@@ -1,0 +1,9 @@
+// Queries for the API data. useEventStream refetches them by key.
+import { queryOptions } from "@tanstack/react-query";
+
+import { api, unwrap } from "@/api/client";
+
+export const containersQuery = queryOptions({
+  queryKey: ["containers"],
+  queryFn: async () => unwrap(await api.GET("/api/containers")),
+});
