@@ -16,7 +16,7 @@ Rules:
   - **Test:** `wt --help` exits 0 and lists the 3 subcommands. Each stub exits with a "not implemented" error.
 - [x] **1.4** Add runtime deps: `fastapi`, `uvicorn`, `sqlmodel`, `alembic`, `aiodocker`, `httpx`, `pydantic-settings`, `argon2-cffi`, `pyotp`, `segno`. Lock with `uv lock`.
   - **Test:** a smoke test imports each package.
-- [ ] **1.5** Add dev deps: `hypothesis`, `respx`, `testcontainers`, `schemathesis`, `mutmut`, `pip-audit`, `pytest-cov`. Configure:
+- [x] **1.5** Add dev deps: `hypothesis`, `respx`, `testcontainers`, `schemathesis`, `mutmut`, `pip-audit`, `pytest-cov`. Configure:
   - ruff: default rules, `S` (security), `TID251` (banned APIs, see 2.1 and 6.2).
   - pyright: strict on `wt/` and `tests/`.
   - pytest: anyio plugin for async tests. Markers `docker`, `e2e`, `llm_eval`. The default run skips them. CI runs them.

@@ -25,10 +25,17 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.170.14",
+    "mutmut>=3.8.1",
+    "pip-audit>=2.10.1",
     "pyright",
     "pytest",
+    "pytest-cov>=7.1.0",
     "pytest-xdist",
+    "respx>=0.23.1",
     "ruff",
+    "schemathesis>=4.33.0",
+    "testcontainers>=4.15.0",
 ]
 
 [tool.uv]
@@ -41,10 +48,34 @@ module-root = ""
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Run tests in parallel on all CPUs. Use "-n0" to run one test fast.
-addopts = "-n auto"
+# The default run skips slow tests. CI runs them with "-m docker" (or e2e, llm_eval).
+addopts = "-n auto --strict-markers -m 'not docker and not e2e and not llm_eval'"
+markers = [
+    "docker: needs the host Docker (testcontainers)",
+    "e2e: needs the full E2E stack",
+    "llm_eval: calls a real LLM server",
+]
 
 [tool.ruff]
 target-version = "py314"
 
+[tool.ruff.lint]
+# Default rules, plus security (S) and banned APIs (TID251).
+extend-select = ["S", "TID251"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use assert and run local commands.
+"tests/**" = ["S101", "S603"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# Tasks 2.1 and 6.2 add the banned APIs here.
+
 [tool.pyright]
+include = ["wt", "tests"]
+strict = ["wt", "tests"]
 typeCheckingMode = "strict"
+
+[tool.mutmut]
+paths_to_mutate = ["wt/"]
+# mutmut does not work with xdist.
+pytest_add_cli_args = ["-n0"]
