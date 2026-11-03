@@ -3,10 +3,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { onUnauthorized } from "@/api/client";
 import { routes } from "@/routes";
 
 export function renderRoute(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
+  onUnauthorized(() => void router.navigate("/login"));
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const result = render(
     <QueryClientProvider client={queryClient}>
