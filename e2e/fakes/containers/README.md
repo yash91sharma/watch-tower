@@ -1,6 +1,7 @@
 # Test containers
 
-`app/` is a busybox app for the Docker tests (`backend/tests/docker/`) and the E2E tests.
+`app/` is a busybox app for the Docker tests (`backend/tests/docker/`) and the E2E tests
+(`e2e/compose.containers.yaml`).
 `backend/tests/docker/conftest.py` builds it and starts the `wt_test_*` containers.
 
 - Healthy while `/tmp/ok` exists. Make it unhealthy: `docker exec <name> rm /tmp/ok`.

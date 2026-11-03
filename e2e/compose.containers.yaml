@@ -1,0 +1,54 @@
+# E2E test containers (task 16.3). e2e/compose.test.yaml includes this file, so they are in
+# the Compose project wt_test_e2e. They use the test app of the Docker tests
+# (fakes/containers/app). See fakes/containers/README.md for how a test makes them fail.
+#
+# Old-version containers: images with a version tag and a source label for a fake repo.
+# The fake GitHub seed (FAKE_GITHUB_SEED in compose.test.yaml) starts each repo at the
+# running version, so there is no update until a flow adds a release.
+
+x-app: &app
+  build: fakes/containers/app
+  image: wt_test/e2e-app:1.0.0
+
+services:
+  healthy:
+    <<: *app
+    container_name: wt_test_e2e_healthy
+  unhealthy:
+    <<: *app
+    container_name: wt_test_e2e_unhealthy
+  restart:
+    <<: *app
+    container_name: wt_test_e2e_restart
+    restart: on-failure
+  json:
+    <<: *app
+    container_name: wt_test_e2e_json
+    environment: [MODE=json]
+  tty:
+    <<: *app
+    container_name: wt_test_e2e_tty
+    tty: true
+  latest:
+    build:
+      context: fakes/containers/app
+    image: wt_test/e2e-app:latest
+    container_name: wt_test_e2e_latest
+  excluded:
+    <<: *app
+    container_name: wt_test_e2e_excluded
+    labels: [wt.enable=false]
+  old-a:
+    build:
+      context: fakes/containers/app
+      labels:
+        org.opencontainers.image.source: https://github.com/wt-e2e/old-a
+    image: wt_test/e2e-old-a:1.0.0
+    container_name: wt_test_e2e_old_a
+  old-b:
+    build:
+      context: fakes/containers/app
+      labels:
+        org.opencontainers.image.source: https://github.com/wt-e2e/old-b
+    image: wt_test/e2e-old-b:2.0.0
+    container_name: wt_test_e2e_old_b
