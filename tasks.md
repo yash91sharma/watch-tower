@@ -254,7 +254,7 @@ Rules:
   - **Test:** with and without a summary. A note or summary with `<script>` shows as text.
 - [x] **13.12** Logs buffer: read the `/logs` SSE. Keep max 10,000 lines (drop the oldest). Add new lines once per animation frame. Clear the buffer when the stream opens (a reconnect sends the tail again).
   - **Test:** buffer cap, batching, line parse, a reconnect gives no duplicate lines.
-- [ ] **13.13** Logs view: TanStack Virtual list. Follow mode scrolls to the end. Scroll up pauses follow. A button starts follow again. Stderr lines have a different color. Tail size select.
+- [x] **13.13** Logs view: TanStack Virtual list. Follow mode scrolls to the end. Scroll up pauses follow. A button starts follow again. Stderr lines have a different color. Tail size select.
   - **Test:** follow and pause.
 - [ ] **13.14** Log search (in the browser): highlight, match count, next and previous, show only matches. Not case-sensitive.
   - **Test:** matches, no match, filter mode, case.
