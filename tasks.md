@@ -107,7 +107,7 @@ Rules:
   - **Test:** defaults on an empty DB, save and load, bad values fail.
 - [x] **5.2** `GET /api/settings`: values and secret state (`github_token`, `ntfy_token`, `llm_api_key`: `set` or `not set`). `PUT /api/settings`: validate and save. A bad value gives 422 with one error per field. A save publishes `settings` on the bus.
   - **Test:** no secret value in a response. A save publishes `settings`.
-- [ ] **5.3** `GET /api/config/export`: JSON `{format_version, settings, containers: [{name, release_source, source_confirmed}]}`, file name `wt-config-<date>.json`. No secrets.
+- [x] **5.3** `GET /api/config/export`: JSON `{format_version, settings, containers: [{name, release_source, source_confirmed}]}`, file name `wt-config-<date>.json`. No secrets.
   - **Test:** with all secrets set, the export has no secret.
 - [ ] **5.4** `POST /api/config/import?dry_run=true|false` (JSON body): check `format_version` and all values, then save settings and per-container values by name in one transaction. Add rows for names that WT does not know yet. Return counts. A dry run returns counts and errors and saves nothing. A real import publishes `settings` on the bus.
   - **Test:** import of an export into an empty DB gives the same export. A bad file changes nothing. A dry run changes nothing. A real import publishes `settings`.
