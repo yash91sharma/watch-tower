@@ -201,7 +201,7 @@ Rules:
   - **Test:** text snapshots for each message.
 - [x] **10.2** Priority: `high` for a critical update, a digest with a critical update, and `unhealthy`. Else `default`.
   - **Test:** table tests.
-- [ ] **10.3** `wt/notify/ntfy.py`: `POST {ntfy_url}/{topic}` with `Title`, `Priority`, `Tags`, `Click`, and `Authorization: Bearer` if `WT_NTFY_TOKEN` is set. Timeout 10 s. Give ok or fail. If the URL or topic is not set, send nothing.
+- [x] **10.3** `wt/notify/ntfy.py`: `POST {ntfy_url}/{topic}` with `Title`, `Priority`, `Tags`, `Click`, and `Authorization: Bearer` if `WT_NTFY_TOKEN` is set. Timeout 10 s. Give ok or fail. If the URL or topic is not set, send nothing.
   - **Test (respx):** headers, token, error, not set.
 - [ ] **10.4** After each check run: get the current update rows (9.9) with no `notified_at`. One row: one message. More rows: one digest. On success, set `notified_at`. On fail, keep the rows for the next run.
   - **Test:** 1 update, 2 updates, second run sends nothing, a failed send goes out on the next run, a stale row is not sent.
