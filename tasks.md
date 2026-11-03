@@ -22,7 +22,7 @@ Rules:
   - pytest: anyio plugin for async tests. Markers `docker`, `e2e`, `llm_eval`. The default run skips them. CI runs them.
   - mutmut: run pytest with `-n0` (mutmut does not work with xdist).
   - **Test:** a sample async test and a sample Hypothesis test pass.
-- [ ] **1.6** Frontend scaffold: Vite, React 19, TypeScript strict, ESLint (typescript-eslint, react-hooks), Tailwind CSS, shadcn/ui, React Router, TanStack Query, TanStack Virtual, openapi-fetch, openapi-typescript. Vite proxies `/api` to the backend.
+- [x] **1.6** Frontend scaffold: Vite, React 19, TypeScript strict, ESLint (typescript-eslint, react-hooks), Tailwind CSS, shadcn/ui, React Router, TanStack Query, TanStack Virtual, openapi-fetch, openapi-typescript. Vite proxies `/api` to the backend.
   - **Test:** `pnpm build`, `pnpm lint` and `tsc --noEmit` pass.
 - [ ] **1.7** Frontend test tools: Vitest, `jsdom`, Testing Library, MSW, `@vitest/coverage-v8`. Shared MSW handlers in `src/test/`. Remove `smoke.test.ts`.
   - **Test:** a sample component test with an MSW handler passes.
