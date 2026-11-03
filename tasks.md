@@ -147,7 +147,7 @@ Rules:
   - **Test:** each change. Repeated `unhealthy` events give one change. A `destroy` with an old `docker_id` keeps the state. 100% branch.
 - [x] **7.3** Baseline: at start and after a resync (6.6), set the state from `inspect` with no change.
   - **Test:** a container that is unhealthy at start gives no change, then `recovered_health` when it becomes healthy.
-- [ ] **7.4** Health wiring: the events worker (6.5) calls the health rules directly (not through the bus, because the bus can drop items). After each connect (6.6), set the baseline (7.3). Save each change as an `event` row. A 30 s tick finds loop ends. N and M come from settings and reload on `settings`.
+- [x] **7.4** Health wiring: the events worker (6.5) calls the health rules directly (not through the bus, because the bus can drop items). After each connect (6.6), set the baseline (7.3). Save each change as an `event` row. A 30 s tick finds loop ends. N and M come from settings and reload on `settings`.
   - **Test (clock):** a restart loop, then M quiet minutes, gives `restart_loop`, then `recovered_loop`, and 2 `event` rows.
 - [ ] **7.5** Docker test: `docker exec` makes the unhealthy and restart loop containers fail (6.1). WT gives the expected changes.
 

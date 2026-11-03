@@ -12,6 +12,7 @@ from wt.bus import Bus
 from wt.config import Env
 from wt.docker.connection import DockerState
 from wt.docker.inventory import Inventory
+from wt.health.monitor import HealthMonitor
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,7 @@ class AppContext:
     bus: Bus
     setup_token: SetupToken
     inventory: Inventory
+    health: HealthMonitor
     docker_state: DockerState = field(default_factory=DockerState)
     login_limit: LoginLimit = field(default_factory=LoginLimit)
 

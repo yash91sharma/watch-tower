@@ -19,12 +19,13 @@ from wt.api import errors, static
 from wt.api.headers import SecurityHeadersMiddleware
 from wt.auth.setup_token import SetupToken
 from wt.bus import Bus
-from wt.config import Env
+from wt.config import Env, load_settings
 from wt.context import AppContext, Worker
 from wt.db import cleanup, open_db
 from wt.docker.client import DockerClient
 from wt.docker.connection import keep_connected
 from wt.docker.inventory import Inventory
+from wt.health.monitor import HealthMonitor, run_health
 
 log = logging.getLogger(__name__)
 
@@ -39,11 +40,16 @@ async def docker_worker(ctx: AppContext) -> None:
         ctx.inventory,
         ctx.bus,
         ctx.docker_state,
+        ctx.health,
     )
 
 
+async def health_worker(ctx: AppContext) -> None:
+    await run_health(ctx.health, ctx.engine, ctx.bus)
+
+
 # The workers that WT starts.
-WORKERS: list[Worker] = [cleanup_worker, docker_worker]
+WORKERS: list[Worker] = [cleanup_worker, docker_worker, health_worker]
 
 
 def create_app(
@@ -62,6 +68,7 @@ def create_app(
             bus=Bus(),
             setup_token=SetupToken.at_start(engine),
             inventory=Inventory(engine),
+            health=HealthMonitor(engine, load_settings(engine)),
         )
         app.state.ctx = ctx
         tasks = [asyncio.create_task(_run_worker(worker, ctx)) for worker in workers]

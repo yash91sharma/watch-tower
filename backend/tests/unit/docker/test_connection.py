@@ -8,7 +8,7 @@ from sqlalchemy import Engine
 
 from wt.bus import Bus, Subscription, Topic
 from wt.clock import FakeClock
-from wt.docker.client import ContainerInfo
+from wt.docker.client import ContainerInfo, DockerEvent
 from wt.docker.connection import DockerState, keep_connected
 from wt.docker.fake import FakeDocker
 from wt.docker.inventory import Inventory
@@ -93,3 +93,32 @@ async def test_backoff_stops_at_60_seconds(db_engine: Engine, clock: FakeClock) 
     # 1 + 2 + 4 + 8 + 16 + 32 + 60 + 60 + 60 seconds before the 10th message.
     assert clock.now() - start == timedelta(seconds=243)
     assert state.connected is False
+
+
+async def test_listener_gets_the_infos_after_each_sync(
+    db_engine: Engine, clock: FakeClock
+) -> None:
+    fake = FakeDocker()
+    fake.add(WEB)
+    synced: list[list[str]] = []
+
+    class Listener:
+        def on_sync(self, infos: list[ContainerInfo]) -> None:
+            synced.append([info.name for info in infos])
+
+        async def on_event(self, event: DockerEvent) -> None:
+            return None
+
+    inventory, bus, state = Inventory(db_engine), Bus(), DockerState()
+    subscription = bus.subscribe([Topic.DOCKER])
+    task = asyncio.create_task(
+        keep_connected(lambda: fake, inventory, bus, state, Listener())
+    )
+    try:
+        while not await next_docker_state(subscription):
+            pass
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+    assert synced == [["web"]]

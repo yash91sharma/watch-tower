@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from wt import clock
 from wt.bus import Bus, Topic
 from wt.docker.client import DockerApi, DockerUnavailableError
-from wt.docker.events import follow_events
+from wt.docker.events import DockerListener, follow_events
 from wt.docker.inventory import Inventory
 
 log = logging.getLogger(__name__)
@@ -33,18 +33,21 @@ async def keep_connected(
     inventory: Inventory,
     bus: Bus,
     state: DockerState,
+    listener: DockerListener | None = None,
 ) -> None:
-    """Run until WT stops it (task cancel)."""
+    """Run until WT stops it (task cancel). The listener gets each sync and event."""
     _set(state, bus, connected=False)
     delay = FIRST_DELAY
     while True:
         client = make_client()
         try:
             await client.ping()
-            await inventory.sync_all(client)
+            infos = await inventory.sync_all(client)
+            if listener is not None:
+                listener.on_sync(infos)
             _set(state, bus, connected=True)
             delay = FIRST_DELAY
-            await follow_events(client, inventory, bus)
+            await follow_events(client, inventory, bus, listener)
             log.warning("The Docker event stream stopped")
         except DockerUnavailableError as error:
             log.warning("Docker is not available: %s", error)

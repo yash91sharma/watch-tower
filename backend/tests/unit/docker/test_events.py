@@ -113,3 +113,39 @@ async def test_follow_events_handles_events_until_the_stream_ends(
     await follow_events(docker, inventory, bus)
 
     assert [(await subscription.get()).data for _ in range(2)] == [{"name": "web"}] * 2
+
+
+class RecordingListener:
+    def __init__(self) -> None:
+        self.synced: list[list[ContainerInfo]] = []
+        self.events: list[DockerEvent] = []
+
+    def on_sync(self, infos: list[ContainerInfo]) -> None:
+        self.synced.append(infos)
+
+    async def on_event(self, event: DockerEvent) -> None:
+        self.events.append(event)
+
+
+async def test_listener_gets_events_but_not_for_excluded_containers(
+    db_engine: Engine,
+) -> None:
+    docker, inventory, bus = FakeDocker(), Inventory(db_engine), Bus()
+    docker.add(WEB)
+    docker.add(replace(WEB, id="id-2", name="secret", labels={"wt.enable": "false"}))
+    listener = RecordingListener()
+
+    await handle_event(event("start"), docker, inventory, bus, listener)
+    await handle_event(
+        DockerEvent("start", "id-2", "secret", T0, None),
+        docker,
+        inventory,
+        bus,
+        listener,
+    )
+    await handle_event(event("destroy"), docker, inventory, bus, listener)
+
+    assert [(item.action, item.name) for item in listener.events] == [
+        ("start", "web"),
+        ("destroy", "web"),
+    ]
