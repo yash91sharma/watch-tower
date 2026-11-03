@@ -26,6 +26,8 @@ from wt.docker.client import DockerClient
 from wt.docker.connection import keep_connected
 from wt.docker.inventory import Inventory
 from wt.health.monitor import HealthMonitor, run_health
+from wt.versions.check import CheckRunner
+from wt.versions.scheduler import run_scheduler
 
 log = logging.getLogger(__name__)
 
@@ -48,8 +50,12 @@ async def health_worker(ctx: AppContext) -> None:
     await run_health(ctx.health, ctx.engine, ctx.bus)
 
 
+async def scheduler_worker(ctx: AppContext) -> None:
+    await run_scheduler(ctx.checker, ctx.engine)
+
+
 # The workers that WT starts.
-WORKERS: list[Worker] = [cleanup_worker, docker_worker, health_worker]
+WORKERS: list[Worker] = [cleanup_worker, docker_worker, health_worker, scheduler_worker]
 
 
 def create_app(
@@ -62,13 +68,15 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         engine = open_db(env.data_dir)
+        inventory = Inventory(engine)
         ctx = AppContext(
             env=env,
             engine=engine,
             bus=Bus(),
             setup_token=SetupToken.at_start(engine),
-            inventory=Inventory(engine),
+            inventory=inventory,
             health=HealthMonitor(engine, load_settings(engine)),
+            checker=CheckRunner(engine, env, inventory),
         )
         app.state.ctx = ctx
         tasks = [asyncio.create_task(_run_worker(worker, ctx)) for worker in workers]

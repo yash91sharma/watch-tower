@@ -13,6 +13,7 @@ from wt.config import Env
 from wt.docker.connection import DockerState
 from wt.docker.inventory import Inventory
 from wt.health.monitor import HealthMonitor
+from wt.versions.check import CheckRunner
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,7 @@ class AppContext:
     setup_token: SetupToken
     inventory: Inventory
     health: HealthMonitor
+    checker: CheckRunner
     docker_state: DockerState = field(default_factory=DockerState)
     login_limit: LoginLimit = field(default_factory=LoginLimit)
 
