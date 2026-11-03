@@ -1,4 +1,4 @@
-"""Auth routes: state, first setup and login. No session is needed for them."""
+"""Auth routes: state, first setup, login and logout. No session is needed for them."""
 
 from typing import Annotated
 
@@ -154,3 +154,11 @@ def _use_step(ctx: AppContext, step: int) -> bool:
         result = session.exec(statement)
         session.commit()
     return result.rowcount == 1
+
+
+@router.post("/logout", status_code=204)
+def logout(ctx: Ctx, response: Response, wt_session: SessionCookie = None) -> None:
+    """Delete the session and the cookie."""
+    if wt_session is not None:
+        sessions.delete_session(ctx.engine, wt_session)
+    sessions.clear_cookie(response)

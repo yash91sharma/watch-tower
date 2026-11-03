@@ -94,7 +94,7 @@ Rules:
   - **Test:** full flow, wrong token, wrong code, second setup, 429 when blocked, the setup code fails at login (replay).
 - [x] **4.7** `POST /api/auth/login {password, totp_code}`: one error message for all failures. Each failure counts for the limit (4.3). While the limit blocks: 429 with `Retry-After`.
   - **Test:** good login, wrong password, wrong code, 6th attempt gets 429, login works after 15 minutes.
-- [ ] **4.8** `POST /api/auth/logout`: delete the session row and the cookie.
+- [x] **4.8** `POST /api/auth/logout`: delete the session row and the cookie.
   - **Test:** the old cookie gets 401.
 - [ ] **4.9** Auth guard: one dependency on a protected `/api` router. All routes except `/api/health` and `/api/auth/*` go on this router.
   - **Test:** a dummy route on the router gives 401 with no cookie. A test reads all registered `/api` routes. Each route not in the list gives 401 with no cookie. Later routes (SSE, `logs.txt`) get this test automatically.
