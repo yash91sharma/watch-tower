@@ -90,6 +90,8 @@ def test_bad_image_ref(ref: str) -> None:
         ("not a url", None),
         ("http://[x/owner/repo", None),
         ("owner/repo/extra", None),
+        # Python "$" also matches before a last newline. The config export rejects it.
+        ("owner/repo\n.git", None),
         ("", None),
         (None, None),
     ],

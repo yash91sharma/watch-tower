@@ -82,4 +82,4 @@ def release_source(value: str | None) -> str | None:
             return None
         value = f"{parts[0]}/{parts[1]}"
     value = value.removesuffix(".git")
-    return value if _REPO.match(value) else None
+    return value if _REPO.fullmatch(value) else None
