@@ -1,14 +1,23 @@
 // A virtual list of log lines. Follow mode keeps the end in view. Scroll up pauses it.
+// Search: the matches of the query are marked, and the current match line is shown.
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { LogLine } from "@/lib/logs";
+import { highlight, type LogLine } from "@/lib/logs";
 import { cn } from "@/lib/utils";
 
 const ROW_HEIGHT = 20;
 
-export function LogView({ lines }: { lines: LogLine[] }) {
+export function LogView({
+  lines,
+  query = "",
+  currentId = null,
+}: {
+  lines: LogLine[];
+  query?: string;
+  currentId?: number | null;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [follow, setFollow] = useState(true);
   // The build has no React Compiler, so its memoization warning does not apply.
@@ -26,6 +35,17 @@ export function LogView({ lines }: { lines: LogLine[] }) {
     // The browser limits scrollTop to the end.
     if (follow && element) element.scrollTop = element.scrollHeight;
   }, [follow, lines]);
+
+  // Go to the current match (a new search, next or previous). This pauses follow.
+  const showLine = useEffectEvent((id: number) => {
+    const index = lines.findIndex((line) => line.id === id);
+    if (index === -1) return;
+    setFollow(false);
+    virtualizer.scrollToIndex(index, { align: "center" });
+  });
+  useEffect(() => {
+    if (currentId !== null) showLine(currentId);
+  }, [currentId]);
 
   function onScroll() {
     const element = scrollRef.current;
@@ -58,10 +78,19 @@ export function LogView({ lines }: { lines: LogLine[] }) {
                 className={cn(
                   "absolute top-0 left-0 w-full px-2 leading-5 break-all whitespace-pre-wrap",
                   line.stream === "stderr" && "text-destructive",
+                  line.id === currentId && "bg-accent",
                 )}
                 style={{ transform: `translateY(${String(item.start)}px)` }}
               >
-                {line.text}
+                {highlight(line.text, query).map((part, index) =>
+                  part.match ? (
+                    <mark key={index} className="rounded-sm bg-yellow-200 text-black">
+                      {part.text}
+                    </mark>
+                  ) : (
+                    part.text
+                  ),
+                )}
               </div>
             );
           })}

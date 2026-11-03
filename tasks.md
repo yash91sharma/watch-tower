@@ -256,7 +256,7 @@ Rules:
   - **Test:** buffer cap, batching, line parse, a reconnect gives no duplicate lines.
 - [x] **13.13** Logs view: TanStack Virtual list. Follow mode scrolls to the end. Scroll up pauses follow. A button starts follow again. Stderr lines have a different color. Tail size select.
   - **Test:** follow and pause.
-- [ ] **13.14** Log search (in the browser): highlight, match count, next and previous, show only matches. Not case-sensitive.
+- [x] **13.14** Log search (in the browser): highlight, match count, next and previous, show only matches. Not case-sensitive.
   - **Test:** matches, no match, filter mode, case.
 - [ ] **13.15** JSON pretty-print toggle (in the browser): JSON object lines show formatted. Other lines do not change.
   - **Test:** JSON line, bad JSON, plain text.

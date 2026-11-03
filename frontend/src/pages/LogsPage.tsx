@@ -1,10 +1,13 @@
-// The live log of a container.
-import { useState } from "react";
+// The live log of a container, with search (in the browser) and a tail size.
+import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 
 import { useLogStream } from "@/api/useLogStream";
 import { FormError } from "@/components/FormError";
 import { LogView } from "@/components/LogView";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { matchingLines } from "@/lib/logs";
 
 const TAIL_SIZES = [100, 500, 1000, 5000, 10000];
 
@@ -12,6 +15,16 @@ export function LogsPage() {
   const { name = "" } = useParams();
   const [tail, setTail] = useState(500);
   const { lines, error } = useLogStream(name, tail);
+  const [query, setQuery] = useState("");
+  const [onlyMatches, setOnlyMatches] = useState(false);
+  const [position, setPosition] = useState(0);
+
+  const matches = useMemo(() => matchingLines(lines, query), [lines, query]);
+  // The buffer can drop old lines, so keep the position in the range.
+  const current = matches.length > 0 ? Math.min(position, matches.length - 1) : 0;
+  const move = (step: number) => {
+    setPosition((current + step + matches.length) % matches.length);
+  };
 
   return (
     <div className="space-y-3">
@@ -34,8 +47,62 @@ export function LogsPage() {
           </select>
         </label>
       </div>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <Input
+          aria-label="Search"
+          type="search"
+          placeholder="Search"
+          className="w-48"
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setPosition(0);
+          }}
+        />
+        {query && (
+          <span aria-live="polite" className="text-muted-foreground">
+            {matches.length === 0 ? "No match" : `${String(current + 1)} of ${String(matches.length)}`}
+          </span>
+        )}
+        <Button
+          size="sm"
+          variant="outline"
+          aria-label="Previous match"
+          disabled={matches.length === 0}
+          onClick={() => {
+            move(-1);
+          }}
+        >
+          ↑
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          aria-label="Next match"
+          disabled={matches.length === 0}
+          onClick={() => {
+            move(1);
+          }}
+        >
+          ↓
+        </Button>
+        <label className="flex items-center gap-1.5">
+          <input
+            type="checkbox"
+            checked={onlyMatches}
+            onChange={(event) => {
+              setOnlyMatches(event.target.checked);
+            }}
+          />
+          Only matches
+        </label>
+      </div>
       <FormError error={error} />
-      <LogView lines={lines} />
+      <LogView
+        lines={onlyMatches && query ? matches : lines}
+        query={query}
+        currentId={matches[current]?.id ?? null}
+      />
     </div>
   );
 }

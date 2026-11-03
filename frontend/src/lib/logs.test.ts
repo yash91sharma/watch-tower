@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { appendLines, type LogLine, MAX_LINES, parseLine } from "@/lib/logs";
+import { appendLines, highlight, type LogLine, matchingLines, MAX_LINES, parseLine } from "@/lib/logs";
 
 function line(id: number): LogLine {
   return { id, time: null, stream: "stdout", text: `line ${String(id)}` };
@@ -25,4 +25,31 @@ test("appendLines keeps the newest MAX_LINES lines", () => {
   expect(lines).toHaveLength(MAX_LINES);
   expect(lines[0]?.id).toBe(2);
   expect(lines.at(-1)?.id).toBe(MAX_LINES + 1);
+});
+
+const texts = ["GET /health 200", "ERROR db timeout", "get /api 500", "done"].map(
+  (text, id): LogLine => ({ id, time: null, stream: "stdout", text }),
+);
+
+test("matchingLines gives the lines with the query, not case-sensitive", () => {
+  expect(matchingLines(texts, "get").map((item) => item.id)).toEqual([0, 2]);
+  expect(matchingLines(texts, "ERROR").map((item) => item.id)).toEqual([1]);
+});
+
+test("matchingLines gives no lines for no match or an empty query", () => {
+  expect(matchingLines(texts, "nothing")).toEqual([]);
+  expect(matchingLines(texts, "")).toEqual([]);
+});
+
+test("highlight marks each match, not case-sensitive", () => {
+  expect(highlight("Get a get", "GET")).toEqual([
+    { text: "Get", match: true },
+    { text: " a ", match: false },
+    { text: "get", match: true },
+  ]);
+});
+
+test("highlight with no match or no query gives the text", () => {
+  expect(highlight("plain", "x")).toEqual([{ text: "plain", match: false }]);
+  expect(highlight("plain", "")).toEqual([{ text: "plain", match: false }]);
 });
