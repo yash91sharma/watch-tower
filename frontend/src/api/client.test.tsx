@@ -66,6 +66,24 @@ test("unwrap throws an ApiError with the status and the detail", async () => {
   expect(error).toMatchObject({ status: 404, message: "No such thing", fields: [] });
 });
 
+test("unwrap gives the Retry-After seconds", async () => {
+  server.use(
+    http.post("*/api/auth/login", () =>
+      HttpResponse.json(
+        { error: "Too Many Requests", detail: "Too many failed attempts. Try again later." },
+        { status: 429, headers: { "Retry-After": "120" } },
+      ),
+    ),
+  );
+
+  const error = await api
+    .POST("/api/auth/login", { body: { password: "x", totp_code: "1" } })
+    .then(unwrap)
+    .catch((caught: unknown) => caught);
+
+  expect(error).toMatchObject({ status: 429, retryAfter: 120 });
+});
+
 test("unwrap gives the field errors of a 422", async () => {
   const fields = [{ field: "password", message: "String should have at least 12 characters" }];
   server.use(

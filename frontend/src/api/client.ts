@@ -9,15 +9,22 @@ export interface FieldError {
   message: string;
 }
 
-/** An API error: the HTTP status, the WT error detail and the field errors (422). */
+/** An API error: the HTTP status, the WT error detail, the field errors (422) and Retry-After (429). */
 export class ApiError extends Error {
   readonly status: number;
   readonly fields: FieldError[];
+  /** Seconds to wait, from the Retry-After header. */
+  readonly retryAfter: number | null;
 
-  constructor(status: number, message: string, fields: FieldError[] = []) {
+  constructor(
+    status: number,
+    message: string,
+    { fields = [], retryAfter = null }: { fields?: FieldError[]; retryAfter?: number | null } = {},
+  ) {
     super(message);
     this.status = status;
     this.fields = fields;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -51,16 +58,19 @@ interface Result<T> {
   response: Response;
 }
 
-/** The data of a result, or an ApiError. For TanStack Query query functions. */
+/** The data of a result (undefined for a 204), or an ApiError. For TanStack Query functions. */
 export function unwrap<T>(result: Result<T>): T {
-  if (result.error !== undefined || result.data === undefined) {
-    // WT errors: {error, detail}. The detail is a text, or the field errors for a 422.
-    const body = result.error as { error?: string; detail?: unknown } | undefined;
-    if (Array.isArray(body?.detail)) {
-      throw new ApiError(result.response.status, body.error ?? result.response.statusText, body.detail as FieldError[]);
-    }
-    const detail = typeof body?.detail === "string" ? body.detail : result.response.statusText;
-    throw new ApiError(result.response.status, detail);
+  const { response } = result;
+  if (response.ok) return result.data as T;
+
+  // WT errors: {error, detail}. The detail is a text, or the field errors for a 422.
+  const body = result.error as { error?: string; detail?: unknown } | undefined;
+  const header = response.headers.get("Retry-After");
+  const retryAfter = header === null ? null : Number(header);
+  if (Array.isArray(body?.detail)) {
+    const fields = body.detail as FieldError[];
+    throw new ApiError(response.status, body.error ?? response.statusText, { fields, retryAfter });
   }
-  return result.data;
+  const detail = typeof body?.detail === "string" ? body.detail : response.statusText;
+  throw new ApiError(response.status, detail, { retryAfter });
 }
