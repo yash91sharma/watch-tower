@@ -1,5 +1,6 @@
 """Tests for the SQLite engine in wt.db.engine."""
 
+import sqlite3
 import stat
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
@@ -60,10 +61,11 @@ def test_makes_the_data_dir_and_the_db_file(
         conn.execute(text("CREATE TABLE t (x INTEGER)"))
         conn.execute(text("INSERT INTO t VALUES (1)"))
         conn.commit()
+        # SQLite deletes the -wal file when the last connection closes.
+        assert file_mode(data_dir / "wt.db-wal") == 0o600
 
     assert file_mode(data_dir) == 0o700
     assert file_mode(data_dir / "wt.db") == 0o600
-    assert file_mode(data_dir / "wt.db-wal") == 0o600
 
 
 def test_fixes_the_mode_of_an_old_db_file(
@@ -83,7 +85,7 @@ def test_use_from_a_second_thread(make_engine: MakeEngine, tmp_path: Path) -> No
         session.connection().execute(text("CREATE TABLE t (x INTEGER)"))
         session.commit()
 
-    # The pool gives the same SQLite connection to the other thread.
+    # A session in another thread works on the same DB.
     def insert_and_count() -> int:
         with Session(engine) as session:
             session.connection().execute(text("INSERT INTO t VALUES (1)"))
@@ -96,3 +98,34 @@ def test_use_from_a_second_thread(make_engine: MakeEngine, tmp_path: Path) -> No
 
     with ThreadPoolExecutor(max_workers=1) as pool:
         assert pool.submit(insert_and_count).result() == 1
+
+
+def raw_connection(session: Session) -> sqlite3.Connection:
+    dbapi_connection = session.connection().connection.dbapi_connection
+    assert isinstance(dbapi_connection, sqlite3.Connection)
+    return dbapi_connection
+
+
+def is_closed(conn: sqlite3.Connection) -> bool:
+    try:
+        conn.execute("SELECT 1")
+    except sqlite3.ProgrammingError:
+        return True
+    return False
+
+
+def test_a_connection_is_closed_when_it_comes_back(
+    make_engine: MakeEngine, tmp_path: Path
+) -> None:
+    # At shutdown, a worker thread can hold a connection while the lifespan disposes
+    # the engine. An open connection that comes back later is never closed: it gives
+    # a ResourceWarning at garbage collection (a flaky test failure).
+    engine = make_engine(tmp_path)
+    with Session(engine) as session:
+        held = raw_connection(session)
+        engine.dispose()
+    with Session(engine) as session:
+        after_dispose = raw_connection(session)
+
+    assert is_closed(held)
+    assert is_closed(after_dispose)

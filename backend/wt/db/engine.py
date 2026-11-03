@@ -2,13 +2,15 @@
 
 Use sync SQLModel sessions: `with Session(engine) as session: ...`. FastAPI runs sync
 code in threads, so a connection can move to another thread (`check_same_thread=False`).
+No pool (NullPool): each connection closes when it comes back. A pool keeps a connection
+open when a thread gives it back after `dispose()` (for example at shutdown).
 """
 
 from pathlib import Path
 from sqlite3 import Connection as SQLiteConnection
 
 from sqlalchemy import Engine, create_engine, event
-from sqlalchemy.pool import ConnectionPoolEntry
+from sqlalchemy.pool import ConnectionPoolEntry, NullPool
 
 DB_FILE = "wt.db"
 BUSY_TIMEOUT_MS = 5000
@@ -24,7 +26,9 @@ def create_db_engine(data_dir: Path) -> Engine:
     db_file.chmod(0o600)
 
     engine = create_engine(
-        f"sqlite:///{db_file}", connect_args={"check_same_thread": False}
+        f"sqlite:///{db_file}",
+        connect_args={"check_same_thread": False},
+        poolclass=NullPool,
     )
     event.listen(engine, "connect", _set_pragmas)
     return engine
