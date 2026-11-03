@@ -306,7 +306,7 @@ Rules:
 - [x] **16.7** Flow 2, login: login, logout, wrong password, wrong TOTP, login limit (then restart WT to clear it), session expiry.
 - [x] **16.8** Flow 3, container list: Compose groups, excluded container absent, `latest` shows `no check`.
 - [x] **16.9** Flow 4, release source: value from the label, admin edits and confirms it.
-- [ ] **16.10** Flow 5, Check now: add one release on fake GitHub. Versions, notes and summary show. ntfy gets one message with the WT link. A second run sends nothing.
+- [x] **16.10** Flow 5, Check now: add one release on fake GitHub. Versions, notes and summary show. ntfy gets one message with the WT link. A second run sends nothing.
 - [ ] **16.11** Flow 6, two updates: add releases for 2 containers (one with `CVE-` in the notes). ntfy gets one digest with high priority.
 - [ ] **16.12** Flow 7, LLM off and LLM timeout: add a new release for each case. Notes only, keyword severity.
 - [ ] **16.13** Flow 8, health: `docker exec` makes the containers fail (6.1). Unhealthy, restart loop and each recovery send one ntfy message.
