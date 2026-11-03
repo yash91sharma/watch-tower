@@ -210,7 +210,7 @@ Rules:
 
 ## 11. Containers API
 
-- [ ] **11.1** `GET /api/containers`: containers that exist in Docker now (any state) and are not excluded, in groups `[{project, label, containers}]`. Sort groups by label and containers by name. Containers with no Compose project go in the last group, label `Other`. Fields: name, state, health (`healthy`, `unhealthy`, `starting`, `none`), image, tag, status (9.7), latest version, severity of the current update (9.9), release_source, source_confirmed.
+- [x] **11.1** `GET /api/containers`: containers that exist in Docker now (any state) and are not excluded, in groups `[{project, label, containers}]`. Sort groups by label and containers by name. Containers with no Compose project go in the last group, label `Other`. Fields: name, state, health (`healthy`, `unhealthy`, `starting`, `none`), image, tag, status (9.7), latest version, severity of the current update (9.9), release_source, source_confirmed.
   - **Test:** groups, sort order, `Other`, fields per status, excluded container absent.
 - [ ] **11.2** `GET /api/containers/{name}`: fields from 11.1, the current update (9.9: from, to, severity, summary, release notes) and the events of the last 7 days. 404 for an unknown or excluded name.
   - **Test:** with and without an update.
