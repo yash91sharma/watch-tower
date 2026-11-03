@@ -13,7 +13,7 @@ echo "== backend"
   # Coverage gate: see [tool.coverage] in pyproject.toml.
   uv run pytest -q --cov --cov-report=term
   # Rule modules: 100% of lines and branches.
-  for module in health; do
+  for module in health versions; do
     echo "-- 100% gate: wt/$module"
     uv run coverage report --include="wt/$module/*" --fail-under=100
   done
