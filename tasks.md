@@ -214,7 +214,7 @@ Rules:
   - **Test:** groups, sort order, `Other`, fields per status, excluded container absent.
 - [x] **11.2** `GET /api/containers/{name}`: fields from 11.1, the current update (9.9: from, to, severity, summary, release notes) and the events of the last 7 days. 404 for an unknown or excluded name.
   - **Test:** with and without an update.
-- [ ] **11.3** `GET /api/stream` (SSE): on connect, first send the current `docker` state (6.6). Then send bus events (`container`, `check`, `docker`). Keep-alive comment every 15 s. Headers `Cache-Control: no-cache`, `X-Accel-Buffering: no`. Unsubscribe when the client goes.
+- [x] **11.3** `GET /api/stream` (SSE): on connect, first send the current `docker` state (6.6). Then send bus events (`container`, `check`, `docker`). Keep-alive comment every 15 s. Headers `Cache-Control: no-cache`, `X-Accel-Buffering: no`. Unsubscribe when the client goes.
   - **Test:** a new client first gets the `docker` state. A container change arrives. Keep-alive (clock). Disconnect removes the subscriber.
 - [ ] **11.4** OpenAPI: typed response models on all routes. `wt openapi` writes the schema. `pnpm gen:api` writes `frontend/src/api/schema.d.ts` (committed). `check.sh` makes both again and fails on a diff.
   - **Test:** a changed route model with old types makes `check.sh` fail.
