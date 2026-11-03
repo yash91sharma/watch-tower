@@ -10,8 +10,10 @@ from fastapi import FastAPI
 from sqlalchemy import Engine
 
 from wt import clock as wt_clock
+from wt.auth import sessions
 from wt.clock import Clock, FakeClock
 from wt.config import Env
+from wt.context import AppContext
 from wt.db import open_db
 from wt.main import create_app
 
@@ -53,3 +55,11 @@ async def client(app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="https://wt") as http:
         yield http
+
+
+@pytest.fixture
+async def user_client(app: FastAPI, client: httpx.AsyncClient) -> httpx.AsyncClient:
+    """The client with a valid session cookie (logged in)."""
+    ctx: AppContext = app.state.ctx
+    client.cookies.set(sessions.COOKIE, sessions.create_session(ctx.engine))
+    return client
