@@ -172,7 +172,7 @@ Rules:
   - **Test:** table tests: design cases, `1.2.0` vs `1.2`, running newer than latest. Hypothesis: no crash, same input gives same result, equal versions give no update.
 - [x] **9.3** Release range: drop drafts, pre-releases and tags that are not versions. Keep versions above the running version, up to the latest (number compare). Sort newest first. Join the notes with one heading per version.
   - **Test:** table tests. Hypothesis: the generator makes a release list that has a valid latest version (not a draft, not a pre-release) above the running version. The result is a sorted subset that contains the latest.
-- [ ] **9.4** `wt/versions/github.py`: httpx client, base URL `WT_GITHUB_API_URL`, headers `Accept: application/vnd.github+json`, `X-GitHub-Api-Version`, `User-Agent`, `Authorization: Bearer` if the token is set. Timeout 30 s. `latest(repo, etag)` gives a release, `not modified` (304) or `no release` (404). `releases(repo)` gets one page, `per_page=100`.
+- [x] **9.4** `wt/versions/github.py`: httpx client, base URL `WT_GITHUB_API_URL`, headers `Accept: application/vnd.github+json`, `X-GitHub-Api-Version`, `User-Agent`, `Authorization: Bearer` if the token is set. Timeout 30 s. `latest(repo, etag)` gives a release, `not modified` (304) or `no release` (404). `releases(repo)` gets one page, `per_page=100`.
   - **Test (respx):** 200, 304 with ETag, 404, timeout, bad JSON.
 - [ ] **9.5** Rate limit: 403 or 429 with `x-ratelimit-remaining: 0`, or a `Retry-After` header, raises `RateLimited(reset_at)`. The check run waits until the reset time (through `clock`), then continues.
   - **Test (respx, clock):** the run waits, then finishes.
