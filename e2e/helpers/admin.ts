@@ -1,12 +1,14 @@
 // The admin of the E2E run. Flow 1 sets it up, the next flows log in with it. A state file
 // keeps it (and the last used TOTP step), because a worker restarts after a failed test.
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
-import { expect, type Page } from "@playwright/test";
+import { type Browser, type BrowserContext, expect, type Page, test } from "@playwright/test";
 
 import { totp } from "./totp";
 
 const STATE_FILE = "/tmp/wt-e2e-state.json";
+// Same as baseURL in playwright.config.ts (a new browser context does not get it).
+const BASE_URL = "https://wt.test";
 export const PASSWORD = "e2e-password-1234";
 
 interface State {
@@ -62,4 +64,36 @@ export async function logIn(page: Page, password = PASSWORD): Promise<void> {
 export async function logInOk(page: Page): Promise<void> {
   await logIn(page);
   await expect(page.getByRole("heading", { level: 1, name: "Containers" })).toBeVisible();
+}
+
+/** A saved login (cookies). useSession() puts it in each test. */
+const SESSION_FILE = "/tmp/wt-e2e-session.json";
+
+type Cookies = Parameters<BrowserContext["addCookies"]>[0];
+
+/** Call it in a spec file: each test of the file starts logged in. */
+export function useSession(): void {
+  test.beforeEach(async ({ browser, context }) => {
+    await saveSession(browser);
+    const { cookies } = JSON.parse(readFileSync(SESSION_FILE, "utf8")) as { cookies: Cookies };
+    await context.addCookies(cookies);
+  });
+}
+
+/**
+ * Make SESSION_FILE hold a valid session. It logs in only if the saved session does not
+ * work any more, so that the flows do not wait for a new TOTP step each time.
+ */
+async function saveSession(browser: Browser): Promise<void> {
+  const options = { baseURL: BASE_URL, ignoreHTTPSErrors: true };
+  if (existsSync(SESSION_FILE)) {
+    const saved = await browser.newContext({ ...options, storageState: SESSION_FILE });
+    const state = (await (await saved.request.get("/api/auth/state")).json()) as { logged_in: boolean };
+    await saved.close();
+    if (state.logged_in) return;
+  }
+  const context = await browser.newContext(options);
+  await logInOk(await context.newPage());
+  await context.storageState({ path: SESSION_FILE });
+  await context.close();
 }

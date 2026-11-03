@@ -304,7 +304,7 @@ Rules:
   - **Test:** a sample spec runs on all projects.
 - [x] **16.6** Flow 1, setup: token from the log, password, TOTP.
 - [x] **16.7** Flow 2, login: login, logout, wrong password, wrong TOTP, login limit (then restart WT to clear it), session expiry.
-- [ ] **16.8** Flow 3, container list: Compose groups, excluded container absent, `latest` shows `no check`.
+- [x] **16.8** Flow 3, container list: Compose groups, excluded container absent, `latest` shows `no check`.
 - [ ] **16.9** Flow 4, release source: value from the label, admin edits and confirms it.
 - [ ] **16.10** Flow 5, Check now: add one release on fake GitHub. Versions, notes and summary show. ntfy gets one message with the WT link. A second run sends nothing.
 - [ ] **16.11** Flow 6, two updates: add releases for 2 containers (one with `CVE-` in the notes). ntfy gets one digest with high priority.
