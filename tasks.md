@@ -24,7 +24,7 @@ Rules:
   - **Test:** a sample async test and a sample Hypothesis test pass.
 - [x] **1.6** Frontend scaffold: Vite, React 19, TypeScript strict, ESLint (typescript-eslint, react-hooks), Tailwind CSS, shadcn/ui, React Router, TanStack Query, TanStack Virtual, openapi-fetch, openapi-typescript. Vite proxies `/api` to the backend.
   - **Test:** `pnpm build`, `pnpm lint` and `tsc --noEmit` pass.
-- [ ] **1.7** Frontend test tools: Vitest, `jsdom`, Testing Library, MSW, `@vitest/coverage-v8`. Shared MSW handlers in `src/test/`. Remove `smoke.test.ts`.
+- [x] **1.7** Frontend test tools: Vitest, `jsdom`, Testing Library, MSW, `@vitest/coverage-v8`. Shared MSW handlers in `src/test/`. Remove `smoke.test.ts`.
   - **Test:** a sample component test with an MSW handler passes.
 - [ ] **1.8** Extend `check.sh`: ruff, pyright, pytest with coverage gate (backend ≥ 90% line and branch), `tsc`, ESLint, Vitest with coverage ≥ 85% (exclude `src/main.tsx` and `src/api/schema.d.ts`). Tasks 7.1, 9.1 and 10.1 add the 100% branch gates for their modules.
   - **Test:** a lint error makes `check.sh` fail. A missed branch makes it fail.
