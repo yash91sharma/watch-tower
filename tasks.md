@@ -286,7 +286,7 @@ Rules:
   - **Test:** `docker compose config` passes.
 - [x] **15.4** `.env.example`: all env vars from 2.2, empty secrets, one comment per line.
   - **Test:** the file and the `config.py` fields match.
-- [ ] **15.5** `README.md`: purpose, deploy, first setup (`docker logs wt` gives the token), Traefik example, `wt reset-admin` then `docker restart wt`, backup (stop WT, copy the `wt-data` volume, start WT), env vars.
+- [x] **15.5** `README.md`: purpose, deploy, first setup (`docker logs wt` gives the token), Traefik example, `wt reset-admin` then `docker restart wt`, backup (stop WT, copy the `wt-data` volume, start WT), env vars.
 
 ## 16. Full-stack tests
 
