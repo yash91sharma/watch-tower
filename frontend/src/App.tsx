@@ -1,12 +1,11 @@
-// App root: data cache and routes. Task 13.1 adds the app shell and all routes.
+// App root: data cache and routes.
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router";
 
-const queryClient = new QueryClient();
+import { routes } from "@/routes";
 
-const router = createBrowserRouter([
-  { path: "/", element: <h1 className="p-4 text-xl font-semibold">Watch Tower</h1> },
-]);
+const queryClient = new QueryClient();
+const router = createBrowserRouter(routes);
 
 export function App() {
   return (

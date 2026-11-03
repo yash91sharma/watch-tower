@@ -230,7 +230,7 @@ Rules:
 
 ## 13. Frontend
 
-- [ ] **13.1** App shell: nav (Containers, Settings, Log out), routes (`/setup`, `/login`, `/`, `/containers/:name`, `/containers/:name/logs`, `/settings`), not-found page, error boundary. Light and dark mode follow the system. Phone-width layout. Times in the browser time zone.
+- [x] **13.1** App shell: nav (Containers, Settings, Log out), routes (`/setup`, `/login`, `/`, `/containers/:name`, `/containers/:name/logs`, `/settings`), not-found page, error boundary. Light and dark mode follow the system. Phone-width layout. Times in the browser time zone.
   - **Test:** each route renders. Not-found page.
 - [ ] **13.2** API client: openapi-fetch with the generated types, same-origin cookies. A 401 opens `/login`. TanStack Query provider.
   - **Test (MSW):** a 401 opens `/login`.
