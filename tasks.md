@@ -145,7 +145,7 @@ Rules:
   - **Test:** N-1 starts: no loop. N starts: loop. N starts over more than M: no loop. M quiet minutes: loop ends.
 - [x] **7.2** Health state machine (pure): flags `unhealthy` and `restart_loop` per container. Input: event (with `docker_id`) and time. Output: changes `became_unhealthy`, `recovered_health`, `restart_loop`, `recovered_loop`. One change per state change. `destroy` removes the state with no change, only if `docker_id` matches.
   - **Test:** each change. Repeated `unhealthy` events give one change. A `destroy` with an old `docker_id` keeps the state. 100% branch.
-- [ ] **7.3** Baseline: at start and after a resync (6.6), set the state from `inspect` with no change.
+- [x] **7.3** Baseline: at start and after a resync (6.6), set the state from `inspect` with no change.
   - **Test:** a container that is unhealthy at start gives no change, then `recovered_health` when it becomes healthy.
 - [ ] **7.4** Health wiring: the events worker (6.5) calls the health rules directly (not through the bus, because the bus can drop items). After each connect (6.6), set the baseline (7.3). Save each change as an `event` row. A 30 s tick finds loop ends. N and M come from settings and reload on `settings`.
   - **Test (clock):** a restart loop, then M quiet minutes, gives `restart_loop`, then `recovered_loop`, and 2 `event` rows.

@@ -3,7 +3,7 @@
 from datetime import UTC, datetime, timedelta
 
 from wt.db.models import EventKind
-from wt.docker.client import DockerEvent
+from wt.docker.client import ContainerInfo, DockerEvent
 from wt.health.state import HealthState
 
 T0 = datetime(2026, 1, 1, tzinfo=UTC)
@@ -112,3 +112,45 @@ def test_destroy_of_an_unknown_container_gives_no_change() -> None:
 
 def test_another_action_gives_no_change() -> None:
     assert handle(HealthState(), event("pause")) == []
+
+
+def info(health: str, docker_id: str = "id-1", name: str = "web") -> ContainerInfo:
+    return ContainerInfo(docker_id, name, "nginx:1", {}, "running", health, False, 0)
+
+
+def test_baseline_unhealthy_gives_no_change_then_recovered_health() -> None:
+    state = HealthState()
+
+    state.baseline([info("unhealthy")])
+
+    assert handle(state, event("health_status", health="unhealthy")) == []
+    assert handle(state, event("health_status", health="healthy")) == [
+        EventKind.RECOVERED_HEALTH
+    ]
+
+
+def test_baseline_clears_a_missed_recovery_with_no_change() -> None:
+    state = HealthState()
+    handle(state, event("health_status", health="unhealthy"))
+
+    state.baseline([info("healthy")])
+
+    assert handle(state, event("health_status", health="healthy")) == []
+
+
+def test_baseline_removes_containers_that_are_gone() -> None:
+    state = HealthState()
+    handle(state, event("health_status", health="unhealthy"))
+
+    state.baseline([])
+
+    assert handle(state, event("health_status", health="healthy")) == []
+
+
+def test_baseline_keeps_a_restart_loop() -> None:
+    state = HealthState()
+    restart_loop(state)
+
+    state.baseline([info("healthy")])
+
+    assert state.tick(T0 + timedelta(hours=1), M) == [("web", EventKind.RECOVERED_LOOP)]

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from wt.db.models import EventKind
-from wt.docker.client import DockerEvent
+from wt.docker.client import ContainerInfo, DockerEvent
 from wt.health.rules import RestartWindow
 
 
@@ -54,6 +54,20 @@ class HealthState:
                 container.restart_loop = True
                 return [EventKind.RESTART_LOOP]
         return []
+
+    def baseline(self, infos: list[ContainerInfo]) -> None:
+        """Set the state from inspect, with no change (at start and after a resync).
+
+        The health comes from Docker. A restart loop stays, so that its end gives a change.
+        Containers that are not in `infos` are removed.
+        """
+        containers: dict[str, _Container] = {}
+        for info in infos:
+            container = self._containers.get(info.name) or _Container(info.id)
+            container.docker_id = info.id
+            container.unhealthy = info.health == "unhealthy"
+            containers[info.name] = container
+        self._containers = containers
 
     def tick(self, now: datetime, window: timedelta) -> list[tuple[str, EventKind]]:
         """Find the restart loops that ended: no restart in the last `window`."""
