@@ -187,6 +187,11 @@ def load_settings(engine: Engine) -> Settings:
 def save_settings(engine: Engine, settings: Settings) -> None:
     """Save all settings, one row per setting."""
     with Session(engine) as session:
-        for key, value in settings.model_dump().items():
-            session.merge(Setting(key=key, value=value))
+        write_settings(session, settings)
         session.commit()
+
+
+def write_settings(session: Session, settings: Settings) -> None:
+    """Add the settings rows to `session`. The caller commits."""
+    for key, value in settings.model_dump().items():
+        session.merge(Setting(key=key, value=value))

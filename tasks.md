@@ -109,7 +109,7 @@ Rules:
   - **Test:** no secret value in a response. A save publishes `settings`.
 - [x] **5.3** `GET /api/config/export`: JSON `{format_version, settings, containers: [{name, release_source, source_confirmed}]}`, file name `wt-config-<date>.json`. No secrets.
   - **Test:** with all secrets set, the export has no secret.
-- [ ] **5.4** `POST /api/config/import?dry_run=true|false` (JSON body): check `format_version` and all values, then save settings and per-container values by name in one transaction. Add rows for names that WT does not know yet. Return counts. A dry run returns counts and errors and saves nothing. A real import publishes `settings` on the bus.
+- [x] **5.4** `POST /api/config/import?dry_run=true|false` (JSON body): check `format_version` and all values, then save settings and per-container values by name in one transaction. Add rows for names that WT does not know yet. Return counts. A dry run returns counts and errors and saves nothing. A real import publishes `settings` on the bus.
   - **Test:** import of an export into an empty DB gives the same export. A bad file changes nothing. A dry run changes nothing. A real import publishes `settings`.
 
 ## 6. Docker access

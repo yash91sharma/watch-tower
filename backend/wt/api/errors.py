@@ -5,7 +5,7 @@ value goes to the client (an input can be a password).
 """
 
 import logging
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from http import HTTPStatus
 from typing import Any
 
@@ -49,8 +49,7 @@ async def _http_error(request: Request, exc: Exception) -> JSONResponse:
 async def _validation_error(request: Request, exc: Exception) -> JSONResponse:
     if not isinstance(exc, RequestValidationError):
         return await _server_error(request, exc)
-    fields = [_field_error(error) for error in exc.errors()]
-    return error_response(422, fields)
+    return error_response(422, field_errors(exc.errors()))
 
 
 async def _server_error(request: Request, exc: Exception) -> JSONResponse:
@@ -58,7 +57,12 @@ async def _server_error(request: Request, exc: Exception) -> JSONResponse:
     return error_response(500, "An error occurred. See the WT log.")
 
 
-def _field_error(error: dict[str, Any]) -> FieldError:
+def field_errors(errors: Sequence[Any]) -> list[FieldError]:
+    """One {field, message} per Pydantic error. No input values."""
+    return [_field_error(error) for error in errors]
+
+
+def _field_error(error: Any) -> FieldError:
     location = [str(part) for part in error.get("loc", ())]
     if location and location[0] in _SOURCES:
         location = location[1:]
