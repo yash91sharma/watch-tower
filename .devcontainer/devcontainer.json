@@ -5,6 +5,8 @@
     "--name=wt_dev",
     "--cpus=6",
     "--add-host=host.docker.internal:host-gateway",
+    // WT in the E2E stack must not show the dev container.
+    "--label=wt.enable=false",
     // Dev run: API (wt serve) and Vite. Only the host can open them.
     "--publish=127.0.0.1:8000:8000",
     "--publish=127.0.0.1:5173:5173"

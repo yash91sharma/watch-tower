@@ -1,0 +1,118 @@
+# E2E stack (task 16.4). Start it from wt_dev:
+#   docker compose -f e2e/compose.test.yaml up -d --build --wait
+# WT runs with the same settings as compose.yaml. The browser reaches WT through Traefik at
+# https://wt.test (self-signed certificate; the session cookie is Secure). All names start
+# with wt_test_e2e. WT and the support services have wt.enable=false, so WT shows only the
+# test containers (compose.containers.yaml) in the group wt_test_e2e.
+name: wt_test_e2e
+
+include:
+  - compose.containers.yaml
+
+x-support: &support
+  labels: [wt.enable=false]
+  networks: [e2e]
+
+x-fake: &fake
+  <<: *support
+  build:
+    context: fakes
+    additional_contexts:
+      wt: service:wt
+  image: wt_test/e2e-fakes:local
+
+services:
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls104
+    container_name: wt_test_e2e_socket_proxy
+    environment: [CONTAINERS=1, EVENTS=1, ALLOW_LOGS=1, POST=0]
+    volumes: [/var/run/docker.sock:/var/run/docker.sock:ro]
+    read_only: true
+    tmpfs: [/run]
+    labels: [wt.enable=false]
+    networks: [docker]
+
+  wt:
+    build: ..
+    image: wt_test/wt:e2e
+    container_name: wt_test_e2e_wt
+    depends_on:
+      socket-proxy: { condition: service_started }
+      github: { condition: service_healthy }
+    environment:
+      DOCKER_HOST: tcp://socket-proxy:2375
+      WT_GITHUB_API_URL: http://github:8000
+      # The e2e network: Traefik sends X-Forwarded-* from there.
+      WT_TRUSTED_PROXIES: 10.199.0.0/24
+      WT_LOG_LEVEL: DEBUG
+    volumes: [wt-data:/data]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.5
+    labels: [wt.enable=false]
+    networks: [docker, e2e]
+
+  github:
+    <<: *fake
+    container_name: wt_test_e2e_github
+    command: [fakes.github.app:app]
+    environment:
+      # Start at the running versions: no update until a flow adds a release.
+      FAKE_GITHUB_SEED: >-
+        {"wt-e2e/old-a": [{"tag_name": "1.0.0"}], "wt-e2e/old-b": [{"tag_name": "2.0.0"}]}
+
+  llm:
+    <<: *fake
+    container_name: wt_test_e2e_llm
+    command: [fakes.llm.app:app]
+
+  ntfy:
+    <<: *support
+    image: binwiederhier/ntfy:v2.11.0
+    container_name: wt_test_e2e_ntfy
+    command: [serve]
+
+  # HTTPS with the Traefik default (self-signed) certificate. A file route, so that
+  # Traefik needs no Docker access.
+  traefik:
+    <<: *support
+    image: traefik:v3.1.2
+    container_name: wt_test_e2e_traefik
+    command:
+      - --providers.file.filename=/etc/traefik/wt.yaml
+      - --entrypoints.websecure.address=:443
+    configs:
+      - source: traefik-wt
+        target: /etc/traefik/wt.yaml
+    networks:
+      e2e:
+        aliases: [wt.test]
+
+configs:
+  traefik-wt:
+    content: |
+      http:
+        routers:
+          wt:
+            rule: Host(`wt.test`)
+            entryPoints: [websecure]
+            tls: {}
+            service: wt
+        services:
+          wt:
+            loadBalancer:
+              servers:
+                - url: http://wt:8000
+
+networks:
+  docker:
+    internal: true
+  e2e:
+    ipam:
+      config:
+        - subnet: 10.199.0.0/24
+
+volumes:
+  wt-data:
