@@ -1,15 +1,17 @@
 """Containers API."""
 
+from datetime import datetime, timedelta
 from typing import Literal, cast, get_args
 
 from fastapi import APIRouter, HTTPException
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
+from wt import clock
 from wt.api.deps import Ctx
 from wt.db import LOCAL_HOST_ID
-from wt.db.models import Container, RepoCache, Severity
+from wt.db.models import Container, Event, EventKind, RepoCache, Severity
 from wt.docker.inventory import LiveContainer
 from wt.docker.parse import release_source
 from wt.versions.check import current_update
@@ -143,3 +145,51 @@ def list_containers(ctx: Ctx) -> list[GroupOut]:
         )
         for project in ordered
     ]
+
+
+EVENT_DAYS = 7
+
+
+class UpdateOut(BaseModel):
+    from_version: str
+    to_version: str
+    severity: Severity
+    # Empty with no LLM result.
+    summary: str
+    # Plain text. The UI must not show it as HTML.
+    release_notes: str
+
+
+class EventOut(BaseModel):
+    kind: EventKind
+    time: datetime
+
+
+class ContainerDetail(ContainerOut):
+    update: UpdateOut | None
+    # The health changes of the last 7 days, newest first.
+    events: list[EventOut]
+
+
+@router.get("/{name}")
+def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
+    """One container with its current update and its events. 404 if it is not in Docker now."""
+    live = ctx.inventory.get(name)
+    with Session(ctx.engine) as session:
+        row = get_container(session, name)
+        if live is None or row.id is None:
+            raise HTTPException(404, f"No container {name!r}")
+        update = current_update(session, row)
+        since = clock.now() - timedelta(days=EVENT_DAYS)
+        events = session.exec(
+            select(Event)
+            .where(Event.container_id == row.id, col(Event.time) >= since)
+            .order_by(col(Event.time).desc())
+        )
+        return ContainerDetail(
+            **container_out(session, row, live).model_dump(),
+            update=UpdateOut.model_validate(update, from_attributes=True)
+            if update
+            else None,
+            events=[EventOut(kind=event.kind, time=event.time) for event in events],
+        )
