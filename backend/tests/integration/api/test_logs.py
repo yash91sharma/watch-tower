@@ -11,6 +11,7 @@ from fastapi import FastAPI
 
 from tests.integration.api.asgi_stream import open_stream
 from wt.auth import sessions
+from wt.clock import FakeClock
 from wt.context import AppContext
 from wt.docker.client import ContainerInfo, LogLine, Stream
 from wt.docker.fake import FakeDocker
@@ -125,3 +126,35 @@ async def test_disconnect_stops_the_docker_stream(
     async with asyncio.timeout(2):
         while not fake.closed:
             await asyncio.sleep(0.01)  # noqa: TID251  (real wait for the cleanup)
+
+
+async def test_download_has_all_lines_and_headers(
+    fake: FakeDocker, user_client: httpx.AsyncClient, clock: FakeClock
+) -> None:
+    fake.log_lines["web"].append(LogLine(None, "stdout", "no time"))
+
+    response = await user_client.get("/api/containers/web/logs.txt")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/plain")
+    assert (
+        response.headers["content-disposition"]
+        == 'attachment; filename="web-2026-01-01.log"'
+    )
+    assert response.text.splitlines() == [
+        "2026-01-01T00:00:00Z stdout line 0",
+        "2026-01-01T00:00:01Z stderr line 1",
+        "2026-01-01T00:00:02Z stdout line 2",
+        "2026-01-01T00:00:03Z stdout line 3",
+        "- stdout no time",
+    ]
+    assert fake.closed is True
+
+
+@pytest.mark.parametrize("name", ["nope", "secret"])
+async def test_download_of_unknown_or_excluded_gives_404(
+    fake: FakeDocker, user_client: httpx.AsyncClient, name: str
+) -> None:
+    assert (
+        await user_client.get(f"/api/containers/{name}/logs.txt")
+    ).status_code == 404

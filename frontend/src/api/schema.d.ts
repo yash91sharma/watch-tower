@@ -306,6 +306,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/containers/{name}/logs.txt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Logs
+         * @description The full log as a text file, no follow. Line: <time> <stream> <text>.
+         */
+        get: operations["download_logs_api_containers__name__logs_txt_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stream": {
         parameters: {
             query?: never;
@@ -1236,6 +1256,46 @@ export interface operations {
                 follow?: boolean;
                 since?: string | null;
             };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: {
+                wt_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    download_logs_api_containers__name__logs_txt_get: {
+        parameters: {
+            query?: never;
             header?: never;
             path: {
                 name: string;

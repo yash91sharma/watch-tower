@@ -257,3 +257,32 @@ async def container_logs(
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@router.get("/{name}/logs.txt", response_class=StreamingResponse)
+async def download_logs(name: str, ctx: Ctx) -> StreamingResponse:
+    """The full log as a text file, no follow. Line: <time> <stream> <text>."""
+    live = await asyncio.to_thread(_live_container, ctx, name)
+    docker = ctx.docker_factory()
+
+    async def text() -> AsyncGenerator[str]:
+        try:
+            async with aclosing(
+                docker.logs(live.docker_id, None, None, False)
+            ) as lines:
+                async for line in lines:
+                    time = (
+                        line.time.isoformat().replace("+00:00", "Z")
+                        if line.time
+                        else "-"
+                    )
+                    yield f"{time} {line.stream} {line.text}\n"
+        finally:
+            await docker.close()
+
+    filename = f"{name}-{clock.now().date().isoformat()}.log"
+    return StreamingResponse(
+        text(),
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

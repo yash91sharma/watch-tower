@@ -77,3 +77,17 @@ async def test_follow_gets_new_lines_and_disconnect_ends_it(
         first = json.loads((await stream.next_chunk(timeout=5)).removeprefix("data: "))
 
     assert first["time"] >= start
+
+
+async def test_download_of_the_full_log(
+    ctx: AppContext, user_client: httpx.AsyncClient
+) -> None:
+    response = await user_client.get("/api/containers/wt_test_json/logs.txt")
+
+    lines_ = response.text.splitlines()
+    assert response.headers["content-disposition"].startswith(
+        'attachment; filename="wt_test_json-'
+    )
+    assert len(lines_) > 10
+    assert any(" stderr error line " in line for line in lines_)
+    assert any(' stdout {"level"' in line for line in lines_)
