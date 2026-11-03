@@ -1,3 +1,119 @@
+// Settings: the UI settings form and the secret state. Env vars set the secrets.
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useId, useState, type SubmitEvent } from "react";
+
+import { api, unwrap } from "@/api/client";
+import { settingsQuery } from "@/api/queries";
+import type { components } from "@/api/schema";
+import { Field } from "@/components/Field";
+import { FormError } from "@/components/FormError";
+import { Button } from "@/components/ui/button";
+
+type Settings = components["schemas"]["Settings"];
+type SecretState = components["schemas"]["SecretState"];
+
+const FIELDS: { key: keyof Settings; label: string; numeric?: boolean }[] = [
+  { key: "check_interval_hours", label: "Check interval (hours)", numeric: true },
+  { key: "restart_count", label: "Restart loop: restarts", numeric: true },
+  { key: "restart_window_minutes", label: "Restart loop: window (minutes)", numeric: true },
+  { key: "ntfy_url", label: "ntfy URL" },
+  { key: "ntfy_topic", label: "ntfy topic" },
+  { key: "llm_url", label: "LLM URL" },
+  { key: "llm_model", label: "LLM model" },
+  { key: "public_url", label: "WT URL (for links in notifications)" },
+];
+
+const SECRETS: { key: keyof SecretState; label: string }[] = [
+  { key: "github_token", label: "GitHub token" },
+  { key: "ntfy_token", label: "ntfy token" },
+  { key: "llm_api_key", label: "LLM API key" },
+];
+
 export function SettingsPage() {
-  return <h1 className="text-xl font-semibold">Settings</h1>;
+  const { data, error } = useQuery(settingsQuery);
+  return (
+    <div className="max-w-xl space-y-6">
+      <h1 className="text-xl font-semibold">Settings</h1>
+      {data === undefined ? (
+        error ? (
+          <FormError error={error} />
+        ) : (
+          <p className="text-muted-foreground">Loading…</p>
+        )
+      ) : (
+        <>
+          <SettingsForm values={data.values} />
+          <Secrets secrets={data.secrets} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function SettingsForm({ values }: { values: Settings }) {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState(() =>
+    Object.fromEntries(FIELDS.map(({ key }) => [key, String(values[key] ?? "")])),
+  );
+  const save = useMutation({
+    // The form sends the text of each input. The backend validates and converts the
+    // values (for example "24" to 24, "" to null) and gives an error per field.
+    mutationFn: async () => unwrap(await api.PUT("/api/settings", { body: form as unknown as Settings })),
+    onSuccess: (result) => {
+      queryClient.setQueryData(settingsQuery.queryKey, result);
+    },
+  });
+
+  function onSubmit(event: SubmitEvent) {
+    event.preventDefault();
+    save.mutate();
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={onSubmit}>
+      {FIELDS.map(({ key, label, numeric }) => (
+        <Field
+          key={key}
+          label={label}
+          inputMode={numeric ? "numeric" : undefined}
+          value={form[key]}
+          onChange={(event) => {
+            setForm({ ...form, [key]: event.target.value });
+            save.reset();
+          }}
+        />
+      ))}
+      <FormError error={save.error} />
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={save.isPending}>
+          Save
+        </Button>
+        {save.isSuccess && (
+          <span role="status" className="text-sm text-muted-foreground">
+            Saved.
+          </span>
+        )}
+      </div>
+    </form>
+  );
+}
+
+function Secrets({ secrets }: { secrets: SecretState }) {
+  const id = useId();
+  return (
+    <section aria-labelledby={id} className="space-y-2">
+      <h2 id={id} className="font-medium">
+        Secrets
+      </h2>
+      <p className="text-sm text-muted-foreground">Env vars set the secrets. Restart WT after a change.</p>
+      <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1 text-sm">
+        {SECRETS.map(({ key, label }) => [
+          <dt key={`${key}-label`} className="text-muted-foreground">
+            {label}
+          </dt>,
+          <dd key={key}>{secrets[key]}</dd>,
+        ])}
+      </dl>
+    </section>
+  );
 }

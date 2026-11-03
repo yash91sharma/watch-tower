@@ -262,7 +262,7 @@ Rules:
   - **Test:** JSON line, bad JSON, plain text.
 - [x] **13.16** Log download button: link to `logs.txt`.
   - **Test:** the link URL.
-- [ ] **13.17** Settings page: form for 5.1. Show the backend field errors. Show each secret as "set" or "not set" (read only; env vars set them).
+- [x] **13.17** Settings page: form for 5.1. Show the backend field errors. Show each secret as "set" or "not set" (read only; env vars set them).
   - **Test:** save, field errors, secret state.
 - [ ] **13.18** Export and import. Export downloads the JSON. Import sends the file text to the dry run (5.4), shows the counts and errors, asks to confirm, then sends it to save.
   - **Test:** export, dry run then confirm, bad file error.

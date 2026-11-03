@@ -25,3 +25,22 @@ export function container(fields: Partial<ContainerOut> = {}): ContainerOut {
 export function containerDetail(fields: Partial<ContainerDetail> = {}): ContainerDetail {
   return { ...container(), update: null, events: [], ...fields };
 }
+
+type SettingsOut = components["schemas"]["SettingsOut"];
+
+/** The settings: defaults, ntfy set up, only the ntfy token set. */
+export function settingsOut(): SettingsOut {
+  return {
+    values: {
+      check_interval_hours: 24,
+      restart_count: 3,
+      restart_window_minutes: 10,
+      ntfy_url: "https://ntfy.example.com/",
+      ntfy_topic: "wt",
+      llm_url: null,
+      llm_model: null,
+      public_url: null,
+    },
+    secrets: { github_token: "not set", ntfy_token: "set", llm_api_key: "not set" },
+  };
+}

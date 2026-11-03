@@ -19,3 +19,8 @@ export function containerQuery(name: string) {
     queryFn: async () => unwrap(await api.GET("/api/containers/{name}", { params: { path: { name } } })),
   });
 }
+
+export const settingsQuery = queryOptions({
+  queryKey: ["settings"],
+  queryFn: async () => unwrap(await api.GET("/api/settings")),
+});
