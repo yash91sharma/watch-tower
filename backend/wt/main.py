@@ -17,6 +17,7 @@ from sqlalchemy import Engine
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from wt import api
+from wt.bus import Bus
 from wt.config import Env
 from wt.db import cleanup, open_db
 
@@ -29,6 +30,7 @@ class AppContext:
 
     env: Env
     engine: Engine
+    bus: Bus
 
 
 # A worker runs until WT stops it (task cancel).
@@ -49,7 +51,7 @@ def create_app(env: Env, workers: Sequence[Worker] = WORKERS) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         engine = open_db(env.data_dir)
-        ctx = AppContext(env=env, engine=engine)
+        ctx = AppContext(env=env, engine=engine, bus=Bus())
         app.state.ctx = ctx
         tasks = [asyncio.create_task(_run_worker(worker, ctx)) for worker in workers]
         try:

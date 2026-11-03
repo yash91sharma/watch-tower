@@ -63,7 +63,7 @@ Rules:
   - **Test:** the lifespan starts and stops fake workers with no task leak. A test-only route gives `request.client.host` and `request.url.scheme`: WT uses `X-Forwarded-For` and `X-Forwarded-Proto` only from a trusted IP.
 - [x] **3.2** Cleanup worker, each hour: delete expired sessions and `event` rows older than 7 days.
   - **Test (clock):** 8-day events and expired sessions go. 6-day events and valid sessions stay.
-- [ ] **3.3** `wt/bus.py`: in-process event bus, one asyncio queue per subscriber. Topics: `container`, `check`, `docker`, `settings`. Publish never blocks. A slow subscriber loses its oldest items.
+- [x] **3.3** `wt/bus.py`: in-process event bus, one asyncio queue per subscriber. Topics: `container`, `check`, `docker`, `settings`. Publish never blocks. A slow subscriber loses its oldest items.
   - **Test:** 2 subscribers get an event. Close removes a subscriber. A slow subscriber does not block.
 - [ ] **3.4** `GET /api/health` (no auth): 200 if the DB answers, else 503.
   - **Test:** both cases.
