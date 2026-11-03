@@ -4,6 +4,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import { type Browser, type BrowserContext, expect, type Page, test } from "@playwright/test";
 
+import { setupToken } from "./stack";
 import { totp } from "./totp";
 
 const STATE_FILE = "/tmp/wt-e2e-state.json";
@@ -50,6 +51,24 @@ export async function freshTotp(secret = savedSecret()): Promise<string> {
   const step = currentStep();
   writeState({ lastStep: step });
   return totp(secret, step);
+}
+
+/** The first setup on the setup page: token from the WT log, password, TOTP. Saves the secret. */
+export async function setUp(page: Page): Promise<void> {
+  await page.goto("/setup");
+  await page.getByLabel("Setup token").fill(setupToken());
+  await page.getByRole("button", { name: "Next" }).click();
+
+  await expect(page.getByRole("img", { name: "QR code for the authenticator app" })).toBeVisible();
+  const secret = (await page.getByText(/^Secret:/).locator("code").textContent()) ?? "";
+  expect(secret).toMatch(/^[A-Z2-7]+$/);
+  saveSecret(secret);
+
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
+  await page.getByLabel("Password again").fill(PASSWORD);
+  await page.getByLabel("TOTP code").fill(await freshTotp(secret));
+  await page.getByRole("button", { name: "Set up" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Containers" })).toBeVisible();
 }
 
 /** Log in on the login page with the admin password and a fresh TOTP code. */

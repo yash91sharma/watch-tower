@@ -25,6 +25,10 @@ export function setupToken(): string {
 /** Restart WT and wait until it is healthy. */
 export async function restartWt(): Promise<void> {
   docker("restart", WT);
+  await waitHealthy();
+}
+
+async function waitHealthy(): Promise<void> {
   for (let tries = 0; tries < 60; tries++) {
     if (docker("inspect", "-f", "{{.State.Health.Status}}", WT).trim() === "healthy") return;
     await sleep(1000);
@@ -79,4 +83,13 @@ export async function ntfyMessages(topic: string): Promise<NtfyMessage[]> {
     .filter((line) => line.trim())
     .map((line) => JSON.parse(line) as NtfyMessage & { event: string })
     .filter((item) => item.event === "message");
+}
+
+/** Stop WT, delete its DB (wt.db and the WAL files) and start WT again: a new install. */
+export async function deleteWtData(): Promise<void> {
+  const image = docker("inspect", "-f", "{{.Config.Image}}", WT).trim();
+  docker("stop", WT);
+  docker("run", "--rm", "--entrypoint", "sh", "--volumes-from", WT, image, "-c", "rm -f /data/wt.db /data/wt.db-wal /data/wt.db-shm");
+  docker("start", WT);
+  await waitHealthy();
 }
