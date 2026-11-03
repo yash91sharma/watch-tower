@@ -50,7 +50,7 @@ Rules:
   - `event`: id (PK), container_id, kind (`became_unhealthy`, `recovered_health`, `restart_loop`, `recovered_loop`), time.
   - `setting` (key PK, value JSON), `admin` (id PK, password_hash, totp_secret, last_totp_step), `session` (token_hash PK, created, expires, last_seen).
   - **Test:** unique constraints reject duplicates.
-- [ ] **2.6** Alembic in `wt/db/migrations/`. The first revision makes all tables. WT runs `upgrade head` at start.
+- [x] **2.6** Alembic in `wt/db/migrations/`. The first revision makes all tables. WT runs `upgrade head` at start.
   - **Test:** upgrade from empty to head. `alembic check` finds no drift.
 - [ ] **2.7** At first start, add the host row: id 1, name `local`.
   - **Test:** two starts give one host row.

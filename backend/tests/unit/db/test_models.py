@@ -3,7 +3,7 @@
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import Engine
+from sqlalchemy import Engine, text
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, SQLModel, select
 
@@ -156,3 +156,27 @@ def test_json_values_round_trip(db_engine: Engine) -> None:
     assert cache.releases == releases
     assert setting is not None
     assert setting.value == 24
+
+
+def test_enums_are_stored_as_values(db_engine: Engine) -> None:
+    with Session(db_engine) as session:
+        container_id = add_container(session).id
+        assert container_id is not None
+        session.add(
+            Event(container_id=container_id, kind=EventKind.RESTART_LOOP, time=T0)
+        )
+        session.add(
+            Update(
+                container_id=container_id,
+                from_version="1.0",
+                to_version="1.1",
+                severity=Severity.CRITICAL,
+                release_notes="CVE-2026-1",
+            )
+        )
+        session.commit()
+
+    with db_engine.connect() as conn:
+        kind = conn.execute(text("SELECT kind FROM event")).scalar_one()
+        severity = conn.execute(text('SELECT severity FROM "update"')).scalar_one()
+    assert (kind, severity) == ("restart_loop", "critical")

@@ -9,6 +9,7 @@ from enum import StrEnum
 from typing import Any
 
 from sqlalchemy import JSON, Column, DateTime, Dialect, UniqueConstraint
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.types import TypeDecorator
 from sqlmodel import Field, SQLModel
 
@@ -60,6 +61,20 @@ class EventKind(StrEnum):
     RECOVERED_HEALTH = "recovered_health"
     RESTART_LOOP = "restart_loop"
     RECOVERED_LOOP = "recovered_loop"
+
+
+def _enum_values(enum_type: type[StrEnum]) -> list[str]:
+    return [member.value for member in enum_type]
+
+
+def _enum(enum_type: type[StrEnum]) -> Any:
+    """An enum column that stores the values (for example "critical"), not the names."""
+    column_type = SAEnum(
+        enum_type,
+        native_enum=False,
+        values_callable=_enum_values,
+    )
+    return Field(sa_column=Column(column_type, nullable=False))
 
 
 class Host(SQLModel, table=True):
@@ -114,7 +129,7 @@ class Update(SQLModel, table=True):
     )
     from_version: str
     to_version: str
-    severity: Severity
+    severity: Severity = _enum(Severity)
     summary: str = ""
     release_notes: str
     notified_at: datetime | None = _time(nullable=True)
@@ -127,7 +142,7 @@ class Event(SQLModel, table=True):
     container_id: int = Field(
         foreign_key="container.id", ondelete="CASCADE", index=True
     )
-    kind: EventKind
+    kind: EventKind = _enum(EventKind)
     time: datetime = _time()
 
 

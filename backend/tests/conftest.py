@@ -10,7 +10,7 @@ from sqlalchemy import Engine
 from wt import clock as wt_clock
 from wt.clock import Clock, FakeClock
 from wt.db.engine import create_db_engine
-from wt.db.models import metadata
+from wt.db.migrate import upgrade
 
 
 @pytest.fixture
@@ -30,8 +30,8 @@ def clock() -> Iterator[FakeClock]:
 
 @pytest.fixture
 def db_engine(tmp_path: Path) -> Iterator[Engine]:
-    """An engine for a new DB in a temp dir, with all tables."""
+    """An engine for a new DB in a temp dir, upgraded to the newest revision."""
     engine = create_db_engine(tmp_path)
-    metadata.create_all(engine)
+    upgrade(engine)
     yield engine
     engine.dispose()
