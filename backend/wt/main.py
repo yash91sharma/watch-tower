@@ -7,34 +7,19 @@ them at shutdown.
 
 import asyncio
 import logging
-from collections.abc import AsyncGenerator, Callable, Coroutine, Sequence
+from collections.abc import AsyncGenerator, Sequence
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
-from typing import Any
 
 from fastapi import FastAPI
-from sqlalchemy import Engine
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from wt import api
 from wt.bus import Bus
 from wt.config import Env
+from wt.context import AppContext, Worker
 from wt.db import cleanup, open_db
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class AppContext:
-    """The shared objects of the app. Workers and routes get them from here."""
-
-    env: Env
-    engine: Engine
-    bus: Bus
-
-
-# A worker runs until WT stops it (task cancel).
-Worker = Callable[[AppContext], Coroutine[Any, Any, None]]
 
 
 async def cleanup_worker(ctx: AppContext) -> None:

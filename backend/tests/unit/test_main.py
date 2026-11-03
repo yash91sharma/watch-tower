@@ -10,8 +10,9 @@ from sqlmodel import Session
 
 from wt import clock
 from wt.config import Env
+from wt.context import AppContext, Worker
 from wt.db.models import Host
-from wt.main import AppContext, Worker, create_app
+from wt.main import create_app
 
 
 def make_env(tmp_path: Path, trusted_proxies: list[str] | None = None) -> Env:

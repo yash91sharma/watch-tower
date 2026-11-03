@@ -2,5 +2,7 @@
 
 from fastapi import APIRouter
 
-# The routes of all API modules go on this router.
+from wt.api import health
+
 router = APIRouter(prefix="/api")
+router.include_router(health.router)

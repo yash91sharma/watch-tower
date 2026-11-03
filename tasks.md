@@ -65,7 +65,7 @@ Rules:
   - **Test (clock):** 8-day events and expired sessions go. 6-day events and valid sessions stay.
 - [x] **3.3** `wt/bus.py`: in-process event bus, one asyncio queue per subscriber. Topics: `container`, `check`, `docker`, `settings`. Publish never blocks. A slow subscriber loses its oldest items.
   - **Test:** 2 subscribers get an event. Close removes a subscriber. A slow subscriber does not block.
-- [ ] **3.4** `GET /api/health` (no auth): 200 if the DB answers, else 503.
+- [x] **3.4** `GET /api/health` (no auth): 200 if the DB answers, else 503.
   - **Test:** both cases.
 - [ ] **3.5** Errors: one JSON shape `{error, detail}` for all errors, 422 included. No stack trace goes to the client.
   - **Test:** a route that raises gives 500 with no trace.
