@@ -54,7 +54,7 @@ Rules:
   - **Test:** upgrade from empty to head. `alembic check` finds no drift.
 - [x] **2.7** At first start, add the host row: id 1, name `local`.
   - **Test:** two starts give one host row.
-- [ ] **2.8** Migration test with data: `tests/fixtures/db/` holds one SQL dump per release. The test loads each dump and upgrades to head. Task 18.6 adds the first dump.
+- [x] **2.8** Migration test with data: `tests/fixtures/db/` holds one SQL dump per release. The test loads each dump and upgrades to head. Task 18.6 adds the first dump.
   - **Test:** the test passes with 0 dumps and with 1 dump.
 
 ## 3. App base
