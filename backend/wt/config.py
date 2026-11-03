@@ -1,11 +1,15 @@
 """WT config.
 
 `Env` holds the env vars: deploy values and secrets. Each secret also reads
-`<NAME>_FILE` (Docker secrets). The UI settings are stored in the DB (task 5.1).
+`<NAME>_FILE` (Docker secrets). `configure_logging` sets up the log output.
+The UI settings are stored in the DB (task 5.1).
 """
 
 import ipaddress
+import logging
 import os
+import sys
+import time
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -101,3 +105,22 @@ class _SecretFiles(PydanticBaseSettingsSource):
             except OSError as error:
                 raise ValueError(f"Cannot read {name}_FILE: {error.strerror}") from None
         return values
+
+
+class _OneLineFormatter(logging.Formatter):
+    """Writes each record on one line. Escapes the newlines in messages and tracebacks."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        return super().format(record).replace("\n", "\\n")
+
+
+def configure_logging(level: LogLevel) -> None:
+    """Send all logs to stdout, one line per record: UTC time, level, module, message."""
+    formatter = _OneLineFormatter(
+        "%(asctime)s.%(msecs)03dZ %(levelname)s %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
+    formatter.converter = time.gmtime
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    logging.basicConfig(level=level, handlers=[handler], force=True)
