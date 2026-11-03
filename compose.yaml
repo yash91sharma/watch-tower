@@ -1,0 +1,44 @@
+# Watch Tower deploy. Put the secrets and WT_TRUSTED_PROXIES in .env (see .env.example).
+# Start: docker compose up -d. First setup: docker logs wt gives the setup token.
+services:
+  # Read-only Docker API for WT. Internal network only, no published port.
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls104
+    environment: [CONTAINERS=1, EVENTS=1, ALLOW_LOGS=1, POST=0]
+    volumes: [/var/run/docker.sock:/var/run/docker.sock:ro]
+    read_only: true
+    tmpfs: [/run]
+    networks: [docker]
+    restart: unless-stopped
+
+  wt:
+    image: ghcr.io/yash91sharma/watch-tower:latest
+    container_name: wt
+    environment:
+      DOCKER_HOST: tcp://socket-proxy:2375
+    env_file:
+      - path: .env
+        required: false
+    volumes: [wt-data:/data]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.5
+    networks: [docker, default]
+    restart: unless-stopped
+    # Traefik: remove the # signs and set your host name. Traefik and WT must share a
+    # network (for example, add an external "proxy" network to both).
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.wt.rule=Host(`wt.example.com`)
+    #   - traefik.http.routers.wt.entrypoints=websecure
+    #   - traefik.http.routers.wt.tls=true
+    #   - traefik.http.services.wt.loadbalancer.server.port=8000
+
+networks:
+  docker:
+    internal: true
+
+volumes:
+  wt-data:

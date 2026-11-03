@@ -282,7 +282,7 @@ Rules:
   - **Test:** the image builds. 16.21 tests it.
 - [x] **15.2** `.dockerignore`: `.git`, `.env*`, `node_modules`, `.venv`, tests.
   - **Test:** the build context has no secrets.
-- [ ] **15.3** `compose.yaml`: the design example, plus `restart: unless-stopped` and commented Traefik labels.
+- [x] **15.3** `compose.yaml`: the design example, plus `restart: unless-stopped` and commented Traefik labels.
   - **Test:** `docker compose config` passes.
 - [ ] **15.4** `.env.example`: all env vars from 2.2, empty secrets, one comment per line.
   - **Test:** the file and the `config.py` fields match.
