@@ -284,7 +284,7 @@ Rules:
   - **Test:** the build context has no secrets.
 - [x] **15.3** `compose.yaml`: the design example, plus `restart: unless-stopped` and commented Traefik labels.
   - **Test:** `docker compose config` passes.
-- [ ] **15.4** `.env.example`: all env vars from 2.2, empty secrets, one comment per line.
+- [x] **15.4** `.env.example`: all env vars from 2.2, empty secrets, one comment per line.
   - **Test:** the file and the `config.py` fields match.
 - [ ] **15.5** `README.md`: purpose, deploy, first setup (`docker logs wt` gives the token), Traefik example, `wt reset-admin` then `docker restart wt`, backup (stop WT, copy the `wt-data` volume, start WT), env vars.
 
