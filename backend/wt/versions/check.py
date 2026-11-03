@@ -6,6 +6,7 @@ have a version tag and a release source. Containers with the same repo share one
 
 import asyncio
 from collections import Counter
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -52,12 +53,19 @@ def load_check_status(engine: Engine) -> CheckStatus:
 
 class CheckRunner:
     def __init__(
-        self, engine: Engine, env: Env, inventory: Inventory, bus: Bus
+        self,
+        engine: Engine,
+        env: Env,
+        inventory: Inventory,
+        bus: Bus,
+        after_run: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
         self._engine = engine
         self._env = env
         self._inventory = inventory
         self._bus = bus
+        # Called after each run (the update notifications, 10.4).
+        self._after_run = after_run
         self._lock = asyncio.Lock()
 
     @property
@@ -95,6 +103,8 @@ class CheckRunner:
             await github.close()
         await self._update_rows(rows)
         await asyncio.to_thread(_save_status, self._engine, rows)
+        if self._after_run is not None:
+            await self._after_run()
 
     async def _update_rows(self, rows: list[Container]) -> None:
         """Add or change the update row of each container with an update."""

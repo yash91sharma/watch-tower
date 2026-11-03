@@ -147,3 +147,22 @@ async def test_a_gone_container_is_not_checked(
         await runner.run()
 
     assert not route.called
+
+
+async def test_after_run_is_called_after_each_run(
+    db_engine: Engine, clock: FakeClock
+) -> None:
+    calls: list[str] = []
+
+    async def after_run() -> None:
+        calls.append("after")
+
+    env = Env(data_dir=Path("."), github_api_url=API)
+    runner = CheckRunner(
+        db_engine, env, Inventory(db_engine), Bus(), after_run=after_run
+    )
+
+    await runner.run()
+    await runner.run()
+
+    assert calls == ["after", "after"]
