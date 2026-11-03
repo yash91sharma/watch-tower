@@ -37,7 +37,7 @@ Rules:
 
 - [x] **2.1** `wt/clock.py`: `now()` (UTC, timezone-aware) and `async sleep(seconds)`. Pytest fixture `clock` sets the time. In tests, `sleep` moves the time with no real wait. Ban `datetime.now`, `datetime.utcnow`, `time.time` and `asyncio.sleep` outside `clock.py` (ruff `TID251`).
   - **Test:** the fixture sets and moves the time. A banned call in another module fails ruff.
-- [ ] **2.2** `wt/config.py` env vars (pydantic-settings): `DOCKER_HOST`, `WT_DATA_DIR` (default `/data`), `WT_TRUSTED_PROXIES`, `WT_LOG_LEVEL` (default `INFO`), `WT_GITHUB_API_URL` (default `https://api.github.com`). Secrets `WT_GITHUB_TOKEN`, `WT_NTFY_TOKEN`, `WT_LLM_API_KEY` are `SecretStr`. Each secret also reads `<NAME>_FILE`.
+- [x] **2.2** `wt/config.py` env vars (pydantic-settings): `DOCKER_HOST`, `WT_DATA_DIR` (default `/data`), `WT_TRUSTED_PROXIES`, `WT_LOG_LEVEL` (default `INFO`), `WT_GITHUB_API_URL` (default `https://api.github.com`). Secrets `WT_GITHUB_TOKEN`, `WT_NTFY_TOKEN`, `WT_LLM_API_KEY` are `SecretStr`. Each secret also reads `<NAME>_FILE`.
   - **Test:** defaults, `_FILE` read, error if `<NAME>` and `<NAME>_FILE` are both set, no secret value in `repr` or `str`.
 - [ ] **2.3** Logging: stdlib, stdout, level from `WT_LOG_LEVEL`, one line per record with time and module.
   - **Test:** a log of the config object shows no secret value.
