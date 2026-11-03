@@ -59,7 +59,7 @@ Rules:
 
 ## 3. App base
 
-- [ ] **3.1** `wt/main.py`: `create_app()` (routes in `wt/api/`) and a lifespan that starts and stops the workers. `create_app()` adds Uvicorn `ProxyHeadersMiddleware` with trusted hosts from `WT_TRUSTED_PROXIES` (empty: an empty list, trust no proxy). `wt serve` runs Uvicorn: 1 worker, port 8000, root path only, `proxy_headers=False`.
+- [x] **3.1** `wt/main.py`: `create_app()` (routes in `wt/api/`) and a lifespan that starts and stops the workers. `create_app()` adds Uvicorn `ProxyHeadersMiddleware` with trusted hosts from `WT_TRUSTED_PROXIES` (empty: an empty list, trust no proxy). `wt serve` runs Uvicorn: 1 worker, port 8000, root path only, `proxy_headers=False`.
   - **Test:** the lifespan starts and stops fake workers with no task leak. A test-only route gives `request.client.host` and `request.url.scheme`: WT uses `X-Forwarded-For` and `X-Forwarded-Proto` only from a trusted IP.
 - [ ] **3.2** Cleanup worker, each hour: delete expired sessions and `event` rows older than 7 days.
   - **Test (clock):** 8-day events and expired sessions go. 6-day events and valid sessions stay.
