@@ -312,7 +312,7 @@ Rules:
 - [x] **16.13** Flow 8, health: `docker exec` makes the containers fail (6.1). Unhealthy, restart loop and each recovery send one ntfy message.
 - [x] **16.14** Flow 9, logs: live tail, search, JSON pretty-print, download.
 - [x] **16.15** Flow 10, settings: change values, export, delete the DB, restart WT, set up, import, export again: the same file.
-- [ ] **16.16** Flow 11, CLI reset: `docker exec wt wt reset-admin`, `docker restart wt`, then the setup page.
+- [x] **16.16** Flow 11, CLI reset: `docker exec wt wt reset-admin`, `docker restart wt`, then the setup page.
 - [ ] **16.17** Flow 12, Docker stream stops: restart the socket proxy. The banner shows, then the UI recovers. No false ntfy message.
 - [ ] **16.18** Accessibility: `@axe-core/playwright` on each page. No serious or critical issues.
 - [ ] **16.19** Visual: screenshots of the main pages at desktop and phone width, light and dark mode. The containers page screenshot covers only the E2E project group. Baselines from the Playwright image.
