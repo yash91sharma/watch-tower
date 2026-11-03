@@ -46,3 +46,15 @@ test("index.html has the favicon, the apple-touch-icon and the iOS meta tags", (
   expect(existsSync(publicFile("icon.svg"))).toBe(true);
   expect(pngSize("apple-touch-icon.png")).toBe("180x180");
 });
+
+test("the service worker caches the app shell only and never /api", () => {
+  const workbox = pwaOptions.workbox ?? {};
+  const denied = (path: string) => (workbox.navigateFallbackDenylist ?? []).some((rule) => rule.test(path));
+
+  expect(workbox.navigateFallback).toBe("index.html");
+  expect(denied("/api/stream")).toBe(true);
+  expect(denied("/api/containers/web/logs.txt")).toBe(true);
+  expect(denied("/containers/web")).toBe(false);
+  expect(workbox.globPatterns).toEqual(["**/*.{html,js,css,svg,png,woff2}"]);
+  expect(workbox.runtimeCaching).toBeUndefined();
+});
