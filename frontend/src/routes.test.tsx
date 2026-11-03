@@ -1,7 +1,9 @@
 import { screen } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
 import { renderRoute } from "@/test/render";
+import { server } from "@/test/server";
 
 test.each([
   ["/", "Containers"],
@@ -19,9 +21,10 @@ test.each([
 });
 
 test.each([
-  ["/setup", "Set up Watch Tower"],
-  ["/login", "Log in"],
-])("route %s renders with no nav", async (path, heading) => {
+  ["/setup", "Set up Watch Tower", { setup_required: true, logged_in: false }],
+  ["/login", "Log in", { setup_required: false, logged_in: false }],
+])("route %s renders with no nav", async (path, heading, state) => {
+  server.use(http.get("*/api/auth/state", () => HttpResponse.json(state)));
   renderRoute(path);
 
   expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();

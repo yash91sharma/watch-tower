@@ -11,10 +11,16 @@ const unauthorized = () => HttpResponse.json({ error: "Unauthorized", detail: "L
 test("a 401 opens /login", async () => {
   server.use(http.get("*/api/containers", unauthorized));
   const { router } = renderRoute("/settings");
+  await screen.findByRole("heading", { level: 1, name: "Settings" });
+  // The session expired: the auth guard must get the new state, not use the old one.
+  server.use(http.get("*/api/auth/state", () => HttpResponse.json({ setup_required: false, logged_in: false })));
+  const paths: string[] = [];
+  router.subscribe((state) => paths.push(state.location.pathname));
 
   await api.GET("/api/containers");
 
   expect(await screen.findByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
+  expect(paths).not.toContain("/");
   expect(router.state.location.pathname).toBe("/login");
 });
 

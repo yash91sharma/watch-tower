@@ -234,7 +234,7 @@ Rules:
   - **Test:** each route renders. Not-found page.
 - [x] **13.2** API client: openapi-fetch with the generated types, same-origin cookies. A 401 opens `/login`. TanStack Query provider.
   - **Test (MSW):** a 401 opens `/login`.
-- [ ] **13.3** Auth guard from `/api/auth/state`: setup required opens `/setup`. Logged out opens `/login`. Logged in opens the app.
+- [x] **13.3** Auth guard from `/api/auth/state`: setup required opens `/setup`. Logged out opens `/login`. Logged in opens the app.
   - **Test:** each state.
 - [ ] **13.4** Setup page. Step 1: token. Step 2: TOTP QR code (`qr_svg` in an `<img>` with a `data:` URL, not inner HTML), secret as text, password (two times), TOTP code. The page only checks that the two passwords match. It shows the backend errors. Success opens the app.
   - **Test:** full flow, wrong token, passwords that do not match, wrong code.
