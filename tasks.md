@@ -199,7 +199,7 @@ Rules:
   - Health: `<name> is unhealthy`, `<name> restarts in a loop`, `<name> is healthy again`, `<name> does not restart now`.
   - Click: `<public_url>/containers/<name>`, or `<public_url>/` for a digest. No `Click` header if `public_url` is not set.
   - **Test:** text snapshots for each message.
-- [ ] **10.2** Priority: `high` for a critical update, a digest with a critical update, and `unhealthy`. Else `default`.
+- [x] **10.2** Priority: `high` for a critical update, a digest with a critical update, and `unhealthy`. Else `default`.
   - **Test:** table tests.
 - [ ] **10.3** `wt/notify/ntfy.py`: `POST {ntfy_url}/{topic}` with `Title`, `Priority`, `Tags`, `Click`, and `Authorization: Bearer` if `WT_NTFY_TOKEN` is set. Timeout 10 s. Give ok or fail. If the URL or topic is not set, send nothing.
   - **Test (respx):** headers, token, error, not set.

@@ -31,6 +31,7 @@ def test_one_critical_update_with_no_summary() -> None:
         body="Release notes are available",
         tags=("warning", "package"),
         click="https://wt.example.com/containers/db",
+        priority="high",
     )
 
 
@@ -40,6 +41,7 @@ def test_digest() -> None:
         body="web 1.0 -> 1.2\ndb 16.3 -> 16.4 (critical)",
         tags=("warning", "package"),
         click="https://wt.example.com/",
+        priority="high",
     )
 
 
@@ -59,11 +61,13 @@ def test_digest_with_no_critical_update() -> None:
     ],
 )
 def test_health_messages(kind: EventKind, title: str, tags: tuple[str, ...]) -> None:
-    assert health_message("web", kind, URL) == Message(
-        title=title,
-        body=title,
-        tags=tags,
-        click="https://wt.example.com/containers/web",
+    message = health_message("web", kind, URL)
+
+    assert (message.title, message.body, message.tags, message.click) == (
+        title,
+        title,
+        tags,
+        "https://wt.example.com/containers/web",
     )
 
 

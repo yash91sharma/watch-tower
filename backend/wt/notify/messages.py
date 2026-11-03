@@ -34,6 +34,8 @@ class Message:
     tags: tuple[str, ...]
     # The link that opens WT. None if the public URL is not set.
     click: str | None
+    # ntfy priority: "high" or "default".
+    priority: str = "default"
 
 
 def update_message(update: UpdateInfo, public_url: str | None) -> Message:
@@ -44,6 +46,7 @@ def update_message(update: UpdateInfo, public_url: str | None) -> Message:
         body=_short(update.summary or "Release notes are available"),
         tags=_update_tags([update]),
         click=_click(public_url, f"/containers/{quote(update.name)}"),
+        priority=_update_priority([update]),
     )
 
 
@@ -58,6 +61,7 @@ def digest_message(updates: list[UpdateInfo], public_url: str | None) -> Message
         body=_short("\n".join(lines)),
         tags=_update_tags(updates),
         click=_click(public_url, "/"),
+        priority=_update_priority(updates),
     )
 
 
@@ -68,6 +72,16 @@ def health_message(name: str, kind: EventKind, public_url: str | None) -> Messag
         body=text,
         tags=("warning",) if kind in PROBLEMS else ("white_check_mark",),
         click=_click(public_url, f"/containers/{quote(name)}"),
+        priority="high" if kind is EventKind.BECAME_UNHEALTHY else "default",
+    )
+
+
+def _update_priority(updates: list[UpdateInfo]) -> str:
+    """High if one of the updates is critical."""
+    return (
+        "high"
+        if any(update.severity is Severity.CRITICAL for update in updates)
+        else "default"
     )
 
 
