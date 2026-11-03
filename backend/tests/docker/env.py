@@ -26,6 +26,9 @@ VERSIONED_IMAGE = "wt_test/versioned:1.0.0"
 VERSIONED_SOURCE = "https://github.com/wt-test/versioned"
 PROJECT = "wt_test"
 SPEC_LABEL = "wt.test.spec"
+# Files in the test app container (see e2e/fakes/containers/app/app.sh).
+OK_FILE = "/tmp/ok"  # noqa: S108
+CRASH_FILE = "/tmp/crash"  # noqa: S108
 
 _DOCKER = shutil.which("docker") or "docker"
 
