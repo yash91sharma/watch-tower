@@ -292,7 +292,7 @@ Rules:
 
 - [x] **16.1** Fake GitHub API (`e2e/fakes/github/`, FastAPI): `/repos/{o}/{r}/releases/latest` with ETag, `/repos/{o}/{r}/releases`, rate limit mode, control route to set releases. It starts with no updates (latest = running version). Each flow adds its releases.
   - **Test:** unit tests.
-- [ ] **16.2** Fake LLM API (`e2e/fakes/llm/`): `/v1/chat/completions` with modes good, slow (timeout), error.
+- [x] **16.2** Fake LLM API (`e2e/fakes/llm/`): `/v1/chat/completions` with modes good, slow (timeout), error.
   - **Test:** unit tests.
 - [ ] **16.3** E2E test containers: the 6.1 images, plus two old-version containers on fake repos (one with `CVE-` in the notes).
 - [ ] **16.4** `e2e/compose.test.yaml`: WT (built image, same settings as `compose.yaml`), socket proxy, ntfy server, fake GitHub, fake LLM, Traefik with a self-signed certificate, test containers. All names `wt_test_*`. WT and the support services have `wt.enable=false`. Add `--label=wt.enable=false` to `wt_dev` (`devcontainer.json`). Tests check only the E2E Compose project group.
