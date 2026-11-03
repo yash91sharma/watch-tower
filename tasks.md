@@ -161,7 +161,7 @@ Rules:
   - **Test:** prompt snapshot. Long notes are cut.
 - [x] **8.4** `summarize(notes)`: if `llm_url` and `llm_model` are set and the LLM gives a result, use it. Else the summary is empty and the severity comes from 8.1.
   - **Test:** LLM off (URL or model not set), LLM error, LLM good.
-- [ ] **8.5** LLM eval: 20 release notes with the expected severity in `tests/llm_eval/`. A test with marker `llm_eval` calls a real Ollama and checks the severity and the reply schema.
+- [x] **8.5** LLM eval: 20 release notes with the expected severity in `tests/llm_eval/`. A test with marker `llm_eval` calls a real Ollama and checks the severity and the reply schema.
   - **Test:** runs nightly (17.2).
 
 ## 9. Version check
