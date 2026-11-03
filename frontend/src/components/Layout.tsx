@@ -4,6 +4,7 @@ import { Link, Outlet, useNavigate } from "react-router";
 
 import { authStateQuery } from "@/api/auth";
 import { api, unwrap } from "@/api/client";
+import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { Button } from "@/components/ui/button";
 
 export function Layout() {
@@ -44,6 +45,7 @@ export function Layout() {
           </Button>
         </nav>
       </header>
+      <ConnectionBanner />
       <main className="flex-1 px-4 py-4">
         <Outlet />
       </main>

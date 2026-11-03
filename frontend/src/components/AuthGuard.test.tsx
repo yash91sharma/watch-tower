@@ -1,7 +1,8 @@
-import { screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
+import { authStateQuery } from "@/api/auth";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 
@@ -34,6 +35,21 @@ test("the guard shows a loading text until the state comes", async () => {
 
   expect(screen.getByText("Loading…")).toBeInTheDocument();
   expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
+});
+
+test("a failed refetch keeps the page", async () => {
+  const { queryClient } = renderRoute("/");
+  await screen.findByRole("heading", { level: 1, name: "Containers" });
+  server.use(http.get("*/api/auth/state", () => HttpResponse.error()));
+
+  await act(async () => {
+    await queryClient.refetchQueries({ queryKey: authStateQuery.queryKey });
+    // Let React render the new query state.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  });
+
+  expect(queryClient.getQueryState(authStateQuery.queryKey)?.status).toBe("error");
+  expect(screen.getByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
 });
 
 test("an auth state error shows the error page", async () => {
