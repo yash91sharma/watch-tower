@@ -223,7 +223,7 @@ Rules:
 
 ## 12. Logs API
 
-- [ ] **12.1** `GET /api/containers/{name}/logs` (SSE): `tail` (default 500, max 10,000), `follow` (default true), `since`. One event per line: `{time, stream, text}`. Stop the Docker stream when the client goes. 404 for an unknown or excluded name.
+- [x] **12.1** `GET /api/containers/{name}/logs` (SSE): `tail` (default 500, max 10,000), `follow` (default true), `since`. One event per line: `{time, stream, text}`. Stop the Docker stream when the client goes. 404 for an unknown or excluded name.
   - **Test:** Docker test: tail, follow gets new lines, since, disconnect stops the Docker stream.
 - [ ] **12.2** `GET /api/containers/{name}/logs.txt`: the full log, no follow, `text/plain`, `Content-Disposition: attachment; filename=<name>-<date>.log`. Line format: `<time> <stream> <text>`. 404 for an unknown or excluded name.
   - **Test:** Docker test: content and headers. 404 for an excluded name.

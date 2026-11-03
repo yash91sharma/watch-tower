@@ -1,17 +1,24 @@
 """Containers API."""
 
+import asyncio
+import json
+from collections.abc import AsyncGenerator
+from contextlib import aclosing
 from datetime import datetime, timedelta
-from typing import Literal, cast, get_args
+from typing import Annotated, Literal, cast, get_args
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlmodel import Session, col, select
 
 from wt import clock
 from wt.api.deps import Ctx
+from wt.context import AppContext
 from wt.db import LOCAL_HOST_ID
 from wt.db.models import Container, Event, EventKind, RepoCache, Severity
+from wt.docker.client import DockerUnavailableError
 from wt.docker.inventory import LiveContainer
 from wt.docker.parse import release_source
 from wt.versions.check import current_update
@@ -193,3 +200,60 @@ def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
             else None,
             events=[EventOut(kind=event.kind, time=event.time) for event in events],
         )
+
+
+MAX_TAIL = 10_000
+
+
+class LogLineOut(BaseModel):
+    time: datetime | None
+    stream: Literal["stdout", "stderr"]
+    text: str
+
+
+def _live_container(ctx: AppContext, name: str) -> LiveContainer:
+    """The live state of a container that is not excluded. 404 if it is not in Docker now."""
+    with Session(ctx.engine) as session:
+        get_container(session, name)
+    live = ctx.inventory.get(name)
+    if live is None:
+        raise HTTPException(404, f"No container {name!r}")
+    return live
+
+
+@router.get("/{name}/logs", response_class=StreamingResponse)
+async def container_logs(
+    name: str,
+    ctx: Ctx,
+    tail: Annotated[int, Query(ge=0, le=MAX_TAIL)] = 500,
+    follow: bool = True,
+    since: datetime | None = None,
+) -> StreamingResponse:
+    """The log as SSE: one event per line, {time, stream, text}.
+
+    When the client goes, WT stops the Docker log stream.
+    """
+    live = await asyncio.to_thread(_live_container, ctx, name)
+    docker = ctx.docker_factory()
+
+    async def events() -> AsyncGenerator[str]:
+        try:
+            # aclosing: when the client goes, close the Docker stream before the client.
+            async with aclosing(
+                docker.logs(live.docker_id, tail, since, follow)
+            ) as lines:
+                async for line in lines:
+                    item = LogLineOut(
+                        time=line.time, stream=line.stream, text=line.text
+                    )
+                    yield f"data: {item.model_dump_json()}\n\n"
+        except DockerUnavailableError as error:
+            yield f"event: error\ndata: {json.dumps(str(error))}\n\n"
+        finally:
+            await docker.close()
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )

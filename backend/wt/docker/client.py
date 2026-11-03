@@ -9,7 +9,7 @@ WT reads Docker through a read-only socket proxy (DOCKER_HOST). Other modules us
 
 import json
 import socket
-from collections.abc import AsyncIterator, Generator, Mapping
+from collections.abc import AsyncGenerator, AsyncIterator, Generator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -79,7 +79,7 @@ class DockerApi(Protocol):
 
     def logs(
         self, container_id: str, tail: int | None, since: datetime | None, follow: bool
-    ) -> AsyncIterator[LogLine]:
+    ) -> AsyncGenerator[LogLine]:
         """Log lines, with timestamps. tail None: all lines. follow: wait for new lines."""
         ...
 
@@ -183,7 +183,7 @@ class DockerClient:
 
     async def logs(
         self, container_id: str, tail: int | None, since: datetime | None, follow: bool
-    ) -> AsyncIterator[LogLine]:
+    ) -> AsyncGenerator[LogLine]:
         info = await self.inspect(container_id)
         params: dict[str, str | int] = {
             "stdout": "1",
@@ -201,9 +201,13 @@ class DockerClient:
         )
         with _errors():
             async with query as response:
-                async for chunk in response.content.iter_any():
-                    for line in decoder.feed(chunk):
-                        yield line
+                try:
+                    async for chunk in response.content.iter_any():
+                        for line in decoder.feed(chunk):
+                            yield line
+                finally:
+                    # aiodocker does not close the response. A stopped stream cannot go back to the pool.
+                    response.close()
         for line in decoder.flush():
             yield line
 

@@ -9,9 +9,11 @@ examples per route (default 10 for the PR run; the nightly run sets more).
 
 import os
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+import pytest
 import schemathesis
 from hypothesis import settings
 
@@ -46,6 +48,12 @@ app = create_app(
 )
 schema = schemathesis.openapi.from_dict(app.openapi())
 schema.app = app
+
+
+@pytest.fixture(scope="module", autouse=True)
+def close_engine() -> Iterator[None]:
+    yield
+    ENGINE.dispose()
 
 
 @schema.exclude(path="/api/stream").parametrize()

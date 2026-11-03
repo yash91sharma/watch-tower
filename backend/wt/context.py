@@ -10,6 +10,7 @@ from wt.auth.limit import LoginLimit
 from wt.auth.setup_token import SetupToken
 from wt.bus import Bus
 from wt.config import Env
+from wt.docker.client import DockerApi
 from wt.docker.connection import DockerState
 from wt.docker.inventory import Inventory
 from wt.health.monitor import HealthMonitor
@@ -27,6 +28,8 @@ class AppContext:
     inventory: Inventory
     health: HealthMonitor
     checker: CheckRunner
+    # Makes a new Docker client (FakeDocker in tests).
+    docker_factory: Callable[[], DockerApi]
     docker_state: DockerState = field(default_factory=DockerState)
     login_limit: LoginLimit = field(default_factory=LoginLimit)
 

@@ -40,7 +40,7 @@ async def cleanup_worker(ctx: AppContext) -> None:
 
 async def docker_worker(ctx: AppContext) -> None:
     await keep_connected(
-        lambda: DockerClient(ctx.env.docker_host),
+        ctx.docker_factory,
         ctx.inventory,
         ctx.bus,
         ctx.docker_state,
@@ -85,6 +85,7 @@ def create_app(
                     name, kind, settings, env.ntfy_token
                 ),
             ),
+            docker_factory=lambda: DockerClient(env.docker_host),
             checker=CheckRunner(
                 engine,
                 env,

@@ -1,7 +1,7 @@
 """FakeDocker: the DockerApi interface in memory, for tests with no Docker."""
 
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator, AsyncIterator
 from datetime import datetime
 
 from wt.docker.client import (
@@ -19,6 +19,7 @@ class FakeDocker:
         self.containers: dict[str, ContainerInfo] = {}
         # True: each call fails as if Docker is not there.
         self.fail = False
+        self.closed = False
         self._events: asyncio.Queue[DockerEvent | None] = asyncio.Queue()
         # Container name -> its log lines.
         self.log_lines: dict[str, list[LogLine]] = {}
@@ -66,7 +67,7 @@ class FakeDocker:
 
     async def logs(
         self, container_id: str, tail: int | None, since: datetime | None, follow: bool
-    ) -> AsyncIterator[LogLine]:
+    ) -> AsyncGenerator[LogLine]:
         self._check()
         info = self.containers.get(container_id)
         lines = self.log_lines.get(info.name if info else container_id, [])
@@ -76,6 +77,9 @@ class FakeDocker:
             lines = lines[-tail:] if tail else []
         for line in lines:
             yield line
+        if follow:
+            # No new lines come. Wait until the reader stops.
+            await asyncio.Event().wait()
 
     async def close(self) -> None:
-        return None
+        self.closed = True

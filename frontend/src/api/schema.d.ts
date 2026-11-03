@@ -284,6 +284,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/containers/{name}/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Container Logs
+         * @description The log as SSE: one event per line, {time, stream, text}.
+         *
+         *     When the client goes, WT stops the Docker log stream.
+         */
+        get: operations["container_logs_api_containers__name__logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stream": {
         parameters: {
             query?: never;
@@ -1186,6 +1208,50 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ContainerDetail"];
                 };
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    container_logs_api_containers__name__logs_get: {
+        parameters: {
+            query?: {
+                tail?: number;
+                follow?: boolean;
+                since?: string | null;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: {
+                wt_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation error */
             422: {
