@@ -168,7 +168,7 @@ Rules:
 
 - [x] **9.1** `wt/versions/rules.py` tag filter: a version tag is `v?`, then digits with dots, then an optional `-suffix`. Other tags (`latest`, `stable`, `main`, no tag) get `no check`. Add a 100% branch gate for `wt/versions/` to `check.sh`.
   - **Test:** table tests.
-- [ ] **9.2** Update rule: remove a leading `v` and any `-suffix` from both. Split into number parts. Short form: if the running version has fewer parts and they match the first parts of the latest, no update (`16` and `16.4` match `16.4.1`). Else pad with 0 and compare as numbers. Update only if the latest is higher (`1.2.0` = `1.2`).
+- [x] **9.2** Update rule: remove a leading `v` and any `-suffix` from both. Split into number parts. Short form: if the running version has fewer parts and they match the first parts of the latest, no update (`16` and `16.4` match `16.4.1`). Else pad with 0 and compare as numbers. Update only if the latest is higher (`1.2.0` = `1.2`).
   - **Test:** table tests: design cases, `1.2.0` vs `1.2`, running newer than latest. Hypothesis: no crash, same input gives same result, equal versions give no update.
 - [ ] **9.3** Release range: drop drafts, pre-releases and tags that are not versions. Keep versions above the running version, up to the latest (number compare). Sort newest first. Join the notes with one heading per version.
   - **Test:** table tests. Hypothesis: the generator makes a release list that has a valid latest version (not a draft, not a pre-release) above the running version. The result is a sorted subset that contains the latest.
