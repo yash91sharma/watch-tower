@@ -1,6 +1,14 @@
 import { expect, test } from "vitest";
 
-import { appendLines, highlight, type LogLine, matchingLines, MAX_LINES, parseLine } from "@/lib/logs";
+import {
+  appendLines,
+  highlight,
+  type LogLine,
+  matchingLines,
+  MAX_LINES,
+  parseLine,
+  prettyJson,
+} from "@/lib/logs";
 
 function line(id: number): LogLine {
   return { id, time: null, stream: "stdout", text: `line ${String(id)}` };
@@ -52,4 +60,15 @@ test("highlight marks each match, not case-sensitive", () => {
 test("highlight with no match or no query gives the text", () => {
   expect(highlight("plain", "x")).toEqual([{ text: "plain", match: false }]);
   expect(highlight("plain", "")).toEqual([{ text: "plain", match: false }]);
+});
+
+test("prettyJson formats a JSON object line", () => {
+  expect(prettyJson(' {"level":"info","n":1} ')).toBe('{\n  "level": "info",\n  "n": 1\n}');
+});
+
+test("prettyJson does not change bad JSON, plain text or other JSON values", () => {
+  expect(prettyJson('{"level": "info"')).toBe('{"level": "info"');
+  expect(prettyJson("plain text")).toBe("plain text");
+  expect(prettyJson("[1, 2]")).toBe("[1, 2]");
+  expect(prettyJson("42")).toBe("42");
 });

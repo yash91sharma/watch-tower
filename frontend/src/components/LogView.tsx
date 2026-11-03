@@ -1,10 +1,11 @@
 // A virtual list of log lines. Follow mode keeps the end in view. Scroll up pauses it.
 // Search: the matches of the query are marked, and the current match line is shown.
+// Pretty: JSON object lines show formatted (rows have their own height).
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { highlight, type LogLine } from "@/lib/logs";
+import { highlight, type LogLine, prettyJson } from "@/lib/logs";
 import { cn } from "@/lib/utils";
 
 const ROW_HEIGHT = 20;
@@ -13,10 +14,12 @@ export function LogView({
   lines,
   query = "",
   currentId = null,
+  pretty = false,
 }: {
   lines: LogLine[];
   query?: string;
   currentId?: number | null;
+  pretty?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [follow, setFollow] = useState(true);
@@ -82,7 +85,7 @@ export function LogView({
                 )}
                 style={{ transform: `translateY(${String(item.start)}px)` }}
               >
-                {highlight(line.text, query).map((part, index) =>
+                {highlight(pretty ? prettyJson(line.text) : line.text, query).map((part, index) =>
                   part.match ? (
                     <mark key={index} className="rounded-sm bg-yellow-200 text-black">
                       {part.text}

@@ -1,4 +1,4 @@
-// The live log of a container, with search (in the browser) and a tail size.
+// The live log of a container, with search and JSON pretty-print (in the browser) and a tail size.
 import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 
@@ -18,6 +18,7 @@ export function LogsPage() {
   const [query, setQuery] = useState("");
   const [onlyMatches, setOnlyMatches] = useState(false);
   const [position, setPosition] = useState(0);
+  const [pretty, setPretty] = useState(false);
 
   const matches = useMemo(() => matchingLines(lines, query), [lines, query]);
   // The buffer can drop old lines, so keep the position in the range.
@@ -96,12 +97,23 @@ export function LogsPage() {
           />
           Only matches
         </label>
+        <label className="flex items-center gap-1.5">
+          <input
+            type="checkbox"
+            checked={pretty}
+            onChange={(event) => {
+              setPretty(event.target.checked);
+            }}
+          />
+          Format JSON
+        </label>
       </div>
       <FormError error={error} />
       <LogView
         lines={onlyMatches && query ? matches : lines}
         query={query}
         currentId={matches[current]?.id ?? null}
+        pretty={pretty}
       />
     </div>
   );

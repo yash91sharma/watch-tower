@@ -258,7 +258,7 @@ Rules:
   - **Test:** follow and pause.
 - [x] **13.14** Log search (in the browser): highlight, match count, next and previous, show only matches. Not case-sensitive.
   - **Test:** matches, no match, filter mode, case.
-- [ ] **13.15** JSON pretty-print toggle (in the browser): JSON object lines show formatted. Other lines do not change.
+- [x] **13.15** JSON pretty-print toggle (in the browser): JSON object lines show formatted. Other lines do not change.
   - **Test:** JSON line, bad JSON, plain text.
 - [ ] **13.16** Log download button: link to `logs.txt`.
   - **Test:** the link URL.

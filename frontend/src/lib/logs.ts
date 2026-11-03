@@ -44,3 +44,14 @@ export function highlight(text: string, query: string): { text: string; match: b
   if (start < text.length || parts.length === 0) parts.push({ text: text.slice(start), match: false });
   return parts;
 }
+
+/** A JSON object line, formatted. Other lines (bad JSON, plain text, arrays) do not change. */
+export function prettyJson(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{")) return text;
+  try {
+    return JSON.stringify(JSON.parse(trimmed), null, 2);
+  } catch {
+    return text;
+  }
+}

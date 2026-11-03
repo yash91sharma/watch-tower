@@ -97,3 +97,12 @@ test("only matches shows only the lines with a match", async () => {
     expect(rows()).toEqual(["get 1", "get 2"]);
   });
 });
+
+test("the JSON toggle formats JSON object lines only", async () => {
+  const user = await openWithLines(['{"level":"info"}', "plain"]);
+  expect(rows()).toEqual(['{"level":"info"}', "plain"]);
+
+  await user.click(screen.getByLabelText("Format JSON"));
+
+  expect(rows()).toEqual(['{\n  "level": "info"\n}', "plain"]);
+});
