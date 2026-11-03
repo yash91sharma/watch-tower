@@ -18,7 +18,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from wt import api
 from wt.config import Env
-from wt.db import open_db
+from wt.db import cleanup, open_db
 
 log = logging.getLogger(__name__)
 
@@ -34,8 +34,13 @@ class AppContext:
 # A worker runs until WT stops it (task cancel).
 Worker = Callable[[AppContext], Coroutine[Any, Any, None]]
 
-# The workers that WT starts. Later tasks add them.
-WORKERS: list[Worker] = []
+
+async def cleanup_worker(ctx: AppContext) -> None:
+    await cleanup.run(ctx.engine)
+
+
+# The workers that WT starts.
+WORKERS: list[Worker] = [cleanup_worker]
 
 
 def create_app(env: Env, workers: Sequence[Worker] = WORKERS) -> FastAPI:
