@@ -55,6 +55,8 @@ markers = [
     "e2e: needs the full E2E stack",
     "llm_eval: calls a real LLM server",
 ]
+# A warning (for example an unclosed DB connection) fails the test.
+filterwarnings = ["error"]
 
 [tool.coverage.run]
 source = ["wt"]

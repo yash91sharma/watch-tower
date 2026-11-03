@@ -1,13 +1,31 @@
 """Tests for the SQLite engine in wt.db.engine."""
 
 import stat
+from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from sqlalchemy import Connection, text
+import pytest
+from sqlalchemy import Connection, Engine, text
 from sqlmodel import Session
 
 from wt.db.engine import create_db_engine
+
+MakeEngine = Callable[[Path], Engine]
+
+
+@pytest.fixture
+def make_engine() -> Iterator[MakeEngine]:
+    """Give create_db_engine. Close all connections after the test."""
+    engines: list[Engine] = []
+
+    def make(data_dir: Path) -> Engine:
+        engines.append(create_db_engine(data_dir))
+        return engines[-1]
+
+    yield make
+    for engine in engines:
+        engine.dispose()
 
 
 def file_mode(path: Path) -> int:
@@ -22,18 +40,22 @@ def pragmas(conn: Connection) -> tuple[str, int, int]:
     )
 
 
-def test_pragmas_on_each_new_connection(tmp_path: Path) -> None:
-    engine = create_db_engine(tmp_path)
+def test_pragmas_on_each_new_connection(
+    make_engine: MakeEngine, tmp_path: Path
+) -> None:
+    engine = make_engine(tmp_path)
 
     with engine.connect() as first, engine.connect() as second:
         assert pragmas(first) == ("wal", 1, 5000)
         assert pragmas(second) == ("wal", 1, 5000)
 
 
-def test_makes_the_data_dir_and_the_db_file(tmp_path: Path) -> None:
+def test_makes_the_data_dir_and_the_db_file(
+    make_engine: MakeEngine, tmp_path: Path
+) -> None:
     data_dir = tmp_path / "a" / "b"
 
-    engine = create_db_engine(data_dir)
+    engine = make_engine(data_dir)
     with engine.connect() as conn:
         conn.execute(text("CREATE TABLE t (x INTEGER)"))
         conn.execute(text("INSERT INTO t VALUES (1)"))
@@ -44,17 +66,19 @@ def test_makes_the_data_dir_and_the_db_file(tmp_path: Path) -> None:
     assert file_mode(data_dir / "wt.db-wal") == 0o600
 
 
-def test_fixes_the_mode_of_an_old_db_file(tmp_path: Path) -> None:
+def test_fixes_the_mode_of_an_old_db_file(
+    make_engine: MakeEngine, tmp_path: Path
+) -> None:
     db_file = tmp_path / "wt.db"
     db_file.touch(mode=0o644)
 
-    create_db_engine(tmp_path)
+    make_engine(tmp_path)
 
     assert file_mode(db_file) == 0o600
 
 
-def test_use_from_a_second_thread(tmp_path: Path) -> None:
-    engine = create_db_engine(tmp_path)
+def test_use_from_a_second_thread(make_engine: MakeEngine, tmp_path: Path) -> None:
+    engine = make_engine(tmp_path)
     with Session(engine) as session:
         session.connection().execute(text("CREATE TABLE t (x INTEGER)"))
         session.commit()
