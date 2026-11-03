@@ -314,7 +314,7 @@ Rules:
 - [x] **16.15** Flow 10, settings: change values, export, delete the DB, restart WT, set up, import, export again: the same file.
 - [x] **16.16** Flow 11, CLI reset: `docker exec wt wt reset-admin`, `docker restart wt`, then the setup page.
 - [x] **16.17** Flow 12, Docker stream stops: restart the socket proxy. The banner shows, then the UI recovers. No false ntfy message.
-- [ ] **16.18** Accessibility: `@axe-core/playwright` on each page. No serious or critical issues.
+- [x] **16.18** Accessibility: `@axe-core/playwright` on each page. No serious or critical issues.
 - [ ] **16.19** Visual: screenshots of the main pages at desktop and phone width, light and dark mode. The containers page screenshot covers only the E2E project group. Baselines from the Playwright image.
 - [ ] **16.20** PWA (Playwright): valid manifest, service worker registers, app shell loads offline, `/api` not cached.
 - [ ] **16.21** Image: Trivy finds no high or critical CVE. The user is not root. The healthcheck passes. Only `/data` and `/tmp` are writable. `linux/arm64` and `linux/amd64` start.
