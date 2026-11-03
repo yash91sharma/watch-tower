@@ -88,6 +88,7 @@ extend-select = ["S", "TID251"]
 "datetime.datetime.utcnow".msg = "Use wt.clock.now()."
 "time.time".msg = "Use wt.clock.now()."
 "asyncio.sleep".msg = "Use wt.clock.sleep()."
+"aiodocker".msg = "Only wt/docker/client.py uses aiodocker. Use wt.docker."
 
 [tool.pyright]
 include = ["wt", "tests"]

@@ -121,7 +121,7 @@ Rules:
   - Build all files into the images. No bind mounts (the Docker daemon is on the host, not in `wt_dev`).
   - The fixture makes network `wt_test_net`, connects `wt_dev` to it, and starts the socket proxy and the containers on it as `wt_test_*`. It reuses them if they exist.
   - **Test:** the fixture starts all containers healthy. A second run reuses them. `wt_dev` reaches the socket proxy by name.
-- [ ] **6.2** `wt/docker/client.py`: aiodocker client from `DOCKER_HOST`: `ping`, `list_containers` (all), `inspect`, `events`, `logs`. Typed return values. `FakeDocker` with the same interface for tests with no Docker. Ban `aiodocker` imports outside `wt/docker/` (ruff `TID251`).
+- [x] **6.2** `wt/docker/client.py`: aiodocker client from `DOCKER_HOST`: `ping`, `list_containers` (all), `inspect`, `events`, `logs`. Typed return values. `FakeDocker` with the same interface for tests with no Docker. Ban `aiodocker` imports outside `wt/docker/` (ruff `TID251`).
   - **Test:** Docker test: ping and list through the socket proxy.
 - [ ] **6.3** Parse rules (pure):
   - Name: no leading `/`.
