@@ -28,7 +28,7 @@ Rules:
   - **Test:** a sample component test with an MSW handler passes.
 - [x] **1.8** Extend `check.sh`: ruff, pyright, pytest with coverage gate (backend ≥ 90% line and branch), `tsc`, ESLint, Vitest with coverage ≥ 85% (exclude `src/main.tsx` and `src/api/schema.d.ts`). Tasks 7.1, 9.1 and 10.1 add the 100% branch gates for their modules.
   - **Test:** a lint error makes `check.sh` fail. A missed branch makes it fail.
-- [ ] **1.9** Dev run: publish `127.0.0.1:8000` (API) and `127.0.0.1:5173` (Vite) from `wt_dev`. Add `.env.dev.example` with no secrets.
+- [x] **1.9** Dev run: publish `127.0.0.1:8000` (API) and `127.0.0.1:5173` (Vite) from `wt_dev`. Add `.env.dev.example` with no secrets.
   - **Test:** the host browser opens the app that runs in `wt_dev`.
 - [ ] **1.10** PR workflow `.github/workflows/pr.yml`: build the dev image, run `check.sh` in it. Pin all actions by commit SHA.
   - **Test:** a PR runs the workflow and it passes.

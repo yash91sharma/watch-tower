@@ -1,7 +1,14 @@
 {
   "name": "wt_dev",
   "build": { "dockerfile": "Dockerfile" },
-  "runArgs": ["--name=wt_dev", "--cpus=6","--add-host=host.docker.internal:host-gateway"],
+  "runArgs": [
+    "--name=wt_dev",
+    "--cpus=6",
+    "--add-host=host.docker.internal:host-gateway",
+    // Dev run: API (wt serve) and Vite. Only the host can open them.
+    "--publish=127.0.0.1:8000:8000",
+    "--publish=127.0.0.1:5173:5173"
+  ],
   "remoteUser": "dev",
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",

@@ -13,6 +13,10 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   server: {
+    // Listen on all interfaces in wt_dev. wt_dev publishes the port to 127.0.0.1 on the host only.
+    host: true,
+    port: 5173,
+    strictPort: true,
     proxy: { "/api": BACKEND_URL },
   },
   test: {
