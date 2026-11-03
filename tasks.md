@@ -84,7 +84,7 @@ Rules:
   - **Test (clock):** 5 failures block, 15 minutes later it unblocks, a success resets the count.
 - [x] **4.4** Setup token: at start, if no admin is set up, make a random token (32 bytes) and log it once. Keep the token in memory only. Single use.
   - **Test:** WT logs the token once. The token stays the same until use. It fails after use. With an admin, WT makes no token.
-- [ ] **4.5** Sessions: random token (32 bytes) in cookie `wt_session` (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`). Store the SHA-256 hash. Expire after 30 days with no use. Each request updates `last_seen` and the expiry.
+- [x] **4.5** Sessions: random token (32 bytes) in cookie `wt_session` (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`). Store the SHA-256 hash. Expire after 30 days with no use. Each request updates `last_seen` and the expiry.
   - **Test:** cookie flags, expiry (clock), sliding expiry, no plain token in the DB.
 - [ ] **4.6** Setup API:
   - `GET /api/auth/state` gives `{setup_required, logged_in}`.
