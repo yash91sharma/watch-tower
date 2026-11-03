@@ -71,7 +71,7 @@ Rules:
   - **Test:** a route that raises gives 500 with no trace.
 - [x] **3.6** Security headers on all responses: `Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'` (Radix adds `<style>` elements), `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`.
   - **Test:** headers on an API response and on `index.html`.
-- [ ] **3.7** Static files: serve the built frontend. Paths outside `/api` that are not files return `index.html`. Unknown `/api/*` paths return JSON 404. Hashed assets get a long cache. `index.html` and the service worker get `no-cache`.
+- [x] **3.7** Static files: serve the built frontend. Paths outside `/api` that are not files return `index.html`. Unknown `/api/*` paths return JSON 404. Hashed assets get a long cache. `index.html` and the service worker get `no-cache`.
   - **Test:** asset, SPA route, unknown API path, cache headers.
 
 ## 4. Auth

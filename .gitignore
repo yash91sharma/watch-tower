@@ -49,3 +49,6 @@ coverage/
 *.sqlite
 *.sqlite3
 *.db
+
+# Frontend build, copied into the backend package by the Dockerfile
+backend/wt/static/

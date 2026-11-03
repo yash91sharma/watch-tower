@@ -9,12 +9,13 @@ import asyncio
 import logging
 from collections.abc import AsyncGenerator, Sequence
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from wt import api
-from wt.api import errors
+from wt.api import errors, static
 from wt.api.headers import SecurityHeadersMiddleware
 from wt.bus import Bus
 from wt.config import Env
@@ -32,8 +33,12 @@ async def cleanup_worker(ctx: AppContext) -> None:
 WORKERS: list[Worker] = [cleanup_worker]
 
 
-def create_app(env: Env, workers: Sequence[Worker] = WORKERS) -> FastAPI:
-    """Make the app. Tests give their own env and workers."""
+def create_app(
+    env: Env,
+    workers: Sequence[Worker] = WORKERS,
+    static_dir: Path = static.STATIC_DIR,
+) -> FastAPI:
+    """Make the app. Tests give their own env, workers and static dir."""
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
@@ -52,6 +57,7 @@ def create_app(env: Env, workers: Sequence[Worker] = WORKERS) -> FastAPI:
     app = FastAPI(title="Watch Tower", lifespan=lifespan)
     app.include_router(api.router)
     errors.install(app)
+    static.install(app, static_dir)
     # Use X-Forwarded-For and X-Forwarded-Proto only from the trusted proxies.
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=env.trusted_proxies)
