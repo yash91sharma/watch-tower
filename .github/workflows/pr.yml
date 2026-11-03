@@ -1,0 +1,39 @@
+# PR checks: build the dev image, then run check.sh in it (same checks as the pre-commit hook).
+# Pin all actions by commit SHA. Dependabot updates them.
+name: PR
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The dev user gets the runner UID, so that it can write to the checkout.
+      - name: Build the dev image
+        run: docker build --build-arg USER_UID="$(id -u)" -t wt_dev .devcontainer
+
+      - name: Run check.sh in the dev image
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" -w /workspace \
+            -e UV_LINK_MODE=copy -e UV_PYTHON_DOWNLOADS=never \
+            wt_dev bash -c '
+              set -euo pipefail
+              (cd backend && uv sync --locked)
+              (cd frontend && pnpm install --frozen-lockfile)
+              bash .devcontainer/check.sh
+            '
