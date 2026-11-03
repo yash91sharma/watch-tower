@@ -205,7 +205,7 @@ Rules:
   - **Test (respx):** headers, token, error, not set.
 - [x] **10.4** After each check run: get the current update rows (9.9) with no `notified_at`. One row: one message. More rows: one digest. On success, set `notified_at`. On fail, keep the rows for the next run.
   - **Test:** 1 update, 2 updates, second run sends nothing, a failed send goes out on the next run, a stale row is not sent.
-- [ ] **10.5** Health: send one message for each change from 7.2, at once. On fail, log it.
+- [x] **10.5** Health: send one message for each change from 7.2, at once. On fail, log it.
   - **Test:** each change sends one message with the correct priority.
 
 ## 11. Containers API

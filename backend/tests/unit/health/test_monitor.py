@@ -155,3 +155,24 @@ async def test_change_for_a_container_with_no_row_is_not_saved(
 
     assert event_rows(db_engine) == []
     assert "No container row for ghost" in caplog.text
+
+
+async def test_on_change_gets_each_change_with_the_settings(
+    db_engine: Engine, clock: FakeClock
+) -> None:
+    add_container(db_engine)
+    changes: list[tuple[str, EventKind, int]] = []
+
+    async def on_change(name: str, kind: EventKind, settings: Settings) -> None:
+        changes.append((name, kind, settings.restart_count))
+
+    monitor = HealthMonitor(db_engine, Settings(), on_change=on_change)
+
+    await monitor.on_event(
+        DockerEvent("health_status", "id-1", "web", clock.now(), "unhealthy")
+    )
+    await monitor.on_event(
+        DockerEvent("health_status", "id-1", "web", clock.now(), "unhealthy")
+    )
+
+    assert changes == [("web", EventKind.BECAME_UNHEALTHY, 3)]

@@ -7,6 +7,7 @@ each 30 s to find the restart loops that ended, and reloads N and M on `settings
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 
 from sqlalchemy import Engine
@@ -25,13 +26,20 @@ log = logging.getLogger(__name__)
 
 TICK_SECONDS = 30
 
+# (container name, change, current settings)
+OnChange = Callable[[str, EventKind, Settings], Awaitable[None]]
+
 
 class HealthMonitor:
-    def __init__(self, engine: Engine, settings: Settings) -> None:
+    def __init__(
+        self, engine: Engine, settings: Settings, on_change: OnChange | None = None
+    ) -> None:
         self._engine = engine
         self._state = HealthState()
         self._excluded: set[str] = set()
         self.settings = settings
+        # Called for each change, after it is saved (the health notification, 10.5).
+        self._on_change = on_change
 
     def reload(self, settings: Settings) -> None:
         self.settings = settings
@@ -62,6 +70,8 @@ class HealthMonitor:
     async def _record(self, name: str, kind: EventKind, time: datetime) -> None:
         log.info("Container %s: %s", name, kind.value)
         await asyncio.to_thread(_save_event, self._engine, name, kind, time)
+        if self._on_change is not None:
+            await self._on_change(name, kind, self.settings)
 
 
 def _save_event(engine: Engine, name: str, kind: EventKind, time: datetime) -> None:

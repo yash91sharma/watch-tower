@@ -26,6 +26,7 @@ from wt.docker.client import DockerClient
 from wt.docker.connection import keep_connected
 from wt.docker.inventory import Inventory
 from wt.health.monitor import HealthMonitor, run_health
+from wt.notify.health import notify_health
 from wt.notify.updates import notify_updates
 from wt.versions.check import CheckRunner
 from wt.versions.scheduler import run_scheduler
@@ -77,7 +78,13 @@ def create_app(
             bus=bus,
             setup_token=SetupToken.at_start(engine),
             inventory=inventory,
-            health=HealthMonitor(engine, load_settings(engine)),
+            health=HealthMonitor(
+                engine,
+                load_settings(engine),
+                on_change=lambda name, kind, settings: notify_health(
+                    name, kind, settings, env.ntfy_token
+                ),
+            ),
             checker=CheckRunner(
                 engine,
                 env,
