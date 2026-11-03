@@ -141,7 +141,7 @@ Rules:
 
 ## 7. Health
 
-- [ ] **7.1** `wt/health/rules.py` restart window (pure): count `start` events that follow a `die`. N or more in M minutes is a restart loop. The loop ends when no `start` comes in M minutes. Add a 100% branch gate for `wt/health/` to `check.sh`.
+- [x] **7.1** `wt/health/rules.py` restart window (pure): count `start` events that follow a `die`. N or more in M minutes is a restart loop. The loop ends when no `start` comes in M minutes. Add a 100% branch gate for `wt/health/` to `check.sh`.
   - **Test:** N-1 starts: no loop. N starts: loop. N starts over more than M: no loop. M quiet minutes: loop ends.
 - [ ] **7.2** Health state machine (pure): flags `unhealthy` and `restart_loop` per container. Input: event (with `docker_id`) and time. Output: changes `became_unhealthy`, `recovered_health`, `restart_loop`, `recovered_loop`. One change per state change. `destroy` removes the state with no change, only if `docker_id` matches.
   - **Test:** each change. Repeated `unhealthy` events give one change. A `destroy` with an old `docker_id` keeps the state. 100% branch.
