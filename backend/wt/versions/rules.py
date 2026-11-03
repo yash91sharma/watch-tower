@@ -2,6 +2,9 @@
 
 import re
 from dataclasses import dataclass
+from enum import StrEnum
+
+from wt.db.models import RepoCache
 
 # Optional "v", numbers with dots, optional "-suffix" (for example "-alpine", "-r0-ls104").
 _VERSION_TAG = re.compile(r"[vV]?(\d+(?:\.\d+)*)(?:-[0-9A-Za-z._-]+)?")
@@ -82,3 +85,29 @@ def _compare(first: tuple[int, ...], second: tuple[int, ...]) -> int:
 def _sort_key(tag: str) -> tuple[int, ...]:
     # Enough width for any version: compare with zeros added.
     return _pad(version_parts(tag), 16)
+
+
+class Status(StrEnum):
+    NO_CHECK = "no check"
+    NO_SOURCE = "no source"
+    NOT_CHECKED = "not checked"
+    UP_TO_DATE = "up to date"
+    UPDATE = "update"
+    ERROR = "error"
+
+
+def container_status(
+    tag: str | None, release_source: str | None, cache: RepoCache | None
+) -> Status:
+    """The version status of a container. Computed on read, so it stays after a restart."""
+    if not is_version_tag(tag):
+        return Status.NO_CHECK
+    if not release_source:
+        return Status.NO_SOURCE
+    if cache is None or cache.fetched_at is None:
+        return Status.NOT_CHECKED
+    if cache.error:
+        return Status.ERROR
+    if tag is None or cache.latest_tag is None:
+        return Status.NOT_CHECKED
+    return Status.UPDATE if is_update(tag, cache.latest_tag) else Status.UP_TO_DATE

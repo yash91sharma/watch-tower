@@ -178,7 +178,7 @@ Rules:
   - **Test (respx, clock):** the run waits, then finishes.
 - [x] **9.6** Repo cache: save ETag, latest tag, release list and fetch time in `repo_cache`. Get the release list only when the latest tag changes. A failed fetch, or a latest tag that is not a version (9.1), saves the error text. A good fetch clears it.
   - **Test:** a second run with 304 makes no release list call. A 404 saves an error. A latest tag `nightly` saves an error.
-- [ ] **9.7** Status (computed on read from tag, source and `repo_cache`, so it stays after a restart): `no check`, `no source`, `not checked`, `up to date`, `update`, `error`.
+- [x] **9.7** Status (computed on read from tag, source and `repo_cache`, so it stays after a restart): `no check`, `no source`, `not checked`, `up to date`, `update`, `error`.
   - **Test:** each status.
 - [ ] **9.8** Check run `wt/versions/check.py`: take enabled containers with a version tag and a source. One call per repo. One run at a time (lock). Save the last run time and the status counts in `setting`.
   - **Test (respx):** 2 containers on one repo make 1 call. A second run during a run does not start.
