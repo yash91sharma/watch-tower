@@ -103,7 +103,7 @@ Rules:
 
 ## 5. Settings and config
 
-- [ ] **5.1** UI settings in `wt/config.py`, stored as rows in `setting`: `check_interval_hours` (24, min 1), `restart_count` N (3, min 2), `restart_window_minutes` M (10, min 1), `ntfy_url`, `ntfy_topic`, `llm_url`, `llm_model`, `public_url`. URLs must be `http` or `https`.
+- [x] **5.1** UI settings in `wt/config.py`, stored as rows in `setting`: `check_interval_hours` (24, min 1), `restart_count` N (3, min 2), `restart_window_minutes` M (10, min 1), `ntfy_url`, `ntfy_topic`, `llm_url`, `llm_model`, `public_url`. URLs must be `http` or `https`.
   - **Test:** defaults on an empty DB, save and load, bad values fail.
 - [ ] **5.2** `GET /api/settings`: values and secret state (`github_token`, `ntfy_token`, `llm_api_key`: `set` or `not set`). `PUT /api/settings`: validate and save. A bad value gives 422 with one error per field. A save publishes `settings` on the bus.
   - **Test:** no secret value in a response. A save publishes `settings`.

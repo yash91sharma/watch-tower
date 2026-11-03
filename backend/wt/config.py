@@ -2,7 +2,7 @@
 
 `Env` holds the env vars: deploy values and secrets. Each secret also reads
 `<NAME>_FILE` (Docker secrets). `configure_logging` sets up the log output.
-The UI settings are stored in the DB (task 5.1).
+`Settings` holds the UI settings. They are stored as rows in the `setting` table.
 """
 
 import ipaddress
@@ -13,7 +13,16 @@ import time
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    SecretStr,
+    StringConstraints,
+    field_validator,
+)
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
@@ -21,8 +30,20 @@ from pydantic_settings import (
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
+from sqlalchemy import Engine
+from sqlmodel import Session, select
+
+from wt.db.models import Setting
 
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
+
+
+def http_url(value: str) -> str:
+    """Check that the URL is http or https. Remove a trailing slash."""
+    if not value.startswith(("http://", "https://")):
+        raise ValueError("The URL must start with http:// or https://")
+    return value.rstrip("/")
+
 
 # Secret fields. Each one reads WT_<NAME> or WT_<NAME>_FILE.
 SECRET_FIELDS = ("github_token", "ntfy_token", "llm_api_key")
@@ -65,9 +86,7 @@ class Env(BaseSettings):
     @field_validator("github_api_url")
     @classmethod
     def _check_url(cls, value: str) -> str:
-        if not value.startswith(("http://", "https://")):
-            raise ValueError("The URL must start with http:// or https://")
-        return value.rstrip("/")
+        return http_url(value)
 
     @classmethod
     def settings_customise_sources(
@@ -124,3 +143,50 @@ def configure_logging(level: LogLevel) -> None:
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
     logging.basicConfig(level=level, handlers=[handler], force=True)
+
+
+def _empty_to_none(value: object) -> object:
+    """A form sends an empty text for a value that is not set."""
+    if isinstance(value, str) and not value.strip():
+        return None
+    return value
+
+
+Optional = BeforeValidator(_empty_to_none)
+HttpUrl = Annotated[str, AfterValidator(http_url)]
+# The topic goes in the URL path. ntfy allows these characters.
+NtfyTopic = Annotated[str, StringConstraints(pattern=r"^[-_A-Za-z0-9]{1,64}$")]
+ModelName = Annotated[str, StringConstraints(max_length=200)]
+
+
+class Settings(BaseModel):
+    """UI settings. The admin changes them in the UI. Secrets are env vars (`Env`)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    check_interval_hours: int = Field(default=24, ge=1)
+    # Restart loop: N or more restarts in M minutes.
+    restart_count: int = Field(default=3, ge=2)
+    restart_window_minutes: int = Field(default=10, ge=1)
+    ntfy_url: Annotated[HttpUrl | None, Optional] = None
+    ntfy_topic: Annotated[NtfyTopic | None, Optional] = None
+    llm_url: Annotated[HttpUrl | None, Optional] = None
+    llm_model: Annotated[ModelName | None, Optional] = None
+    # The URL of WT. Notifications link to it.
+    public_url: Annotated[HttpUrl | None, Optional] = None
+
+
+def load_settings(engine: Engine) -> Settings:
+    """Read the settings. A setting with no row has its default."""
+    with Session(engine) as session:
+        rows = session.exec(select(Setting)).all()
+    values = {row.key: row.value for row in rows if row.key in Settings.model_fields}
+    return Settings.model_validate(values)
+
+
+def save_settings(engine: Engine, settings: Settings) -> None:
+    """Save all settings, one row per setting."""
+    with Session(engine) as session:
+        for key, value in settings.model_dump().items():
+            session.merge(Setting(key=key, value=value))
+        session.commit()
