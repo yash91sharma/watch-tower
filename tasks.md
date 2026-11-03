@@ -188,7 +188,7 @@ Rules:
   - **Test (clock):** runs at the interval. A new interval takes effect. No run at start when not due.
 - [x] **9.11** `POST /api/checks`: start a run (202), or 409 if a run is active. `GET /api/checks/status`: `{running, last_run, counts}`. Publish `check` at start and end.
   - **Test:** start, 409 during a run, status after the run.
-- [ ] **9.12** `PUT /api/containers/{name}/release-source {source, confirmed}`: validate with the 6.3 parse. `source: null` clears it and sets `source_confirmed=true`, so that the label does not come back.
+- [x] **9.12** `PUT /api/containers/{name}/release-source {source, confirmed}`: validate with the 6.3 parse. `source: null` clears it and sets `source_confirmed=true`, so that the label does not come back.
   - **Test:** set, confirm, clear (a new inspect keeps it clear), bad value 422, unknown name 404.
 
 ## 10. Notifications (ntfy)
