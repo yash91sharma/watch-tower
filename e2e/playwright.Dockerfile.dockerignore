@@ -1,0 +1,8 @@
+# Build context of the Playwright runner: the specs and their config only.
+*
+!package.json
+!pnpm-lock.yaml
+!tsconfig.json
+!playwright.config.ts
+!helpers/
+!specs/

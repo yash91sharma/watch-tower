@@ -297,7 +297,7 @@ Rules:
 - [x] **16.3** E2E test containers: the 6.1 images, plus two old-version containers on fake repos (one with `CVE-` in the notes).
 - [x] **16.4** `e2e/compose.test.yaml`: WT (built image, same settings as `compose.yaml`), socket proxy, ntfy server, fake GitHub, fake LLM, Traefik with a self-signed certificate, test containers. All names `wt_test_*`. WT and the support services have `wt.enable=false`. Add `--label=wt.enable=false` to `wt_dev` (`devcontainer.json`). Tests check only the E2E Compose project group.
   - **Test:** the stack starts and WT is healthy.
-- [ ] **16.5** Playwright runner `e2e/playwright.Dockerfile`: the official Playwright image (tag matches `@playwright/test`) plus the Docker CLI from `docker:cli`. Container `wt_test_playwright` with `wt.enable=false` and the Docker socket. `ignoreHTTPSErrors`. Projects:
+- [x] **16.5** Playwright runner `e2e/playwright.Dockerfile`: the official Playwright image (tag matches `@playwright/test`) plus the Docker CLI from `docker:cli`. Container `wt_test_playwright` with `wt.enable=false` and the Docker socket. `ignoreHTTPSErrors`. Projects:
   - `flows`: Flows 1-12 (16.6-16.17) on Chromium at desktop size, in sequence.
   - Chromium and WebKit at desktop, iPhone and Pixel sizes: a read-only smoke spec (login, list, container, logs), accessibility and visual. They run after `flows` (project dependency).
   - Helpers: setup token from the WT log, TOTP codes, ntfy messages (JSON poll API), fake GitHub releases, M = 1 minute through settings, age a session row (`docker exec` with Python `sqlite3`), restart WT.
