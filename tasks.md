@@ -159,7 +159,7 @@ Rules:
   - **Test (respx):** good reply, timeout, HTTP 500, bad JSON, JSON that does not match the schema.
 - [x] **8.3** Prompt: write the summary in ASD-STE100, max 2 sentences. Set `critical` for CVE or security fixes. Send the release notes in a separate message, as data. Cut the notes at 16,000 characters.
   - **Test:** prompt snapshot. Long notes are cut.
-- [ ] **8.4** `summarize(notes)`: if `llm_url` and `llm_model` are set and the LLM gives a result, use it. Else the summary is empty and the severity comes from 8.1.
+- [x] **8.4** `summarize(notes)`: if `llm_url` and `llm_model` are set and the LLM gives a result, use it. Else the summary is empty and the severity comes from 8.1.
   - **Test:** LLM off (URL or model not set), LLM error, LLM good.
 - [ ] **8.5** LLM eval: 20 release notes with the expected severity in `tests/llm_eval/`. A test with marker `llm_eval` calls a real Ollama and checks the severity and the reply schema.
   - **Test:** runs nightly (17.2).
