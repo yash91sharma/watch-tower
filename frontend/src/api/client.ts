@@ -3,13 +3,21 @@ import createClient, { type Middleware } from "openapi-fetch";
 
 import type { paths } from "@/api/schema";
 
-/** An API error: the HTTP status and the WT error detail. */
+/** A 422 error for one field. */
+export interface FieldError {
+  field: string;
+  message: string;
+}
+
+/** An API error: the HTTP status, the WT error detail and the field errors (422). */
 export class ApiError extends Error {
   readonly status: number;
+  readonly fields: FieldError[];
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, fields: FieldError[] = []) {
     super(message);
     this.status = status;
+    this.fields = fields;
   }
 }
 
@@ -46,7 +54,11 @@ interface Result<T> {
 /** The data of a result, or an ApiError. For TanStack Query query functions. */
 export function unwrap<T>(result: Result<T>): T {
   if (result.error !== undefined || result.data === undefined) {
-    const body = result.error as { detail?: unknown } | undefined;
+    // WT errors: {error, detail}. The detail is a text, or the field errors for a 422.
+    const body = result.error as { error?: string; detail?: unknown } | undefined;
+    if (Array.isArray(body?.detail)) {
+      throw new ApiError(result.response.status, body.error ?? result.response.statusText, body.detail as FieldError[]);
+    }
     const detail = typeof body?.detail === "string" ? body.detail : result.response.statusText;
     throw new ApiError(result.response.status, detail);
   }

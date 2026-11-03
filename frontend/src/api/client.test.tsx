@@ -63,5 +63,18 @@ test("unwrap throws an ApiError with the status and the detail", async () => {
   const error = await api.GET("/api/settings").then(unwrap).catch((caught: unknown) => caught);
 
   expect(error).toBeInstanceOf(ApiError);
-  expect(error).toMatchObject({ status: 404, message: "No such thing" });
+  expect(error).toMatchObject({ status: 404, message: "No such thing", fields: [] });
+});
+
+test("unwrap gives the field errors of a 422", async () => {
+  const fields = [{ field: "password", message: "String should have at least 12 characters" }];
+  server.use(
+    http.get("*/api/settings", () =>
+      HttpResponse.json({ error: "Unprocessable Content", detail: fields }, { status: 422 }),
+    ),
+  );
+
+  const error = await api.GET("/api/settings").then(unwrap).catch((caught: unknown) => caught);
+
+  expect(error).toMatchObject({ status: 422, message: "Unprocessable Content", fields });
 });

@@ -236,7 +236,7 @@ Rules:
   - **Test (MSW):** a 401 opens `/login`.
 - [x] **13.3** Auth guard from `/api/auth/state`: setup required opens `/setup`. Logged out opens `/login`. Logged in opens the app.
   - **Test:** each state.
-- [ ] **13.4** Setup page. Step 1: token. Step 2: TOTP QR code (`qr_svg` in an `<img>` with a `data:` URL, not inner HTML), secret as text, password (two times), TOTP code. The page only checks that the two passwords match. It shows the backend errors. Success opens the app.
+- [x] **13.4** Setup page. Step 1: token. Step 2: TOTP QR code (`qr_svg` in an `<img>` with a `data:` URL, not inner HTML), secret as text, password (two times), TOTP code. The page only checks that the two passwords match. It shows the backend errors. Success opens the app.
   - **Test:** full flow, wrong token, passwords that do not match, wrong code.
 - [ ] **13.5** Login page: password and TOTP code. After the login limit, show the wait time from `Retry-After`. The Log out button calls logout and opens `/login`.
   - **Test:** good login, error, 429 message, logout.
