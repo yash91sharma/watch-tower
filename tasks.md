@@ -260,7 +260,7 @@ Rules:
   - **Test:** matches, no match, filter mode, case.
 - [x] **13.15** JSON pretty-print toggle (in the browser): JSON object lines show formatted. Other lines do not change.
   - **Test:** JSON line, bad JSON, plain text.
-- [ ] **13.16** Log download button: link to `logs.txt`.
+- [x] **13.16** Log download button: link to `logs.txt`.
   - **Test:** the link URL.
 - [ ] **13.17** Settings page: form for 5.1. Show the backend field errors. Show each secret as "set" or "not set" (read only; env vars set them).
   - **Test:** save, field errors, secret state.

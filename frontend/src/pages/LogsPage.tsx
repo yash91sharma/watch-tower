@@ -31,22 +31,29 @@ export function LogsPage() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold break-all">Logs: {name}</h1>
-        <label className="flex items-center gap-2 text-sm">
-          Tail
-          <select
-            className="h-8 rounded-lg border bg-transparent px-2"
-            value={tail}
-            onChange={(event) => {
-              setTail(Number(event.target.value));
-            }}
-          >
-            {TAIL_SIZES.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" variant="outline">
+            <a href={`/api/containers/${encodeURIComponent(name)}/logs.txt`} download>
+              Download
+            </a>
+          </Button>
+          <label className="flex items-center gap-2 text-sm">
+            Tail
+            <select
+              className="h-8 rounded-lg border bg-transparent px-2"
+              value={tail}
+              onChange={(event) => {
+                setTail(Number(event.target.value));
+              }}
+            >
+              {TAIL_SIZES.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Input

@@ -106,3 +106,12 @@ test("the JSON toggle formats JSON object lines only", async () => {
 
   expect(rows()).toEqual(['{\n  "level": "info"\n}', "plain"]);
 });
+
+test("the download link opens logs.txt", async () => {
+  renderRoute("/containers/my app/logs");
+
+  const link = await screen.findByRole("link", { name: "Download" });
+
+  expect(link).toHaveAttribute("href", "/api/containers/my%20app/logs.txt");
+  expect(link).toHaveAttribute("download");
+});
