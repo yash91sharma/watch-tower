@@ -1,10 +1,11 @@
-// Settings: the UI settings form and the secret state. Env vars set the secrets.
+// Settings: the UI settings form, the secret state (env vars set the secrets), export and import.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { api, unwrap } from "@/api/client";
 import { settingsQuery } from "@/api/queries";
 import type { components } from "@/api/schema";
+import { ConfigFile } from "@/components/ConfigFile";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export function SettingsPage() {
           <Secrets secrets={data.secrets} />
         </>
       )}
+      <ConfigFile />
     </div>
   );
 }
