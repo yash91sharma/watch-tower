@@ -250,7 +250,7 @@ Rules:
   - **Test:** renders MSW data.
 - [x] **13.10** Release source form: show the value, edit it, confirm it. Show "not confirmed" until the admin confirms.
   - **Test:** edit, confirm, clear, backend error.
-- [ ] **13.11** Update block: running version, latest version, severity, summary, release notes. Plain text only.
+- [x] **13.11** Update block: running version, latest version, severity, summary, release notes. Plain text only.
   - **Test:** with and without a summary. A note or summary with `<script>` shows as text.
 - [ ] **13.12** Logs buffer: read the `/logs` SSE. Keep max 10,000 lines (drop the oldest). Add new lines once per animation frame. Clear the buffer when the stream opens (a reconnect sends the tail again).
   - **Test:** buffer cap, batching, line parse, a reconnect gives no duplicate lines.

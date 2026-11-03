@@ -1,4 +1,4 @@
-// One container: state, health, release source, events of the last 7 days and a link to the logs.
+// One container: state, health, release source, update, events of the last 7 days, link to the logs.
 import { useQuery } from "@tanstack/react-query";
 import { useId } from "react";
 import { Link, useParams } from "react-router";
@@ -8,6 +8,7 @@ import type { components } from "@/api/schema";
 import { HealthBadge } from "@/components/badges";
 import { FormError } from "@/components/FormError";
 import { ReleaseSource } from "@/components/ReleaseSource";
+import { UpdateBlock } from "@/components/UpdateBlock";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/time";
 
@@ -63,6 +64,7 @@ function Details({ container }: { container: ContainerDetail }) {
         <dd>{container.tag ?? "-"}</dd>
       </dl>
       <ReleaseSource name={container.name} source={container.release_source} confirmed={container.source_confirmed} />
+      <UpdateBlock update={container.update} status={container.status} />
       <section aria-labelledby={eventsId} className="space-y-2">
         <h2 id={eventsId} className="font-medium">
           Events (last 7 days)
