@@ -10,6 +10,7 @@ import respx
 from sqlalchemy import Engine
 from sqlmodel import Session, select
 
+from wt.bus import Bus
 from wt.clock import FakeClock
 from wt.config import Env, Settings, save_settings
 from wt.db.models import Container, Severity, Update
@@ -67,7 +68,7 @@ async def setup(db_engine: Engine) -> tuple[CheckRunner, Inventory]:
     inventory = Inventory(db_engine)
     await inventory.update(WEB)
     env = Env(data_dir=Path("."), github_api_url=API)
-    return CheckRunner(db_engine, env, inventory), inventory
+    return CheckRunner(db_engine, env, inventory, Bus()), inventory
 
 
 def updates(engine: Engine) -> list[Update]:

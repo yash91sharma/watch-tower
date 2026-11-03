@@ -69,14 +69,15 @@ def create_app(
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         engine = open_db(env.data_dir)
         inventory = Inventory(engine)
+        bus = Bus()
         ctx = AppContext(
             env=env,
             engine=engine,
-            bus=Bus(),
+            bus=bus,
             setup_token=SetupToken.at_start(engine),
             inventory=inventory,
             health=HealthMonitor(engine, load_settings(engine)),
-            checker=CheckRunner(engine, env, inventory),
+            checker=CheckRunner(engine, env, inventory, bus),
         )
         app.state.ctx = ctx
         tasks = [asyncio.create_task(_run_worker(worker, ctx)) for worker in workers]

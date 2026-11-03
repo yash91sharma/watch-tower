@@ -10,6 +10,7 @@ import respx
 from sqlalchemy import Engine
 from sqlmodel import Session
 
+from wt.bus import Bus
 from wt.clock import FakeClock
 from wt.config import Env
 from wt.db import LOCAL_HOST_ID
@@ -51,9 +52,8 @@ async def runner(db_engine: Engine) -> CheckRunner:
     await add(inventory, "nosrc", "app:1.0", None)
     await add(inventory, "rolling", "app:latest", "o/app")
     await add(inventory, "hidden", "app:1.0", "o/hidden", **{"wt.enable": "false"})
-    return CheckRunner(
-        db_engine, Env(data_dir=Path("."), github_api_url=API), inventory
-    )
+    env = Env(data_dir=Path("."), github_api_url=API)
+    return CheckRunner(db_engine, env, inventory, Bus())
 
 
 async def test_one_call_per_repo_and_saved_counts(
@@ -139,9 +139,8 @@ async def test_a_gone_container_is_not_checked(
             )
         )
         session.commit()
-    runner = CheckRunner(
-        db_engine, Env(data_dir=Path("."), github_api_url=API), Inventory(db_engine)
-    )
+    env = Env(data_dir=Path("."), github_api_url=API)
+    runner = CheckRunner(db_engine, env, Inventory(db_engine), Bus())
 
     with respx.mock:
         route = respx.get(f"{API}/repos/o/gone/releases/latest")

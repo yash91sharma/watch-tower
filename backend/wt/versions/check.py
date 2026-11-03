@@ -13,6 +13,7 @@ from sqlalchemy import Engine
 from sqlmodel import Session, col, select
 
 from wt import clock
+from wt.bus import Bus, Topic
 from wt.config import Env, load_settings
 from wt.db import LOCAL_HOST_ID
 from wt.db.models import Container, RepoCache, Setting, Update
@@ -50,10 +51,13 @@ def load_check_status(engine: Engine) -> CheckStatus:
 
 
 class CheckRunner:
-    def __init__(self, engine: Engine, env: Env, inventory: Inventory) -> None:
+    def __init__(
+        self, engine: Engine, env: Env, inventory: Inventory, bus: Bus
+    ) -> None:
         self._engine = engine
         self._env = env
         self._inventory = inventory
+        self._bus = bus
         self._lock = asyncio.Lock()
 
     @property
@@ -65,25 +69,32 @@ class CheckRunner:
         if self._lock.locked():
             return False
         async with self._lock:
-            rows = await asyncio.to_thread(
-                _live_rows, self._engine, self._inventory.names()
-            )
-            repos = sorted(
-                {
-                    row.release_source
-                    for row in rows
-                    if row.release_source and is_version_tag(row.tag)
-                }
-            )
-            github = GitHub(self._env.github_api_url, self._env.github_token)
+            self._bus.publish(Topic.CHECK, {"running": True})
             try:
-                for repo in repos:
-                    await refresh_repo(self._engine, github, repo)
+                await self._run()
             finally:
-                await github.close()
-            await self._update_rows(rows)
-            await asyncio.to_thread(_save_status, self._engine, rows)
+                self._bus.publish(Topic.CHECK, {"running": False})
         return True
+
+    async def _run(self) -> None:
+        rows = await asyncio.to_thread(
+            _live_rows, self._engine, self._inventory.names()
+        )
+        repos = sorted(
+            {
+                row.release_source
+                for row in rows
+                if row.release_source and is_version_tag(row.tag)
+            }
+        )
+        github = GitHub(self._env.github_api_url, self._env.github_token)
+        try:
+            for repo in repos:
+                await refresh_repo(self._engine, github, repo)
+        finally:
+            await github.close()
+        await self._update_rows(rows)
+        await asyncio.to_thread(_save_status, self._engine, rows)
 
     async def _update_rows(self, rows: list[Container]) -> None:
         """Add or change the update row of each container with an update."""
