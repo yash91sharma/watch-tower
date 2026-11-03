@@ -15,6 +15,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from wt import api
 from wt.api import errors
+from wt.api.headers import SecurityHeadersMiddleware
 from wt.bus import Bus
 from wt.config import Env
 from wt.context import AppContext, Worker
@@ -52,6 +53,7 @@ def create_app(env: Env, workers: Sequence[Worker] = WORKERS) -> FastAPI:
     app.include_router(api.router)
     errors.install(app)
     # Use X-Forwarded-For and X-Forwarded-Proto only from the trusted proxies.
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=env.trusted_proxies)
     return app
 
