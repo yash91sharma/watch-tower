@@ -14,7 +14,7 @@ Rules:
 - [x] **1.2** Pre-commit hook runs `check.sh` in `wt_dev`.
 - [x] **1.3** Make `backend/wt/` a package (`package = true`). Add script `wt = "wt.cli:main"` with argparse subcommands `serve`, `reset-admin`, `openapi` (stubs).
   - **Test:** `wt --help` exits 0 and lists the 3 subcommands. Each stub exits with a "not implemented" error.
-- [ ] **1.4** Add runtime deps: `fastapi`, `uvicorn`, `sqlmodel`, `alembic`, `aiodocker`, `httpx`, `pydantic-settings`, `argon2-cffi`, `pyotp`, `segno`. Lock with `uv lock`.
+- [x] **1.4** Add runtime deps: `fastapi`, `uvicorn`, `sqlmodel`, `alembic`, `aiodocker`, `httpx`, `pydantic-settings`, `argon2-cffi`, `pyotp`, `segno`. Lock with `uv lock`.
   - **Test:** a smoke test imports each package.
 - [ ] **1.5** Add dev deps: `hypothesis`, `respx`, `testcontainers`, `schemathesis`, `mutmut`, `pip-audit`, `pytest-cov`. Configure:
   - ruff: default rules, `S` (security), `TID251` (banned APIs, see 2.1 and 6.2).
