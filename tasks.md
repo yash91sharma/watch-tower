@@ -308,7 +308,7 @@ Rules:
 - [x] **16.9** Flow 4, release source: value from the label, admin edits and confirms it.
 - [x] **16.10** Flow 5, Check now: add one release on fake GitHub. Versions, notes and summary show. ntfy gets one message with the WT link. A second run sends nothing.
 - [x] **16.11** Flow 6, two updates: add releases for 2 containers (one with `CVE-` in the notes). ntfy gets one digest with high priority.
-- [ ] **16.12** Flow 7, LLM off and LLM timeout: add a new release for each case. Notes only, keyword severity.
+- [x] **16.12** Flow 7, LLM off and LLM timeout: add a new release for each case. Notes only, keyword severity.
 - [ ] **16.13** Flow 8, health: `docker exec` makes the containers fail (6.1). Unhealthy, restart loop and each recovery send one ntfy message.
 - [ ] **16.14** Flow 9, logs: live tail, search, JSON pretty-print, download.
 - [ ] **16.15** Flow 10, settings: change values, export, delete the DB, restart WT, set up, import, export again: the same file.
