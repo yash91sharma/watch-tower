@@ -96,7 +96,7 @@ Rules:
   - **Test:** good login, wrong password, wrong code, 6th attempt gets 429, login works after 15 minutes.
 - [x] **4.8** `POST /api/auth/logout`: delete the session row and the cookie.
   - **Test:** the old cookie gets 401.
-- [ ] **4.9** Auth guard: one dependency on a protected `/api` router. All routes except `/api/health` and `/api/auth/*` go on this router.
+- [x] **4.9** Auth guard: one dependency on a protected `/api` router. All routes except `/api/health` and `/api/auth/*` go on this router.
   - **Test:** a dummy route on the router gives 401 with no cookie. A test reads all registered `/api` routes. Each route not in the list gives 401 with no cookie. Later routes (SSE, `logs.txt`) get this test automatically.
 - [ ] **4.10** `wt reset-admin`: delete the password, TOTP secret and all sessions. Print "Restart WT (docker restart wt). Then get the setup token from the WT log."
   - **Test:** after a reset and a restart, `/api/auth/state` gives `setup_required`, old sessions get 401, WT logs a new token, the login limit is clear.

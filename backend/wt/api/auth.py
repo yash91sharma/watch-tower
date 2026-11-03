@@ -1,21 +1,17 @@
 """Auth routes: state, first setup, login and logout. No session is needed for them."""
 
-from typing import Annotated
-
-from fastapi import APIRouter, Cookie, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, col, select, update
 
-from wt.api.deps import Ctx
+from wt.api.deps import Ctx, SessionCookie
 from wt.auth import sessions, totp
 from wt.auth.password import MIN_LENGTH, hash_password, verify_password
 from wt.context import AppContext
 from wt.db.models import ADMIN_ID, Admin
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-SessionCookie = Annotated[str | None, Cookie(alias=sessions.COOKIE)]
 
 
 class AuthState(BaseModel):

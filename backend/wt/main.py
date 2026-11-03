@@ -60,7 +60,15 @@ def create_app(
             await asyncio.gather(*tasks, return_exceptions=True)
             engine.dispose()
 
-    app = FastAPI(title="Watch Tower", lifespan=lifespan)
+    # No docs and no schema URL: they have no auth, and Swagger UI loads scripts from a CDN.
+    # `wt openapi` writes the schema.
+    app = FastAPI(
+        title="Watch Tower",
+        lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
     app.include_router(api.router)
     errors.install(app)
     static.install(app, static_dir)
