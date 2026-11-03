@@ -153,7 +153,7 @@ Rules:
 
 ## 8. Update summary (LLM)
 
-- [ ] **8.1** `wt/llm/severity.py`: `critical` if the notes contain `CVE-` or `security` (any case). Else `normal`.
+- [x] **8.1** `wt/llm/severity.py`: `critical` if the notes contain `CVE-` or `security` (any case). Else `normal`.
   - **Test:** table tests.
 - [ ] **8.2** `wt/llm/client.py`: `POST {llm_url}/v1/chat/completions` with `model`, `messages`, `temperature: 0` and a strict `json_schema` `response_format` for `{severity: "critical" | "normal", summary: string}`. `Authorization: Bearer` if `WT_LLM_API_KEY` is set. Timeout 60 s. Validate the reply with Pydantic. On any error, log a warning and give no result.
   - **Test (respx):** good reply, timeout, HTTP 500, bad JSON, JSON that does not match the schema.
