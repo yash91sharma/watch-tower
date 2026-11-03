@@ -1,8 +1,8 @@
-// TOTP codes (RFC 6238: SHA-1, 6 digits, 30 s), as an authenticator app makes them.
+// TOTP codes (RFC 6238: SHA-1, 6 digits, 30 s steps), as an authenticator app makes them.
+// admin.ts gives a fresh code for each login.
 import { createHmac } from "node:crypto";
 
 const BASE32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-const STEP_SECONDS = 30;
 
 function base32Decode(text: string): Buffer {
   let bits = "";
@@ -15,6 +15,7 @@ function base32Decode(text: string): Buffer {
   return Buffer.from(bytes.map((byte) => parseInt(byte, 2)));
 }
 
+/** The code of a time step (Unix time / 30 s). */
 export function totp(secret: string, step: number): string {
   const counter = Buffer.alloc(8);
   counter.writeBigUInt64BE(BigInt(step));
@@ -22,17 +23,4 @@ export function totp(secret: string, step: number): string {
   const offset = (hmac.at(-1) ?? 0) & 0xf;
   const code = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
   return code.toString().padStart(6, "0");
-}
-
-const currentStep = () => Math.floor(Date.now() / 1000 / STEP_SECONDS);
-let lastStep = 0;
-
-/**
- * A code that WT did not see yet. WT rejects a step that it already used (replay), so this
- * waits for the next step when needed (up to 30 s).
- */
-export async function freshTotp(secret: string): Promise<string> {
-  while (currentStep() <= lastStep) await new Promise((resolve) => setTimeout(resolve, 500));
-  lastStep = currentStep();
-  return totp(secret, lastStep);
 }

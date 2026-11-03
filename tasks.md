@@ -302,7 +302,7 @@ Rules:
   - Chromium and WebKit at desktop, iPhone and Pixel sizes: a read-only smoke spec (login, list, container, logs), accessibility and visual. They run after `flows` (project dependency).
   - Helpers: setup token from the WT log, TOTP codes, ntfy messages (JSON poll API), fake GitHub releases, M = 1 minute through settings, age a session row (`docker exec` with Python `sqlite3`), restart WT.
   - **Test:** a sample spec runs on all projects.
-- [ ] **16.6** Flow 1, setup: token from the log, password, TOTP.
+- [x] **16.6** Flow 1, setup: token from the log, password, TOTP.
 - [ ] **16.7** Flow 2, login: login, logout, wrong password, wrong TOTP, login limit (then restart WT to clear it), session expiry.
 - [ ] **16.8** Flow 3, container list: Compose groups, excluded container absent, `latest` shows `no check`.
 - [ ] **16.9** Flow 4, release source: value from the label, admin edits and confirms it.
