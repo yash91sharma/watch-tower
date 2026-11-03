@@ -56,6 +56,16 @@ markers = [
     "llm_eval: calls a real LLM server",
 ]
 
+[tool.coverage.run]
+source = ["wt"]
+branch = true
+
+[tool.coverage.report]
+# One total for lines and branches together (coverage.py has no separate gates).
+fail_under = 90
+show_missing = true
+skip_covered = true
+
 [tool.ruff]
 target-version = "py314"
 
