@@ -123,7 +123,7 @@ Rules:
   - **Test:** the fixture starts all containers healthy. A second run reuses them. `wt_dev` reaches the socket proxy by name.
 - [x] **6.2** `wt/docker/client.py`: aiodocker client from `DOCKER_HOST`: `ping`, `list_containers` (all), `inspect`, `events`, `logs`. Typed return values. `FakeDocker` with the same interface for tests with no Docker. Ban `aiodocker` imports outside `wt/docker/` (ruff `TID251`).
   - **Test:** Docker test: ping and list through the socket proxy.
-- [ ] **6.3** Parse rules (pure):
+- [x] **6.3** Parse rules (pure):
   - Name: no leading `/`.
   - Compose project: label `com.docker.compose.project`.
   - Excluded: label `wt.enable` is `false` (any case).

@@ -17,6 +17,8 @@ from typing import Any, Protocol
 import aiodocker  # noqa: TID251  (the only module that uses aiodocker)
 import aiohttp
 
+from wt.docker.parse import container_name
+
 # The container events that WT uses.
 EVENT_ACTIONS = ("start", "die", "health_status", "destroy")
 
@@ -79,7 +81,7 @@ class DockerApi(Protocol):
 def container_summary(data: Mapping[str, Any]) -> ContainerSummary:
     """From an item of GET /containers/json."""
     names: list[str] = data.get("Names") or [""]
-    return ContainerSummary(id=data["Id"], name=names[0].lstrip("/"))
+    return ContainerSummary(id=data["Id"], name=container_name(names[0]))
 
 
 def container_info(data: Mapping[str, Any]) -> ContainerInfo:
@@ -89,7 +91,7 @@ def container_info(data: Mapping[str, Any]) -> ContainerInfo:
     health: Mapping[str, Any] = state.get("Health") or {}
     return ContainerInfo(
         id=data["Id"],
-        name=str(data.get("Name", "")).lstrip("/"),
+        name=container_name(str(data.get("Name", ""))),
         image=str(config.get("Image", "")),
         labels=dict(config.get("Labels") or {}),
         state=str(state.get("Status", "")),

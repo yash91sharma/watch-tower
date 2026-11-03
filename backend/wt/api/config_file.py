@@ -20,13 +20,14 @@ from wt.bus import Topic
 from wt.config import Settings, load_settings, write_settings
 from wt.db import LOCAL_HOST_ID
 from wt.db.models import Container
+from wt.docker.parse import REPO_PATTERN
 
 router = APIRouter(prefix="/config", tags=["config"])
 
 FORMAT_VERSION = 1
 
 # "owner/repo" on GitHub.
-Repo = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$")]
+Repo = Annotated[str, StringConstraints(pattern=REPO_PATTERN)]
 
 
 class ContainerConfig(BaseModel):
