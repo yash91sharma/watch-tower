@@ -193,7 +193,7 @@ Rules:
 
 ## 10. Notifications (ntfy)
 
-- [ ] **10.1** `wt/notify/messages.py` (pure): title, body, tags and click link. ASCII in header values. Short body. Add a 100% branch gate for `wt/notify/` to `check.sh`.
+- [x] **10.1** `wt/notify/messages.py` (pure): title, body, tags and click link. ASCII in header values. Short body. Add a 100% branch gate for `wt/notify/` to `check.sh`.
   - One update: title `Update: <name> <from> -> <to>`. Body: the summary, or `Release notes are available`.
   - Digest: title `<n> updates`. One body line per container.
   - Health: `<name> is unhealthy`, `<name> restarts in a loop`, `<name> is healthy again`, `<name> does not restart now`.
