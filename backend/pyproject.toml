@@ -49,7 +49,7 @@ module-root = ""
 testpaths = ["tests"]
 # Run tests in parallel on all CPUs. Use "-n0" to run one test fast.
 # The default run skips slow tests. CI runs them with "-m docker" (or e2e, llm_eval).
-addopts = "-n auto --strict-markers -m 'not docker and not e2e and not llm_eval'"
+addopts = "-n auto --import-mode=importlib --strict-markers -m 'not docker and not e2e and not llm_eval'"
 markers = [
     "docker: needs the host Docker (testcontainers)",
     "e2e: needs the full E2E stack",
