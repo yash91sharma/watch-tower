@@ -47,8 +47,8 @@ module-root = ""
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# Tests can import helper modules, for example tests.docker.env.
-pythonpath = ["."]
+# Tests can import helper modules, for example tests.docker.env, and the E2E fakes (fakes.github).
+pythonpath = [".", "../e2e"]
 # Run tests in parallel on all CPUs. Use "-n0" to run one test fast.
 # The default run skips slow tests. CI runs them with "-m docker" (or e2e, llm_eval).
 addopts = "-n auto --import-mode=importlib --strict-markers -m 'not docker and not e2e and not llm_eval'"
@@ -91,8 +91,9 @@ extend-select = ["S", "TID251"]
 "aiodocker".msg = "Only wt/docker/client.py uses aiodocker. Use wt.docker."
 
 [tool.pyright]
-include = ["wt", "tests"]
-strict = ["wt", "tests"]
+include = ["wt", "tests", "../e2e/fakes"]
+strict = ["wt", "tests", "../e2e/fakes"]
+extraPaths = ["../e2e"]
 typeCheckingMode = "strict"
 
 [tool.mutmut]

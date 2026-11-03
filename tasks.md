@@ -290,7 +290,7 @@ Rules:
 
 ## 16. Full-stack tests
 
-- [ ] **16.1** Fake GitHub API (`e2e/fakes/github/`, FastAPI): `/repos/{o}/{r}/releases/latest` with ETag, `/repos/{o}/{r}/releases`, rate limit mode, control route to set releases. It starts with no updates (latest = running version). Each flow adds its releases.
+- [x] **16.1** Fake GitHub API (`e2e/fakes/github/`, FastAPI): `/repos/{o}/{r}/releases/latest` with ETag, `/repos/{o}/{r}/releases`, rate limit mode, control route to set releases. It starts with no updates (latest = running version). Each flow adds its releases.
   - **Test:** unit tests.
 - [ ] **16.2** Fake LLM API (`e2e/fakes/llm/`): `/v1/chat/completions` with modes good, slow (timeout), error.
   - **Test:** unit tests.

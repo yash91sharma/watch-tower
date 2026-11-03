@@ -7,8 +7,9 @@ cd /workspace
 echo "== backend"
 (
   cd backend
-  uv run ruff format --check
-  uv run ruff check
+  # The E2E fakes (Python) use the backend tools and config.
+  uv run ruff format --check . ../e2e/fakes
+  uv run ruff check . ../e2e/fakes
   uv run pyright
   # Coverage gate: see [tool.coverage] in pyproject.toml.
   uv run pytest -q --cov --cov-report=term
