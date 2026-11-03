@@ -2,13 +2,16 @@ import { fileURLToPath, URL } from "node:url";
 
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig } from "vitest/config";
+
+import { pwaOptions } from "./pwa.config";
 
 // The backend runs in the same container (wt serve, port 8000).
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), VitePWA(pwaOptions)],
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },

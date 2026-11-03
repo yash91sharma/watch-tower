@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Watch Tower app icon and favicon. Source of pwa-192.png and pwa-512.png. -->
+  <rect width="512" height="512" rx="96" fill="#171717"/>
+  <g>
+    <polygon points="196,184 96,150 96,220" fill="#f59e0b" opacity="0.6"/>
+    <polygon points="316,184 416,150 416,220" fill="#f59e0b" opacity="0.6"/>
+    <polygon points="256,92 336,160 176,160" fill="#fafafa"/>
+    <rect x="196" y="160" width="120" height="64" fill="#fafafa"/>
+    <rect x="216" y="176" width="80" height="36" fill="#f59e0b"/>
+    <rect x="168" y="224" width="176" height="20" fill="#fafafa"/>
+    <polygon points="208,244 304,244 336,420 176,420" fill="#fafafa"/>
+    <rect x="144" y="420" width="224" height="24" fill="#fafafa"/>
+  </g>
+</svg>

@@ -271,7 +271,7 @@ Rules:
 
 ## 14. PWA
 
-- [ ] **14.1** App icon (SVG source; PNG 192, 512 and maskable). vite-plugin-pwa manifest: name, short name, icons, theme color, `display: standalone`, `start_url: /`. `apple-touch-icon` and iOS meta tags.
+- [x] **14.1** App icon (SVG source; PNG 192, 512 and maskable). vite-plugin-pwa manifest: name, short name, icons, theme color, `display: standalone`, `start_url: /`. `apple-touch-icon` and iOS meta tags.
   - **Test:** the build has a valid manifest and the icons.
 - [ ] **14.2** Service worker: cache the app shell only. Navigation fallback to `index.html`. Never cache `/api/*`.
   - **Test:** the build config has the `/api` deny rule.
