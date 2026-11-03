@@ -152,7 +152,7 @@ def _empty_to_none(value: object) -> object:
     return value
 
 
-Optional = BeforeValidator(_empty_to_none)
+EmptyIsNone = BeforeValidator(_empty_to_none)
 HttpUrl = Annotated[str, AfterValidator(http_url)]
 # The topic goes in the URL path. ntfy allows these characters.
 NtfyTopic = Annotated[str, StringConstraints(pattern=r"^[-_A-Za-z0-9]{1,64}$")]
@@ -168,12 +168,12 @@ class Settings(BaseModel):
     # Restart loop: N or more restarts in M minutes.
     restart_count: int = Field(default=3, ge=2)
     restart_window_minutes: int = Field(default=10, ge=1)
-    ntfy_url: Annotated[HttpUrl | None, Optional] = None
-    ntfy_topic: Annotated[NtfyTopic | None, Optional] = None
-    llm_url: Annotated[HttpUrl | None, Optional] = None
-    llm_model: Annotated[ModelName | None, Optional] = None
+    ntfy_url: Annotated[HttpUrl | None, EmptyIsNone] = None
+    ntfy_topic: Annotated[NtfyTopic | None, EmptyIsNone] = None
+    llm_url: Annotated[HttpUrl | None, EmptyIsNone] = None
+    llm_model: Annotated[ModelName | None, EmptyIsNone] = None
     # The URL of WT. Notifications link to it.
-    public_url: Annotated[HttpUrl | None, Optional] = None
+    public_url: Annotated[HttpUrl | None, EmptyIsNone] = None
 
 
 def load_settings(engine: Engine) -> Settings:
