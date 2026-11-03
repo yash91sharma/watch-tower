@@ -248,7 +248,7 @@ Rules:
   - **Test:** a click starts a run. The button is off during the run.
 - [x] **13.9** Container page: state, health, events of the last 7 days, link to logs.
   - **Test:** renders MSW data.
-- [ ] **13.10** Release source form: show the value, edit it, confirm it. Show "not confirmed" until the admin confirms.
+- [x] **13.10** Release source form: show the value, edit it, confirm it. Show "not confirmed" until the admin confirms.
   - **Test:** edit, confirm, clear, backend error.
 - [ ] **13.11** Update block: running version, latest version, severity, summary, release notes. Plain text only.
   - **Test:** with and without a summary. A note or summary with `<script>` shows as text.
