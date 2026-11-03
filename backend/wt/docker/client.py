@@ -1,5 +1,5 @@
 # aiodocker has no types for its **kwargs. This is the only file that calls aiodocker.
-# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownParameterType=false
 """Docker API client (aiodocker) and its typed data.
 
 WT reads Docker through a read-only socket proxy (DOCKER_HOST). Other modules use the
@@ -8,6 +8,7 @@ WT reads Docker through a read-only socket proxy (DOCKER_HOST). Other modules us
 """
 
 import json
+import socket
 from collections.abc import AsyncIterator, Generator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -16,6 +17,7 @@ from typing import Any, Protocol
 
 import aiodocker  # noqa: TID251  (the only module that uses aiodocker)
 import aiohttp
+from aiohappyeyeballs import AddrInfoType
 
 from wt.docker.parse import container_name
 
@@ -136,7 +138,10 @@ class DockerClient:
     """The real client. Make it in the event loop. Close it when done."""
 
     def __init__(self, docker_host: str | None) -> None:
-        self._docker = aiodocker.Docker(url=docker_host)
+        self._connector: aiohttp.TCPConnector | None = None
+        if docker_host and docker_host.startswith(("tcp://", "http://")):
+            self._connector = aiohttp.TCPConnector(socket_factory=_keepalive_socket)
+        self._docker = aiodocker.Docker(url=docker_host, connector=self._connector)
 
     async def ping(self) -> None:
         # The proxy allows GET /version. aiodocker has no ping call.
@@ -166,7 +171,27 @@ class DockerClient:
                 if event is not None:
                     yield event
         finally:
-            await self._docker.events.stop()
+            # stop() raises the error of the stream task, if it has one.
+            with _errors():
+                await self._docker.events.stop()
 
     async def close(self) -> None:
         await self._docker.close()
+        if self._connector is not None:
+            await self._connector.close()
+
+
+def _keepalive_socket(addr_info: AddrInfoType) -> socket.socket:
+    """A TCP socket with keepalive probes after 10 s with no data.
+
+    Docker sends nothing on an idle event stream. When the socket proxy restarts, the old
+    connection gets no close, so the stream waits for ever. A probe gets a reset (or no
+    answer), and the stream fails in about 25 s.
+    """
+    family, type_, proto, _, _ = addr_info
+    sock = socket.socket(family, type_, proto)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 10)
+    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)
+    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
+    return sock

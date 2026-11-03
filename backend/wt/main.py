@@ -22,6 +22,9 @@ from wt.bus import Bus
 from wt.config import Env
 from wt.context import AppContext, Worker
 from wt.db import cleanup, open_db
+from wt.docker.client import DockerClient
+from wt.docker.connection import keep_connected
+from wt.docker.inventory import Inventory
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +33,17 @@ async def cleanup_worker(ctx: AppContext) -> None:
     await cleanup.run(ctx.engine)
 
 
+async def docker_worker(ctx: AppContext) -> None:
+    await keep_connected(
+        lambda: DockerClient(ctx.env.docker_host),
+        ctx.inventory,
+        ctx.bus,
+        ctx.docker_state,
+    )
+
+
 # The workers that WT starts.
-WORKERS: list[Worker] = [cleanup_worker]
+WORKERS: list[Worker] = [cleanup_worker, docker_worker]
 
 
 def create_app(
@@ -49,6 +61,7 @@ def create_app(
             engine=engine,
             bus=Bus(),
             setup_token=SetupToken.at_start(engine),
+            inventory=Inventory(engine),
         )
         app.state.ctx = ctx
         tasks = [asyncio.create_task(_run_worker(worker, ctx)) for worker in workers]

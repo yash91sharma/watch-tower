@@ -8,10 +8,13 @@ import pytest
 from fastapi import FastAPI, Request
 from sqlmodel import Session
 
-from wt import clock
+from wt import clock, main
+from wt.bus import Topic
 from wt.config import Env
 from wt.context import AppContext, Worker
 from wt.db.models import Host
+from wt.docker.client import ContainerInfo
+from wt.docker.fake import FakeDocker
 from wt.main import create_app
 
 
@@ -140,3 +143,26 @@ async def test_no_trusted_proxies_ignores_forwarded_headers(tmp_path: Path) -> N
     result = await get_client(app, "127.0.0.1", FORWARDED)
 
     assert result == {"host": "127.0.0.1", "scheme": "http"}
+
+
+@pytest.mark.anyio
+async def test_docker_worker_connects_and_fills_the_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake = FakeDocker()
+    fake.add(
+        ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False, 0)
+    )
+
+    def make_client(docker_host: str | None) -> FakeDocker:
+        return fake
+
+    monkeypatch.setattr(main, "DockerClient", make_client)
+    app = create_app(make_env(tmp_path), workers=[main.docker_worker])
+
+    async with app.router.lifespan_context(app):
+        ctx: AppContext = app.state.ctx
+        with ctx.bus.subscribe([Topic.DOCKER]) as subscription:
+            while ctx.docker_state.connected is False:
+                await subscription.get()
+        assert ctx.inventory.get("web") is not None

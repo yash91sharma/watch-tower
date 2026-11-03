@@ -10,6 +10,8 @@ from wt.auth.limit import LoginLimit
 from wt.auth.setup_token import SetupToken
 from wt.bus import Bus
 from wt.config import Env
+from wt.docker.connection import DockerState
+from wt.docker.inventory import Inventory
 
 
 @dataclass(frozen=True)
@@ -20,6 +22,8 @@ class AppContext:
     engine: Engine
     bus: Bus
     setup_token: SetupToken
+    inventory: Inventory
+    docker_state: DockerState = field(default_factory=DockerState)
     login_limit: LoginLimit = field(default_factory=LoginLimit)
 
 
