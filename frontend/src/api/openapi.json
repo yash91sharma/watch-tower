@@ -1,0 +1,1784 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Watch Tower",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health",
+        "description": "200 if the DB answers, else 503.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/state": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "State",
+        "operationId": "state_api_auth_state_get",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/setup/begin": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Setup Begin",
+        "description": "Make a new TOTP secret for the setup. WT keeps it in memory until setup finish.",
+        "operationId": "setup_begin_api_auth_setup_begin_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupBeginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupBeginOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/setup/finish": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Setup Finish",
+        "description": "Save the admin, end the setup token and log in.",
+        "operationId": "setup_finish_api_auth_setup_finish_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupFinishIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "description": "Log in with the password and a TOTP code. All failures give the same message.",
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "description": "Delete the session and the cookie.",
+        "operationId": "logout_api_auth_logout_post",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Get Settings",
+        "operationId": "get_settings_api_settings_get",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Put Settings",
+        "description": "Save all settings. Workers reload them on the `settings` bus topic.",
+        "operationId": "put_settings_api_settings_put",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Settings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config/export": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Export Config",
+        "description": "The config as a JSON file download.",
+        "operationId": "export_config_api_config_export_get",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config/import": {
+      "post": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Import Config",
+        "description": "Check the file, then save the settings and the container values in one transaction.\n\nA dry run gives the counts and the errors and saves nothing. A real import of a\nbad file gives 422. Containers that WT does not know yet get a new row.",
+        "operationId": "import_config_api_config_import_post",
+        "parameters": [
+          {
+            "name": "dry_run",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Dry Run"
+            }
+          },
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonValue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/checks": {
+      "post": {
+        "tags": [
+          "checks"
+        ],
+        "summary": "Start Check",
+        "description": "Start a check run in the background. 409 if a run is active.",
+        "operationId": "start_check_api_checks_post",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckStatusOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/checks/status": {
+      "get": {
+        "tags": [
+          "checks"
+        ],
+        "summary": "Check Status",
+        "operationId": "check_status_api_checks_status_get",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckStatusOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/containers/{name}/release-source": {
+      "put": {
+        "tags": [
+          "containers"
+        ],
+        "summary": "Put Release Source",
+        "description": "Set, confirm or clear the release source. A cleared source stays clear (confirmed).",
+        "operationId": "put_release_source_api_containers__name__release_source_put",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseSourceIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseSourceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/containers": {
+      "get": {
+        "tags": [
+          "containers"
+        ],
+        "summary": "List Containers",
+        "description": "Containers that exist in Docker now and are not excluded, in Compose groups.\n\nGroups are sorted by label; \"Other\" (no project) is last. Containers by name.",
+        "operationId": "list_containers_api_containers_get",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GroupOut"
+                  },
+                  "title": "Response List Containers Api Containers Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/containers/{name}": {
+      "get": {
+        "tags": [
+          "containers"
+        ],
+        "summary": "Get Container Detail",
+        "description": "One container with its current update and its events. 404 if it is not in Docker now.",
+        "operationId": "get_container_detail_api_containers__name__get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContainerDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stream": {
+      "get": {
+        "tags": [
+          "stream"
+        ],
+        "summary": "Stream",
+        "operationId": "stream_api_stream_get",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthState": {
+        "properties": {
+          "setup_required": {
+            "type": "boolean",
+            "title": "Setup Required"
+          },
+          "logged_in": {
+            "type": "boolean",
+            "title": "Logged In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "setup_required",
+          "logged_in"
+        ],
+        "title": "AuthState"
+      },
+      "CheckStatusOut": {
+        "properties": {
+          "running": {
+            "type": "boolean",
+            "title": "Running"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "running",
+          "last_run",
+          "counts"
+        ],
+        "title": "CheckStatusOut"
+      },
+      "ConfigFile": {
+        "properties": {
+          "format_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Format Version"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/Settings"
+          },
+          "containers": {
+            "items": {
+              "$ref": "#/components/schemas/ContainerConfig"
+            },
+            "type": "array",
+            "title": "Containers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "format_version",
+          "settings",
+          "containers"
+        ],
+        "title": "ConfigFile"
+      },
+      "ContainerConfig": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "release_source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Source"
+          },
+          "source_confirmed": {
+            "type": "boolean",
+            "title": "Source Confirmed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "release_source",
+          "source_confirmed"
+        ],
+        "title": "ContainerConfig"
+      },
+      "ContainerDetail": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "health": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "unhealthy",
+              "starting",
+              "none"
+            ],
+            "title": "Health"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image"
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "latest_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Version"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Severity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "release_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Source"
+          },
+          "source_confirmed": {
+            "type": "boolean",
+            "title": "Source Confirmed"
+          },
+          "update": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UpdateOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventOut"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "state",
+          "health",
+          "image",
+          "tag",
+          "status",
+          "latest_version",
+          "severity",
+          "release_source",
+          "source_confirmed",
+          "update",
+          "events"
+        ],
+        "title": "ContainerDetail"
+      },
+      "ContainerOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "health": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "unhealthy",
+              "starting",
+              "none"
+            ],
+            "title": "Health"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image"
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "latest_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Version"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Severity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "release_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Source"
+          },
+          "source_confirmed": {
+            "type": "boolean",
+            "title": "Source Confirmed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "state",
+          "health",
+          "image",
+          "tag",
+          "status",
+          "latest_version",
+          "severity",
+          "release_source",
+          "source_confirmed"
+        ],
+        "title": "ContainerOut"
+      },
+      "ErrorBody": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "$ref": "#/components/schemas/FieldError"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "detail"
+        ],
+        "title": "ErrorBody"
+      },
+      "EventKind": {
+        "type": "string",
+        "enum": [
+          "became_unhealthy",
+          "recovered_health",
+          "restart_loop",
+          "recovered_loop"
+        ],
+        "title": "EventKind",
+        "description": "A health state change of a container."
+      },
+      "EventOut": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/EventKind"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "time"
+        ],
+        "title": "EventOut"
+      },
+      "FieldError": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field",
+          "message"
+        ],
+        "title": "FieldError"
+      },
+      "GroupOut": {
+        "properties": {
+          "project": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "containers": {
+            "items": {
+              "$ref": "#/components/schemas/ContainerOut"
+            },
+            "type": "array",
+            "title": "Containers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project",
+          "label",
+          "containers"
+        ],
+        "title": "GroupOut"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "Health"
+      },
+      "ImportResult": {
+        "properties": {
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "settings": {
+            "type": "integer",
+            "title": "Settings"
+          },
+          "containers_added": {
+            "type": "integer",
+            "title": "Containers Added"
+          },
+          "containers_updated": {
+            "type": "integer",
+            "title": "Containers Updated"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            },
+            "type": "array",
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dry_run",
+          "valid",
+          "settings",
+          "containers_added",
+          "containers_updated",
+          "errors"
+        ],
+        "title": "ImportResult"
+      },
+      "JsonValue": {},
+      "LoginIn": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "title": "Password"
+          },
+          "totp_code": {
+            "type": "string",
+            "maxLength": 16,
+            "title": "Totp Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "password",
+          "totp_code"
+        ],
+        "title": "LoginIn"
+      },
+      "ReleaseSourceIn": {
+        "properties": {
+          "source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "title": "Confirmed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "confirmed"
+        ],
+        "title": "ReleaseSourceIn"
+      },
+      "ReleaseSourceOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "release_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Source"
+          },
+          "source_confirmed": {
+            "type": "boolean",
+            "title": "Source Confirmed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "release_source",
+          "source_confirmed"
+        ],
+        "title": "ReleaseSourceOut"
+      },
+      "SecretState": {
+        "properties": {
+          "github_token": {
+            "type": "string",
+            "enum": [
+              "set",
+              "not set"
+            ],
+            "title": "Github Token"
+          },
+          "ntfy_token": {
+            "type": "string",
+            "enum": [
+              "set",
+              "not set"
+            ],
+            "title": "Ntfy Token"
+          },
+          "llm_api_key": {
+            "type": "string",
+            "enum": [
+              "set",
+              "not set"
+            ],
+            "title": "Llm Api Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "github_token",
+          "ntfy_token",
+          "llm_api_key"
+        ],
+        "title": "SecretState",
+        "description": "Env vars set the secrets. The UI shows only if each one is set."
+      },
+      "Settings": {
+        "properties": {
+          "check_interval_hours": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Check Interval Hours",
+            "default": 24
+          },
+          "restart_count": {
+            "type": "integer",
+            "minimum": 2.0,
+            "title": "Restart Count",
+            "default": 3
+          },
+          "restart_window_minutes": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Restart Window Minutes",
+            "default": 10
+          },
+          "ntfy_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ntfy Url"
+          },
+          "ntfy_topic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[-_A-Za-z0-9]{1,64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ntfy Topic"
+          },
+          "llm_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Url"
+          },
+          "llm_model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Model"
+          },
+          "public_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Url"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Settings",
+        "description": "UI settings. The admin changes them in the UI. Secrets are env vars (`Env`)."
+      },
+      "SettingsOut": {
+        "properties": {
+          "values": {
+            "$ref": "#/components/schemas/Settings"
+          },
+          "secrets": {
+            "$ref": "#/components/schemas/SecretState"
+          }
+        },
+        "type": "object",
+        "required": [
+          "values",
+          "secrets"
+        ],
+        "title": "SettingsOut"
+      },
+      "SetupBeginIn": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "SetupBeginIn"
+      },
+      "SetupBeginOut": {
+        "properties": {
+          "totp_secret": {
+            "type": "string",
+            "title": "Totp Secret"
+          },
+          "otpauth_uri": {
+            "type": "string",
+            "title": "Otpauth Uri"
+          },
+          "qr_svg": {
+            "type": "string",
+            "title": "Qr Svg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totp_secret",
+          "otpauth_uri",
+          "qr_svg"
+        ],
+        "title": "SetupBeginOut"
+      },
+      "SetupFinishIn": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Token"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 12,
+            "title": "Password"
+          },
+          "totp_code": {
+            "type": "string",
+            "maxLength": 16,
+            "title": "Totp Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "password",
+          "totp_code"
+        ],
+        "title": "SetupFinishIn"
+      },
+      "Severity": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "normal"
+        ],
+        "title": "Severity"
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "no check",
+          "no source",
+          "not checked",
+          "up to date",
+          "update",
+          "error"
+        ],
+        "title": "Status"
+      },
+      "UpdateOut": {
+        "properties": {
+          "from_version": {
+            "type": "string",
+            "title": "From Version"
+          },
+          "to_version": {
+            "type": "string",
+            "title": "To Version"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "release_notes": {
+            "type": "string",
+            "title": "Release Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_version",
+          "to_version",
+          "severity",
+          "summary",
+          "release_notes"
+        ],
+        "title": "UpdateOut"
+      }
+    }
+  }
+}

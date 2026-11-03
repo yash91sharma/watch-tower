@@ -216,7 +216,7 @@ Rules:
   - **Test:** with and without an update.
 - [x] **11.3** `GET /api/stream` (SSE): on connect, first send the current `docker` state (6.6). Then send bus events (`container`, `check`, `docker`). Keep-alive comment every 15 s. Headers `Cache-Control: no-cache`, `X-Accel-Buffering: no`. Unsubscribe when the client goes.
   - **Test:** a new client first gets the `docker` state. A container change arrives. Keep-alive (clock). Disconnect removes the subscriber.
-- [ ] **11.4** OpenAPI: typed response models on all routes. `wt openapi` writes the schema. `pnpm gen:api` writes `frontend/src/api/schema.d.ts` (committed). `check.sh` makes both again and fails on a diff.
+- [x] **11.4** OpenAPI: typed response models on all routes. `wt openapi` writes the schema. `pnpm gen:api` writes `frontend/src/api/schema.d.ts` (committed). `check.sh` makes both again and fails on a diff.
   - **Test:** a changed route model with old types makes `check.sh` fail.
 - [ ] **11.5** Contract: schemathesis on all routes, with a session and `FakeDocker`. No 500 errors. Short run on PRs.
   - **Test:** the schemathesis test passes.

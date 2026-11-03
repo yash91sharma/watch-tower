@@ -1,7 +1,7 @@
-"""The `wt` command. Each subcommand that has no code yet is a stub."""
+"""The `wt` command: serve, reset-admin, openapi."""
 
 import argparse
-import sys
+import json
 from collections.abc import Callable, Sequence
 
 import uvicorn
@@ -42,11 +42,17 @@ def reset_admin() -> None:
     print(f"The admin is reset. {reset.NEXT_STEP}")
 
 
-# Subcommand name -> (help text, function). None: not implemented yet.
-COMMANDS: dict[str, tuple[str, Callable[[], None] | None]] = {
+def openapi() -> None:
+    """Write the OpenAPI schema (JSON) to stdout. `pnpm gen:api` makes the TS types from it."""
+    schema = create_app(Env()).openapi()
+    print(json.dumps(schema, indent=2))
+
+
+# Subcommand name -> (help text, function).
+COMMANDS: dict[str, tuple[str, Callable[[], None]]] = {
     "serve": ("Start the API and the workers.", serve),
     "reset-admin": ("Delete the admin password, TOTP and sessions.", reset_admin),
-    "openapi": ("Write the OpenAPI schema to stdout.", None),
+    "openapi": ("Write the OpenAPI schema to stdout.", openapi),
 }
 
 
@@ -62,7 +68,4 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> None:
     """Run the `wt` command. `argv` is for tests. The default is `sys.argv[1:]`."""
     args = build_parser().parse_args(argv)
-    command = COMMANDS[args.command][1]
-    if command is None:
-        sys.exit(f"wt {args.command}: not implemented")
-    command()
+    COMMANDS[args.command][1]()

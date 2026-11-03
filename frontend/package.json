@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "gen:api": "cd ../backend && uv run wt openapi > ../frontend/src/api/openapi.json && cd ../frontend && openapi-typescript src/api/openapi.json -o src/api/schema.d.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

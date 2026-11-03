@@ -8,8 +8,15 @@ from fastapi import APIRouter, Depends
 
 from wt.api import auth, checks, config_file, containers, health, settings, stream
 from wt.api.deps import require_session
+from wt.api.errors import ErrorBody
 
-router = APIRouter(prefix="/api")
+# The OpenAPI schema shows the WT error shape for all errors.
+ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
+    422: {"model": ErrorBody, "description": "Validation error"},
+    "default": {"model": ErrorBody, "description": "Error"},
+}
+
+router = APIRouter(prefix="/api", responses=ERROR_RESPONSES)
 router.include_router(health.router)
 router.include_router(auth.router)
 

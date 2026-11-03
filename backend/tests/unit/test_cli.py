@@ -13,7 +13,6 @@ from fastapi import FastAPI
 from wt.cli import main
 
 SUBCOMMANDS = ["serve", "reset-admin", "openapi"]
-STUBS = ["openapi"]
 
 
 def test_help_lists_subcommands(capsys: pytest.CaptureFixture[str]) -> None:
@@ -24,14 +23,6 @@ def test_help_lists_subcommands(capsys: pytest.CaptureFixture[str]) -> None:
     out = capsys.readouterr().out
     for name in SUBCOMMANDS:
         assert name in out
-
-
-@pytest.mark.parametrize("name", STUBS)
-def test_stub_exits_with_not_implemented(name: str) -> None:
-    with pytest.raises(SystemExit) as exc:
-        main([name])
-
-    assert exc.value.code == f"wt {name}: not implemented"
 
 
 def test_no_subcommand_is_an_error(capsys: pytest.CaptureFixture[str]) -> None:

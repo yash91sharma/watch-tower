@@ -19,6 +19,18 @@ echo "== backend"
   done
 )
 
+echo "== API types"
+# The committed schema and TS types must match the backend. Fix: pnpm gen:api
+tmp=$(mktemp -d)
+(cd backend && uv run wt openapi 2>/dev/null > "$tmp/openapi.json")
+(cd frontend && pnpm exec openapi-typescript "$tmp/openapi.json" -o "$tmp/schema.d.ts" > /dev/null)
+if ! diff -q frontend/src/api/openapi.json "$tmp/openapi.json" > /dev/null \
+  || ! diff -q frontend/src/api/schema.d.ts "$tmp/schema.d.ts" > /dev/null; then
+  echo "The API types are old. Run in frontend/: pnpm gen:api"
+  exit 1
+fi
+echo "API types are up to date"
+
 echo "== frontend"
 (
   cd frontend
