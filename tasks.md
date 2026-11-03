@@ -78,7 +78,7 @@ Rules:
 
 - [x] **4.1** `wt/auth/password.py`: Argon2id hash and verify (19 MiB, 2 iterations, 1 lane). Minimum password length 12.
   - **Test:** params in the hash string, good and bad password, short password.
-- [ ] **4.2** `wt/auth/totp.py`: new secret, provisioning URI (issuer `Watch Tower`), verify with 30 s step and ±1 step window. Check steps -1, 0 and +1 at `clock.now()` and return the matched step (pyotp `verify` gives only a bool). Reject a step ≤ `last_totp_step` (replay).
+- [x] **4.2** `wt/auth/totp.py`: new secret, provisioning URI (issuer `Watch Tower`), verify with 30 s step and ±1 step window. Check steps -1, 0 and +1 at `clock.now()` and return the matched step (pyotp `verify` gives only a bool). Reject a step ≤ `last_totp_step` (replay).
   - **Test:** codes at -1, 0 and +1 steps pass and give the step. ±2 fail. The same code twice fails.
 - [ ] **4.3** `wt/auth/limit.py` login limit: count failures in memory. After 5 failures, block for 15 minutes (time from `clock`). A success resets the count. Setup (4.6) and login (4.7) use it.
   - **Test (clock):** 5 failures block, 15 minutes later it unblocks, a success resets the count.
