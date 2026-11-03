@@ -153,6 +153,10 @@ class Setting(SQLModel, table=True):
     value: Any = Field(sa_column=Column(JSON, nullable=False))
 
 
+# The one admin row always has this id, so that there cannot be two admins.
+ADMIN_ID = 1
+
+
 class Admin(SQLModel, table=True):
     """The one admin. A reset deletes the row."""
 

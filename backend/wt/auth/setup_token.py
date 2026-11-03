@@ -22,6 +22,8 @@ TOKEN_BYTES = 32
 class SetupToken:
     def __init__(self, value: str | None) -> None:
         self.value = value
+        # The TOTP secret from setup begin. Setup finish checks the code against it.
+        self.pending_secret: str | None = None
 
     @classmethod
     def at_start(cls, engine: Engine) -> Self:
@@ -43,3 +45,4 @@ class SetupToken:
     def use(self) -> None:
         """The setup is done. The token does not work again."""
         self.value = None
+        self.pending_secret = None

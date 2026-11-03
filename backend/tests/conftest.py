@@ -49,7 +49,7 @@ async def app(tmp_path: Path) -> AsyncIterator[FastAPI]:
 
 @pytest.fixture
 async def client(app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
-    """An HTTP client for the app."""
+    """An HTTPS client for the app (the session cookie is Secure)."""
     transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://wt") as http:
+    async with httpx.AsyncClient(transport=transport, base_url="https://wt") as http:
         yield http

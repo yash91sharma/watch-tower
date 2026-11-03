@@ -8,6 +8,7 @@ import hmac
 from datetime import timedelta
 
 import pyotp
+import segno
 
 from wt import clock
 
@@ -45,3 +46,8 @@ def verify(secret: str, code: str, last_step: int | None) -> int | None:
         if hmac.compare_digest(expected, code):
             return step
     return None
+
+
+def qr_svg(uri: str) -> str:
+    """The QR code of `uri` as an SVG document."""
+    return segno.make(uri, error="m").svg_inline(scale=5, border=2)

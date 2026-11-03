@@ -86,7 +86,7 @@ Rules:
   - **Test:** WT logs the token once. The token stays the same until use. It fails after use. With an admin, WT makes no token.
 - [x] **4.5** Sessions: random token (32 bytes) in cookie `wt_session` (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`). Store the SHA-256 hash. Expire after 30 days with no use. Each request updates `last_seen` and the expiry.
   - **Test:** cookie flags, expiry (clock), sliding expiry, no plain token in the DB.
-- [ ] **4.6** Setup API:
+- [x] **4.6** Setup API:
   - `GET /api/auth/state` gives `{setup_required, logged_in}`.
   - `POST /api/auth/setup/begin {token}` gives `{totp_secret, otpauth_uri, qr_svg}`. WT keeps the pending secret in memory.
   - `POST /api/auth/setup/finish {token, password, totp_code}` checks the code against the pending secret, saves the admin with the matched step as `last_totp_step`, clears the token and sets a session cookie (4.5).
