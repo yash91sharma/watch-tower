@@ -92,7 +92,7 @@ Rules:
   - `POST /api/auth/setup/finish {token, password, totp_code}` checks the code against the pending secret, saves the admin with the matched step as `last_totp_step`, clears the token and sets a session cookie (4.5).
   - Compare tokens in constant time. Wrong token: 403 and a failure for the limit (4.3). While the limit blocks: 429 with `Retry-After`. Admin exists: 409.
   - **Test:** full flow, wrong token, wrong code, second setup, 429 when blocked, the setup code fails at login (replay).
-- [ ] **4.7** `POST /api/auth/login {password, totp_code}`: one error message for all failures. Each failure counts for the limit (4.3). While the limit blocks: 429 with `Retry-After`.
+- [x] **4.7** `POST /api/auth/login {password, totp_code}`: one error message for all failures. Each failure counts for the limit (4.3). While the limit blocks: 429 with `Retry-After`.
   - **Test:** good login, wrong password, wrong code, 6th attempt gets 429, login works after 15 minutes.
 - [ ] **4.8** `POST /api/auth/logout`: delete the session row and the cookie.
   - **Test:** the old cookie gets 401.

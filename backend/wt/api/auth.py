@@ -1,15 +1,15 @@
-"""Auth routes: state, first setup, login and logout. No session is needed for them."""
+"""Auth routes: state, first setup and login. No session is needed for them."""
 
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, HTTPException, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select, update
 
 from wt.api.deps import Ctx
 from wt.auth import sessions, totp
-from wt.auth.password import MIN_LENGTH, hash_password
+from wt.auth.password import MIN_LENGTH, hash_password, verify_password
 from wt.context import AppContext
 from wt.db.models import ADMIN_ID, Admin
 
@@ -112,3 +112,45 @@ def setup_finish(body: SetupFinishIn, ctx: Ctx, response: Response) -> AuthState
     ctx.login_limit.success()
     sessions.set_cookie(response, sessions.create_session(ctx.engine))
     return AuthState(setup_required=False, logged_in=True)
+
+
+class LoginIn(BaseModel):
+    password: str = Field(max_length=1024)
+    totp_code: str = Field(max_length=16)
+
+
+LOGIN_FAILED = "The password or the TOTP code is not correct"
+
+
+@router.post("/login")
+def login(body: LoginIn, ctx: Ctx, response: Response) -> AuthState:
+    """Log in with the password and a TOTP code. All failures give the same message."""
+    check_limit(ctx)
+    with Session(ctx.engine) as session:
+        admin = session.get(Admin, ADMIN_ID)
+    if admin is None:
+        raise HTTPException(409, "Set up the admin first")
+
+    # Check both, so that the time does not show which one failed.
+    password_ok = verify_password(admin.password_hash, body.password)
+    step = totp.verify(admin.totp_secret, body.totp_code, admin.last_totp_step)
+    if not password_ok or step is None or not _use_step(ctx, step):
+        ctx.login_limit.failure()
+        raise HTTPException(401, LOGIN_FAILED)
+
+    ctx.login_limit.success()
+    sessions.set_cookie(response, sessions.create_session(ctx.engine))
+    return AuthState(setup_required=False, logged_in=True)
+
+
+def _use_step(ctx: AppContext, step: int) -> bool:
+    """Save the TOTP step. False if a parallel login used this step or a newer one."""
+    statement = (
+        update(Admin)
+        .where(col(Admin.id) == ADMIN_ID, col(Admin.last_totp_step) < step)
+        .values(last_totp_step=step)
+    )
+    with Session(ctx.engine) as session:
+        result = session.exec(statement)
+        session.commit()
+    return result.rowcount == 1
