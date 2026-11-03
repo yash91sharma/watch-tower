@@ -1,0 +1,21 @@
+# Build context of the WT image: only the files that the image needs (an allowlist).
+# So no secrets (.env*, keys), no .git, no local deps (node_modules, .venv, .pnpm-store)
+# and no tests go to the Docker daemon.
+*
+!backend/pyproject.toml
+!backend/uv.lock
+!backend/wt/
+!frontend/
+
+# Not needed or built again in the image.
+**/__pycache__
+**/.env*
+**/*.pem
+**/*.key
+backend/wt/static
+frontend/node_modules
+frontend/dist
+frontend/coverage
+frontend/src/test
+frontend/**/*.test.ts
+frontend/**/*.test.tsx

@@ -280,7 +280,7 @@ Rules:
 
 - [ ] **15.1** `Dockerfile` (multi-stage): Node 24 and pnpm build the frontend. `python:3.14-slim` runs the backend (`uv sync`, no dev deps, bytecode compiled at build). Non-root user owns `/data`. Venv `bin` on `PATH`. Port 8000. `HEALTHCHECK` calls `/api/health` with Python. `ENTRYPOINT ["wt"]`, `CMD ["serve"]`. OCI labels: source, version, revision. Pinned base images.
   - **Test:** the image builds. 16.21 tests it.
-- [ ] **15.2** `.dockerignore`: `.git`, `.env*`, `node_modules`, `.venv`, tests.
+- [x] **15.2** `.dockerignore`: `.git`, `.env*`, `node_modules`, `.venv`, tests.
   - **Test:** the build context has no secrets.
 - [ ] **15.3** `compose.yaml`: the design example, plus `restart: unless-stopped` and commented Traefik labels.
   - **Test:** `docker compose config` passes.
