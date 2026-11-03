@@ -174,7 +174,7 @@ Rules:
   - **Test:** table tests. Hypothesis: the generator makes a release list that has a valid latest version (not a draft, not a pre-release) above the running version. The result is a sorted subset that contains the latest.
 - [x] **9.4** `wt/versions/github.py`: httpx client, base URL `WT_GITHUB_API_URL`, headers `Accept: application/vnd.github+json`, `X-GitHub-Api-Version`, `User-Agent`, `Authorization: Bearer` if the token is set. Timeout 30 s. `latest(repo, etag)` gives a release, `not modified` (304) or `no release` (404). `releases(repo)` gets one page, `per_page=100`.
   - **Test (respx):** 200, 304 with ETag, 404, timeout, bad JSON.
-- [ ] **9.5** Rate limit: 403 or 429 with `x-ratelimit-remaining: 0`, or a `Retry-After` header, raises `RateLimited(reset_at)`. The check run waits until the reset time (through `clock`), then continues.
+- [x] **9.5** Rate limit: 403 or 429 with `x-ratelimit-remaining: 0`, or a `Retry-After` header, raises `RateLimited(reset_at)`. The check run waits until the reset time (through `clock`), then continues.
   - **Test (respx, clock):** the run waits, then finishes.
 - [ ] **9.6** Repo cache: save ETag, latest tag, release list and fetch time in `repo_cache`. Get the release list only when the latest tag changes. A failed fetch, or a latest tag that is not a version (9.1), saves the error text. A good fetch clears it.
   - **Test:** a second run with 304 makes no release list call. A 404 saves an error. A latest tag `nightly` saves an error.
