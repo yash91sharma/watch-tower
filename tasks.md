@@ -114,7 +114,7 @@ Rules:
 
 ## 6. Docker access
 
-- [ ] **6.1** Docker test fixtures. Busybox images in `e2e/fakes/containers/`: healthy, unhealthy, restart loop, JSON logs (stdout and stderr), TTY, `latest` tag, excluded (`wt.enable=false`), versioned with `org.opencontainers.image.source`. All containers start healthy and stay running:
+- [x] **6.1** Docker test fixtures. Busybox images in `e2e/fakes/containers/`: healthy, unhealthy, restart loop, JSON logs (stdout and stderr), TTY, `latest` tag, excluded (`wt.enable=false`), versioned with `org.opencontainers.image.source`. All containers start healthy and stay running:
   - Unhealthy image: healthy while `/tmp/ok` exists (made at start). A test removes it with `docker exec`.
   - Restart loop image (`restart: on-failure`): a test writes K to `/tmp/crash` with `docker exec`. The container exits on the next K starts, then runs.
   - Each test sets its container back to healthy at the end.
