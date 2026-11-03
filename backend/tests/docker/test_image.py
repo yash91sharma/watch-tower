@@ -1,8 +1,10 @@
-"""The WT image (Dockerfile, task 15.1): it builds and has the expected config."""
+"""The WT image (Dockerfile, tasks 15.1 and 16.21): config, CVE scan, run checks, amd64."""
 
 import json
 import shutil
 import subprocess
+import time
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -67,3 +69,101 @@ def test_the_image_has_the_frontend_the_bytecode_and_a_data_dir(
     )
     assert run_python(code) == "True True True"
     assert "serve" in docker("run", "--rm", IMAGE, "--help")
+
+
+# Task 16.21: image checks.
+TRIVY_IMAGE = "aquasec/trivy:0.58.1"
+RUN_NAME = "wt_test_image"
+
+
+def test_trivy_finds_no_high_or_critical_cve(image: dict[str, Any]) -> None:
+    assert image
+    docker(
+        "run",
+        "--rm",
+        "-v",
+        "/var/run/docker.sock:/var/run/docker.sock",
+        TRIVY_IMAGE,
+        "image",
+        "--quiet",
+        "--exit-code",
+        "1",
+        "--severity",
+        "HIGH,CRITICAL",
+        "--ignore-unfixed",
+        IMAGE,
+    )
+
+
+@pytest.fixture(scope="module")
+def running(image: dict[str, Any]) -> Iterator[str]:
+    """The image as compose.yaml runs it: read-only, /tmp tmpfs, a data volume."""
+    assert image
+    # No old container is fine.
+    subprocess.run([_DOCKER, "rm", "-f", RUN_NAME], capture_output=True, check=False)
+    docker(
+        "run",
+        "-d",
+        "--name",
+        RUN_NAME,
+        "--label",
+        "wt.enable=false",
+        "--read-only",
+        "--tmpfs",
+        "/tmp",  # noqa: S108 (a path in the container)
+        "--security-opt",
+        "no-new-privileges:true",
+        "-v",
+        "wt_test_image_data:/data",
+        # The same health command, checked often, so that the test is fast.
+        "--health-interval",
+        "2s",
+        IMAGE,
+    )
+    yield RUN_NAME
+    docker("stop", RUN_NAME)
+
+
+def test_the_healthcheck_passes(running: str) -> None:
+    status = ""
+    for _ in range(60):
+        status = docker("inspect", "-f", "{{.State.Health.Status}}", running)
+        if status == "healthy":
+            break
+        time.sleep(1)
+    assert status == "healthy"
+
+
+def test_only_data_and_tmp_are_writable(running: str) -> None:
+    code = (
+        "import os\n"
+        "for d in ['/', '/app', '/app/wt', '/usr', '/etc', '/data', '/tmp']:\n"
+        "    try:\n"
+        "        open(os.path.join(d, 'wt-write-test'), 'w').close()\n"
+        "        os.remove(os.path.join(d, 'wt-write-test'))\n"
+        "        print(d)\n"
+        "    except OSError:\n"
+        "        pass\n"
+    )
+    writable = docker("exec", running, "python", "-c", code).split()
+
+    assert writable == ["/data", "/tmp"]  # noqa: S108 (paths in the container)
+
+
+def test_the_amd64_image_starts() -> None:
+    # The host is arm64 (or amd64): build the other one too. Docker emulates it.
+    docker(
+        "build",
+        "--quiet",
+        "--platform",
+        "linux/amd64",
+        "-t",
+        f"{IMAGE}-amd64",
+        str(REPO),
+    )
+
+    output = docker(
+        "run", "--rm", "--platform", "linux/amd64", f"{IMAGE}-amd64", "--help"
+    )
+
+    assert "serve" in output

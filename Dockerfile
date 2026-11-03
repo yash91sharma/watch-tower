@@ -30,7 +30,9 @@ ARG REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/yash91sharma/watch-tower" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
-RUN useradd --system --user-group --uid 10001 --no-create-home --home-dir /nonexistent wt \
+# WT does not need pip at run time. Its vendored packages (urllib3, msgpack) had CVEs.
+RUN python -m pip uninstall --yes --quiet pip \
+    && useradd --system --user-group --uid 10001 --no-create-home --home-dir /nonexistent wt \
     && install -d -o wt -g wt -m 700 /data
 COPY --from=backend /app /app
 ENV PATH="/app/.venv/bin:${PATH}" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
