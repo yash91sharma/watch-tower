@@ -1,0 +1,44 @@
+{
+  "name": "wt_dev",
+  "build": { "dockerfile": "Dockerfile" },
+  "runArgs": ["--name=wt_dev", "--cpus=6","--add-host=host.docker.internal:host-gateway"],
+  "remoteUser": "dev",
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "mounts": [
+    // Host Docker for testcontainers and E2E. Test containers run on the host Docker.
+    // Name test containers "wt_test_<suffix>", so that they are easy to find and remove.
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    // Deps and caches on volumes, not on the slow macOS bind mount.
+    "source=wt_dev_venv,target=/workspace/backend/.venv,type=volume",
+    "source=wt_dev_node_modules,target=/workspace/frontend/node_modules,type=volume",
+    "source=wt_dev_uv_cache,target=/home/dev/.cache/uv,type=volume",
+    "source=wt_dev_pnpm_store,target=/home/dev/.local/share/pnpm,type=volume"
+  ],
+  "containerEnv": {
+    "UV_LINK_MODE": "copy",
+    "UV_COMPILE_BYTECODE": "1",
+    "UV_PYTHON_DOWNLOADS": "never",
+    "PNPM_HOME": "/home/dev/.local/share/pnpm",
+    "TESTCONTAINERS_HOST_OVERRIDE": "host.docker.internal",
+    "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE": "/var/run/docker.sock"
+  },
+  // Runs on create and on each start. It syncs deps from the lock files.
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "ms-pyright.pyright",
+        "dbaeumer.vscode-eslint",
+        "vitest.explorer"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/workspace/backend/.venv/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.cwd": "/workspace/backend"
+      }
+    }
+  }
+}

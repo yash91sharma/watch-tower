@@ -1,0 +1,8 @@
+#!/bin/sh
+# Runs the checks and tests in the wt_dev container before each commit.
+# Works from the host and from inside wt_dev. Skip once with: git commit --no-verify
+if ! docker exec wt_dev true 2>/dev/null; then
+  echo "pre-commit: wt_dev is not running. Start the dev container, then commit again."
+  exit 1
+fi
+exec docker exec -u dev wt_dev bash /workspace/.devcontainer/check.sh
