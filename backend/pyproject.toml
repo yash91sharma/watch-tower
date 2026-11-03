@@ -5,6 +5,13 @@ description = "Watch Tower backend"
 requires-python = ">=3.14"
 dependencies = []
 
+[project.scripts]
+wt = "wt.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14"]
+build-backend = "uv_build"
+
 [dependency-groups]
 dev = [
     "pyright",
@@ -14,7 +21,11 @@ dev = [
 ]
 
 [tool.uv]
-package = false
+package = true
+
+[tool.uv.build-backend]
+# The package is at backend/wt/, not at backend/src/wt/.
+module-root = ""
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
