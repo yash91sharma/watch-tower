@@ -7,3 +7,8 @@ export const containersQuery = queryOptions({
   queryKey: ["containers"],
   queryFn: async () => unwrap(await api.GET("/api/containers")),
 });
+
+export const checkStatusQuery = queryOptions({
+  queryKey: ["checks", "status"],
+  queryFn: async () => unwrap(await api.GET("/api/checks/status")),
+});

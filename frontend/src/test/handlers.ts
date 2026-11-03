@@ -6,4 +6,5 @@ export const handlers: HttpHandler[] = [
   // The admin is logged in, so the auth guard opens the app.
   http.get("*/api/auth/state", () => HttpResponse.json({ setup_required: false, logged_in: true })),
   http.get("*/api/containers", () => HttpResponse.json([])),
+  http.get("*/api/checks/status", () => HttpResponse.json({ running: false, last_run: null, counts: {} })),
 ];

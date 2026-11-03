@@ -6,6 +6,7 @@ import { Link } from "react-router";
 import { containersQuery } from "@/api/queries";
 import type { components } from "@/api/schema";
 import { HealthBadge, SeverityBadge } from "@/components/badges";
+import { CheckNow } from "@/components/CheckNow";
 import { FormError } from "@/components/FormError";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -16,7 +17,10 @@ export function ContainersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Containers</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold">Containers</h1>
+        <CheckNow />
+      </div>
       {data === undefined ? (
         error ? (
           <FormError error={error} />

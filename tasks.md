@@ -244,7 +244,7 @@ Rules:
   - **Test:** a container event updates the list. A reconnect refetches. The banner shows and hides.
 - [x] **13.7** Containers page: groups in API order (11.1). Row: name, state, health badge (`none` shows `no healthcheck`), running tag, latest version, status, severity badge. Loading, empty and error states.
   - **Test:** groups in API order, each status, empty and error states.
-- [ ] **13.8** "Check now" button and last check time. The button is off during a run.
+- [x] **13.8** "Check now" button and last check time. The button is off during a run.
   - **Test:** a click starts a run. The button is off during the run.
 - [ ] **13.9** Container page: state, health, events of the last 7 days, link to logs.
   - **Test:** renders MSW data.
