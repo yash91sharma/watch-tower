@@ -1,11 +1,13 @@
 """The shared objects of the app. The lifespan (wt.main) makes them."""
 
 from collections.abc import Callable, Coroutine
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from sqlalchemy import Engine
 
+from wt.auth.limit import LoginLimit
+from wt.auth.setup_token import SetupToken
 from wt.bus import Bus
 from wt.config import Env
 
@@ -17,6 +19,8 @@ class AppContext:
     env: Env
     engine: Engine
     bus: Bus
+    setup_token: SetupToken
+    login_limit: LoginLimit = field(default_factory=LoginLimit)
 
 
 # A worker runs until WT stops it (task cancel).

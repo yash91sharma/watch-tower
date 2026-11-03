@@ -75,6 +75,7 @@ async def test_lifespan_opens_the_db(tmp_path: Path) -> None:
     async with app.router.lifespan_context(app):
         ctx: AppContext = app.state.ctx
         assert ctx.bus.subscriber_count == 0
+        assert ctx.setup_token.value is not None
         with Session(ctx.engine) as session:
             assert session.get(Host, 1) is not None
 

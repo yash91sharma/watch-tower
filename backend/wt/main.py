@@ -17,6 +17,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from wt import api
 from wt.api import errors, static
 from wt.api.headers import SecurityHeadersMiddleware
+from wt.auth.setup_token import SetupToken
 from wt.bus import Bus
 from wt.config import Env
 from wt.context import AppContext, Worker
@@ -43,7 +44,12 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         engine = open_db(env.data_dir)
-        ctx = AppContext(env=env, engine=engine, bus=Bus())
+        ctx = AppContext(
+            env=env,
+            engine=engine,
+            bus=Bus(),
+            setup_token=SetupToken.at_start(engine),
+        )
         app.state.ctx = ctx
         tasks = [asyncio.create_task(_run_worker(worker, ctx)) for worker in workers]
         try:
