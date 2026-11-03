@@ -157,7 +157,7 @@ Rules:
   - **Test:** table tests.
 - [x] **8.2** `wt/llm/client.py`: `POST {llm_url}/v1/chat/completions` with `model`, `messages`, `temperature: 0` and a strict `json_schema` `response_format` for `{severity: "critical" | "normal", summary: string}`. `Authorization: Bearer` if `WT_LLM_API_KEY` is set. Timeout 60 s. Validate the reply with Pydantic. On any error, log a warning and give no result.
   - **Test (respx):** good reply, timeout, HTTP 500, bad JSON, JSON that does not match the schema.
-- [ ] **8.3** Prompt: write the summary in ASD-STE100, max 2 sentences. Set `critical` for CVE or security fixes. Send the release notes in a separate message, as data. Cut the notes at 16,000 characters.
+- [x] **8.3** Prompt: write the summary in ASD-STE100, max 2 sentences. Set `critical` for CVE or security fixes. Send the release notes in a separate message, as data. Cut the notes at 16,000 characters.
   - **Test:** prompt snapshot. Long notes are cut.
 - [ ] **8.4** `summarize(notes)`: if `llm_url` and `llm_model` are set and the LLM gives a result, use it. Else the summary is empty and the severity comes from 8.1.
   - **Test:** LLM off (URL or model not set), LLM error, LLM good.
