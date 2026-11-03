@@ -266,7 +266,7 @@ Rules:
   - **Test:** save, field errors, secret state.
 - [x] **13.18** Export and import. Export downloads the JSON. Import sends the file text to the dry run (5.4), shows the counts and errors, asks to confirm, then sends it to save.
   - **Test:** export, dry run then confirm, bad file error.
-- [ ] **13.19** Accessibility: a label on each input, visible focus, keyboard use, color contrast in both modes.
+- [x] **13.19** Accessibility: a label on each input, visible focus, keyboard use, color contrast in both modes.
   - **Test:** component tests find elements by role and label.
 
 ## 14. PWA

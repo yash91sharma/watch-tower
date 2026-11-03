@@ -127,6 +127,11 @@
   body {
     @apply bg-background text-foreground;
     }
+  /* A clear focus outline for native controls (links, select, checkbox, the log list).
+     The shadcn components use their own ring. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-foreground;
+    }
   html {
     @apply font-sans;
     }
