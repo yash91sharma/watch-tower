@@ -180,7 +180,7 @@ Rules:
   - **Test:** a second run with 304 makes no release list call. A 404 saves an error. A latest tag `nightly` saves an error.
 - [x] **9.7** Status (computed on read from tag, source and `repo_cache`, so it stays after a restart): `no check`, `no source`, `not checked`, `up to date`, `update`, `error`.
   - **Test:** each status.
-- [ ] **9.8** Check run `wt/versions/check.py`: take enabled containers with a version tag and a source. One call per repo. One run at a time (lock). Save the last run time and the status counts in `setting`.
+- [x] **9.8** Check run `wt/versions/check.py`: take enabled containers with a version tag and a source. One call per repo. One run at a time (lock). Save the last run time and the status counts in `setting`.
   - **Test (respx):** 2 containers on one repo make 1 call. A second run during a run does not start.
 - [ ] **9.9** Update rows: for an update, upsert `update` by (container, to_version). New row: add release notes, severity and summary (8.4). Existing row: keep `notified_at`. If `from_version` changed, set it and make the release notes, severity and summary again (8.4). The current update of a container is the row with `to_version` = latest tag, when the status is `update`. One function gives it. 10.4, 11.1 and 11.2 use it.
   - **Test:** a second run makes no new row and no LLM call. A new running version makes new notes, one LLM call and no new message. Old rows are not current.
