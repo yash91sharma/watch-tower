@@ -303,7 +303,7 @@ Rules:
   - Helpers: setup token from the WT log, TOTP codes, ntfy messages (JSON poll API), fake GitHub releases, M = 1 minute through settings, age a session row (`docker exec` with Python `sqlite3`), restart WT.
   - **Test:** a sample spec runs on all projects.
 - [x] **16.6** Flow 1, setup: token from the log, password, TOTP.
-- [ ] **16.7** Flow 2, login: login, logout, wrong password, wrong TOTP, login limit (then restart WT to clear it), session expiry.
+- [x] **16.7** Flow 2, login: login, logout, wrong password, wrong TOTP, login limit (then restart WT to clear it), session expiry.
 - [ ] **16.8** Flow 3, container list: Compose groups, excluded container absent, `latest` shows `no check`.
 - [ ] **16.9** Flow 4, release source: value from the label, admin edits and confirms it.
 - [ ] **16.10** Flow 5, Check now: add one release on fake GitHub. Versions, notes and summary show. ntfy gets one message with the WT link. A second run sends nothing.

@@ -28,6 +28,8 @@ export default defineConfig({
     {
       name: "flows",
       testMatch: ["sample.spec.ts", "flows/**/*.spec.ts"],
+      // A login can wait up to 30 s for a new TOTP step. WT restarts and checks take time too.
+      timeout: 120_000,
       use: { ...devices["Desktop Chrome"] },
     },
     ...BROWSERS.flatMap((browserName) =>
