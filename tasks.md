@@ -43,7 +43,7 @@ Rules:
   - **Test:** a log of the config object shows no secret value.
 - [x] **2.4** `wt/db/`: SQLite at `{WT_DATA_DIR}/wt.db`, `check_same_thread=False` (FastAPI runs sync code in threads). A SQLAlchemy `connect` listener sets WAL, `foreign_keys=ON` and `busy_timeout` on each connection. Sync SQLModel sessions. Make the data dir at start. DB file mode 600.
   - **Test:** pragmas on each new connection, file mode, use from a second thread.
-- [ ] **2.5** Tables. `container` has `host_id` (FK to `host`). `update` and `event` link to `container`.
+- [x] **2.5** Tables. `container` has `host_id` (FK to `host`). `update` and `event` link to `container`.
   - `container`: id (PK), host_id, name, docker_id, compose_project, image, tag, enabled, release_source, source_confirmed. `docker_id`, `image` and `tag` can be null (an import adds rows before Docker sees them). Unique (host_id, name). Keep the row when the container is removed, so that admin values stay after a recreate.
   - `repo_cache`: repo (PK), etag, latest_tag, releases (JSON), fetched_at, error.
   - `update`: id (PK), container_id, from_version, to_version, severity, summary, release_notes, notified_at. Unique (container_id, to_version).
