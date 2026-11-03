@@ -13,13 +13,20 @@ from sqlalchemy import Engine
 from sqlmodel import Session, col, select
 
 from wt import clock
-from wt.config import Env
+from wt.config import Env, load_settings
 from wt.db import LOCAL_HOST_ID
-from wt.db.models import Container, RepoCache, Setting
+from wt.db.models import Container, RepoCache, Setting, Update
 from wt.docker.inventory import Inventory
-from wt.versions.cache import refresh_repo
+from wt.llm.summary import Summary, summarize
+from wt.versions.cache import cached_releases, refresh_repo
 from wt.versions.github import GitHub
-from wt.versions.rules import container_status, is_version_tag
+from wt.versions.rules import (
+    Status,
+    container_status,
+    is_version_tag,
+    join_notes,
+    release_range,
+)
 
 # The setting row with the last run time and the status counts.
 CHECK_STATUS_KEY = "check_status"
@@ -74,8 +81,84 @@ class CheckRunner:
                     await refresh_repo(self._engine, github, repo)
             finally:
                 await github.close()
+            await self._update_rows(rows)
             await asyncio.to_thread(_save_status, self._engine, rows)
         return True
+
+    async def _update_rows(self, rows: list[Container]) -> None:
+        """Add or change the update row of each container with an update."""
+        settings = await asyncio.to_thread(load_settings, self._engine)
+        for plan in await asyncio.to_thread(_plan_updates, self._engine, rows):
+            summary = await summarize(plan.notes, settings, self._env.llm_api_key)
+            await asyncio.to_thread(_save_update, self._engine, plan, summary)
+
+
+def current_update(session: Session, container: Container) -> Update | None:
+    """The current update of a container: the row for the latest tag, while the status is
+    "update". Older rows are not current.
+    """
+    cache = session.get(RepoCache, container.release_source or "")
+    status = container_status(container.tag, container.release_source, cache)
+    if status is not Status.UPDATE or cache is None or container.id is None:
+        return None
+    return _update_row(session, container.id, cache.latest_tag or "")
+
+
+@dataclass(frozen=True)
+class _UpdatePlan:
+    container_id: int
+    from_version: str
+    to_version: str
+    notes: str
+
+
+def _plan_updates(engine: Engine, rows: list[Container]) -> list[_UpdatePlan]:
+    """The updates that need new notes: new rows, and rows with a new running version."""
+    plans: list[_UpdatePlan] = []
+    with Session(engine) as session:
+        for row in rows:
+            cache = session.get(RepoCache, row.release_source or "")
+            status = container_status(row.tag, row.release_source, cache)
+            if (
+                status is not Status.UPDATE
+                or cache is None
+                or row.id is None
+                or row.tag is None
+            ):
+                continue
+            latest = cache.latest_tag or ""
+            existing = _update_row(session, row.id, latest)
+            if existing is not None and existing.from_version == row.tag:
+                continue
+            releases = release_range(cached_releases(cache), row.tag, latest)
+            plans.append(_UpdatePlan(row.id, row.tag, latest, join_notes(releases)))
+    return plans
+
+
+def _save_update(engine: Engine, plan: _UpdatePlan, summary: Summary) -> None:
+    """Add the row, or change it. A changed row keeps notified_at (no new message)."""
+    with Session(engine) as session:
+        row = _update_row(session, plan.container_id, plan.to_version) or Update(
+            container_id=plan.container_id,
+            from_version=plan.from_version,
+            to_version=plan.to_version,
+            severity=summary.severity,
+            release_notes=plan.notes,
+        )
+        row.from_version = plan.from_version
+        row.release_notes = plan.notes
+        row.severity = summary.severity
+        row.summary = summary.summary
+        session.add(row)
+        session.commit()
+
+
+def _update_row(session: Session, container_id: int, to_version: str) -> Update | None:
+    return session.exec(
+        select(Update).where(
+            Update.container_id == container_id, Update.to_version == to_version
+        )
+    ).first()
 
 
 def _live_rows(engine: Engine, names: list[str]) -> list[Container]:

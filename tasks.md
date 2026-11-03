@@ -182,7 +182,7 @@ Rules:
   - **Test:** each status.
 - [x] **9.8** Check run `wt/versions/check.py`: take enabled containers with a version tag and a source. One call per repo. One run at a time (lock). Save the last run time and the status counts in `setting`.
   - **Test (respx):** 2 containers on one repo make 1 call. A second run during a run does not start.
-- [ ] **9.9** Update rows: for an update, upsert `update` by (container, to_version). New row: add release notes, severity and summary (8.4). Existing row: keep `notified_at`. If `from_version` changed, set it and make the release notes, severity and summary again (8.4). The current update of a container is the row with `to_version` = latest tag, when the status is `update`. One function gives it. 10.4, 11.1 and 11.2 use it.
+- [x] **9.9** Update rows: for an update, upsert `update` by (container, to_version). New row: add release notes, severity and summary (8.4). Existing row: keep `notified_at`. If `from_version` changed, set it and make the release notes, severity and summary again (8.4). The current update of a container is the row with `to_version` = latest tag, when the status is `update`. One function gives it. 10.4, 11.1 and 11.2 use it.
   - **Test:** a second run makes no new row and no LLM call. A new running version makes new notes, one LLM call and no new message. Old rows are not current.
 - [ ] **9.10** Scheduler: an asyncio loop runs a check when `last run + interval` is past (no last run: now). It also runs on "Check now". It wakes on `settings`.
   - **Test (clock):** runs at the interval. A new interval takes effect. No run at start when not due.
