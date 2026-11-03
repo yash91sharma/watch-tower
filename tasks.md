@@ -98,7 +98,7 @@ Rules:
   - **Test:** the old cookie gets 401.
 - [x] **4.9** Auth guard: one dependency on a protected `/api` router. All routes except `/api/health` and `/api/auth/*` go on this router.
   - **Test:** a dummy route on the router gives 401 with no cookie. A test reads all registered `/api` routes. Each route not in the list gives 401 with no cookie. Later routes (SSE, `logs.txt`) get this test automatically.
-- [ ] **4.10** `wt reset-admin`: delete the password, TOTP secret and all sessions. Print "Restart WT (docker restart wt). Then get the setup token from the WT log."
+- [x] **4.10** `wt reset-admin`: delete the password, TOTP secret and all sessions. Print "Restart WT (docker restart wt). Then get the setup token from the WT log."
   - **Test:** after a reset and a restart, `/api/auth/state` gives `setup_required`, old sessions get 401, WT logs a new token, the login limit is clear.
 
 ## 5. Settings and config

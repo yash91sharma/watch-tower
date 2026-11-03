@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from wt.cli import main
 
 SUBCOMMANDS = ["serve", "reset-admin", "openapi"]
-STUBS = ["reset-admin", "openapi"]
+STUBS = ["openapi"]
 
 
 def test_help_lists_subcommands(capsys: pytest.CaptureFixture[str]) -> None:

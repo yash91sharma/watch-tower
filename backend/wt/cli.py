@@ -6,7 +6,9 @@ from collections.abc import Callable, Sequence
 
 import uvicorn
 
+from wt.auth import reset
 from wt.config import Env, configure_logging
+from wt.db import open_db
 from wt.main import create_app
 
 PORT = 8000
@@ -30,10 +32,20 @@ def serve() -> None:
     )
 
 
+def reset_admin() -> None:
+    """Delete the admin password, TOTP secret and all sessions."""
+    engine = open_db(Env().data_dir)
+    try:
+        reset.reset_admin(engine)
+    finally:
+        engine.dispose()
+    print(f"The admin is reset. {reset.NEXT_STEP}")
+
+
 # Subcommand name -> (help text, function). None: not implemented yet.
 COMMANDS: dict[str, tuple[str, Callable[[], None] | None]] = {
     "serve": ("Start the API and the workers.", serve),
-    "reset-admin": ("Delete the admin password, TOTP and sessions.", None),
+    "reset-admin": ("Delete the admin password, TOTP and sessions.", reset_admin),
     "openapi": ("Write the OpenAPI schema to stdout.", None),
 }
 
