@@ -176,7 +176,7 @@ Rules:
   - **Test (respx):** 200, 304 with ETag, 404, timeout, bad JSON.
 - [x] **9.5** Rate limit: 403 or 429 with `x-ratelimit-remaining: 0`, or a `Retry-After` header, raises `RateLimited(reset_at)`. The check run waits until the reset time (through `clock`), then continues.
   - **Test (respx, clock):** the run waits, then finishes.
-- [ ] **9.6** Repo cache: save ETag, latest tag, release list and fetch time in `repo_cache`. Get the release list only when the latest tag changes. A failed fetch, or a latest tag that is not a version (9.1), saves the error text. A good fetch clears it.
+- [x] **9.6** Repo cache: save ETag, latest tag, release list and fetch time in `repo_cache`. Get the release list only when the latest tag changes. A failed fetch, or a latest tag that is not a version (9.1), saves the error text. A good fetch clears it.
   - **Test:** a second run with 304 makes no release list call. A 404 saves an error. A latest tag `nightly` saves an error.
 - [ ] **9.7** Status (computed on read from tag, source and `repo_cache`, so it stays after a restart): `no check`, `no source`, `not checked`, `up to date`, `update`, `error`.
   - **Test:** each status.

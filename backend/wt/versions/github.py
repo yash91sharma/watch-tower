@@ -37,17 +37,17 @@ class Fetched:
     etag: str | None
 
 
-class _NotModified:
+class NotModified:
     """304: the latest release did not change since the ETag."""
 
 
-class _NoRelease:
+class NoRelease:
     """404: the repo has no release (or does not exist)."""
 
 
-NOT_MODIFIED = _NotModified()
-NO_RELEASE = _NoRelease()
-Latest = Fetched | _NotModified | _NoRelease
+NOT_MODIFIED = NotModified()
+NO_RELEASE = NoRelease()
+Latest = Fetched | NotModified | NoRelease
 
 
 class _ReleaseJson(BaseModel):
