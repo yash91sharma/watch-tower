@@ -136,7 +136,7 @@ Rules:
   - **Test:** Docker test: start and stop a test container, get the events. A `destroy` with an old `docker_id` keeps the new container.
 - [x] **6.6** Connection: at start and when the stream stops, publish `docker` disconnected, wait with backoff (1 s, doubles, max 60 s, through `clock`), connect, list all again, publish `docker` connected. Keep the current connection state in memory (11.3 reads it).
   - **Test:** a fake stream that fails twice. Docker test: restart the socket proxy, the inventory syncs.
-- [ ] **6.7** Log reader: `logs(name, tail, since, follow)` gives `LogLine(time, stream, text)`. Request timestamps. Split stdout and stderr from the multiplexed stream. A TTY container has one raw stream: all lines are `stdout`. If aiodocker drops the stream type, parse the 8-byte frame header.
+- [x] **6.7** Log reader: `logs(name, tail, since, follow)` gives `LogLine(time, stream, text)`. Request timestamps. Split stdout and stderr from the multiplexed stream. A TTY container has one raw stream: all lines are `stdout`. If aiodocker drops the stream type, parse the 8-byte frame header.
   - **Test:** Docker test: tail, since, follow, stderr lines, TTY container.
 
 ## 7. Health

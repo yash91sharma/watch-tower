@@ -2,6 +2,7 @@
 
 import asyncio
 from collections.abc import AsyncIterator
+from datetime import datetime
 
 from wt.docker.client import (
     ContainerInfo,
@@ -9,6 +10,7 @@ from wt.docker.client import (
     ContainerSummary,
     DockerEvent,
     DockerUnavailableError,
+    LogLine,
 )
 
 
@@ -18,6 +20,8 @@ class FakeDocker:
         # True: each call fails as if Docker is not there.
         self.fail = False
         self._events: asyncio.Queue[DockerEvent | None] = asyncio.Queue()
+        # Container name -> its log lines.
+        self.log_lines: dict[str, list[LogLine]] = {}
 
     # Test controls.
 
@@ -59,6 +63,19 @@ class FakeDocker:
         self._check()
         while (event := await self._events.get()) is not None:
             yield event
+
+    async def logs(
+        self, container_id: str, tail: int | None, since: datetime | None, follow: bool
+    ) -> AsyncIterator[LogLine]:
+        self._check()
+        info = self.containers.get(container_id)
+        lines = self.log_lines.get(info.name if info else container_id, [])
+        if since is not None:
+            lines = [line for line in lines if line.time is None or line.time >= since]
+        if tail is not None:
+            lines = lines[-tail:] if tail else []
+        for line in lines:
+            yield line
 
     async def close(self) -> None:
         return None
