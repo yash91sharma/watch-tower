@@ -246,7 +246,7 @@ Rules:
   - **Test:** groups in API order, each status, empty and error states.
 - [x] **13.8** "Check now" button and last check time. The button is off during a run.
   - **Test:** a click starts a run. The button is off during the run.
-- [ ] **13.9** Container page: state, health, events of the last 7 days, link to logs.
+- [x] **13.9** Container page: state, health, events of the last 7 days, link to logs.
   - **Test:** renders MSW data.
 - [ ] **13.10** Release source form: show the value, edit it, confirm it. Show "not confirmed" until the admin confirms.
   - **Test:** edit, confirm, clear, backend error.

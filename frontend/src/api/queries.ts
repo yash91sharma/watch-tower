@@ -12,3 +12,10 @@ export const checkStatusQuery = queryOptions({
   queryKey: ["checks", "status"],
   queryFn: async () => unwrap(await api.GET("/api/checks/status")),
 });
+
+export function containerQuery(name: string) {
+  return queryOptions({
+    queryKey: ["containers", name],
+    queryFn: async () => unwrap(await api.GET("/api/containers/{name}", { params: { path: { name } } })),
+  });
+}
