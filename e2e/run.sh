@@ -18,4 +18,6 @@ docker run --name wt_test_playwright --label wt.enable=false --network wt_test_e
 rm -rf playwright-report test-results
 docker cp wt_test_playwright:/e2e/playwright-report playwright-report > /dev/null 2>&1 || true
 docker cp wt_test_playwright:/e2e/test-results test-results > /dev/null 2>&1 || true
+# Screenshot baselines (new ones after --update-snapshots). Git keeps them.
+docker cp wt_test_playwright:/e2e/specs/checks/visual.spec.ts-snapshots specs/checks/ > /dev/null 2>&1 || true
 exit "$status"

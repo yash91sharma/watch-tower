@@ -1,0 +1,53 @@
+// Visual (task 16.19): screenshots of the main pages in light and dark mode, at desktop and
+// phone width (the iphone project; pixel has the same width class, so it skips them).
+// The baselines come from the Playwright image: bash e2e/run.sh --update-snapshots
+// The containers screenshot covers only the E2E group. Times are masked.
+import { expect, type Page, test } from "@playwright/test";
+
+import { useSession } from "../../helpers/admin";
+
+const MODES = ["light", "dark"] as const;
+
+test.beforeEach(({}, testInfo) => {
+  test.skip(testInfo.project.name.endsWith("-pixel"), "The iphone project covers the phone width");
+});
+
+async function open(page: Page, path: string, heading: string, colorScheme: (typeof MODES)[number]) {
+  await page.emulateMedia({ colorScheme });
+  await page.goto(path);
+  await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+  await expect(page.getByText("Loading", { exact: false })).toHaveCount(0);
+}
+
+for (const colorScheme of MODES) {
+  test(`login page, ${colorScheme}`, async ({ page }) => {
+    await open(page, "/login", "Log in", colorScheme);
+
+    await expect(page).toHaveScreenshot(`login-${colorScheme}.png`, { fullPage: true });
+  });
+}
+
+test.describe("logged in", () => {
+  useSession();
+
+  for (const colorScheme of MODES) {
+    test(`containers, ${colorScheme}`, async ({ page }) => {
+      await open(page, "/", "Containers", colorScheme);
+
+      await expect(page.getByRole("region", { name: "wt_test_e2e" })).toHaveScreenshot(`containers-${colorScheme}.png`);
+    });
+
+    test(`container page, ${colorScheme}`, async ({ page }) => {
+      await open(page, "/containers/wt_test_e2e_healthy", "wt_test_e2e_healthy", colorScheme);
+      const events = page.getByRole("region", { name: "Events (last 7 days)" });
+
+      await expect(page).toHaveScreenshot(`container-${colorScheme}.png`, { fullPage: true, mask: [events] });
+    });
+
+    test(`settings, ${colorScheme}`, async ({ page }) => {
+      await open(page, "/settings", "Settings", colorScheme);
+
+      await expect(page).toHaveScreenshot(`settings-${colorScheme}.png`, { fullPage: true });
+    });
+  }
+});
