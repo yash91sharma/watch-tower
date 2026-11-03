@@ -1,6 +1,7 @@
 """Version rules (pure): tag filter, update rule and release range."""
 
 import re
+from dataclasses import dataclass
 
 # Optional "v", numbers with dots, optional "-suffix" (for example "-alpine", "-r0-ls104").
 _VERSION_TAG = re.compile(r"[vV]?(\d+(?:\.\d+)*)(?:-[0-9A-Za-z._-]+)?")
@@ -34,3 +35,50 @@ def is_update(running: str, latest: str) -> bool:
 
 def _pad(parts: tuple[int, ...], width: int) -> tuple[int, ...]:
     return parts + (0,) * (width - len(parts))
+
+
+@dataclass(frozen=True)
+class Release:
+    """A GitHub release."""
+
+    tag: str
+    notes: str
+    draft: bool = False
+    prerelease: bool = False
+
+
+def release_range(releases: list[Release], running: str, latest: str) -> list[Release]:
+    """The releases after the running version, up to the latest. Newest first.
+
+    Drafts, pre-releases and tags that are not versions are dropped.
+    """
+    low, high = version_parts(running), version_parts(latest)
+    kept = [
+        release
+        for release in releases
+        if not release.draft
+        and not release.prerelease
+        and is_version_tag(release.tag)
+        and _compare(version_parts(release.tag), low) > 0
+        and _compare(version_parts(release.tag), high) <= 0
+    ]
+    return sorted(kept, key=lambda release: _sort_key(release.tag), reverse=True)
+
+
+def join_notes(releases: list[Release]) -> str:
+    """The notes of all releases, with one heading per version."""
+    sections = [
+        f"## {release.tag}\n\n{release.notes.strip()}".strip() for release in releases
+    ]
+    return "\n\n".join(sections)
+
+
+def _compare(first: tuple[int, ...], second: tuple[int, ...]) -> int:
+    width = max(len(first), len(second))
+    a, b = _pad(first, width), _pad(second, width)
+    return (a > b) - (a < b)
+
+
+def _sort_key(tag: str) -> tuple[int, ...]:
+    # Enough width for any version: compare with zeros added.
+    return _pad(version_parts(tag), 16)

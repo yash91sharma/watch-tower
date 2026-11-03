@@ -170,7 +170,7 @@ Rules:
   - **Test:** table tests.
 - [x] **9.2** Update rule: remove a leading `v` and any `-suffix` from both. Split into number parts. Short form: if the running version has fewer parts and they match the first parts of the latest, no update (`16` and `16.4` match `16.4.1`). Else pad with 0 and compare as numbers. Update only if the latest is higher (`1.2.0` = `1.2`).
   - **Test:** table tests: design cases, `1.2.0` vs `1.2`, running newer than latest. Hypothesis: no crash, same input gives same result, equal versions give no update.
-- [ ] **9.3** Release range: drop drafts, pre-releases and tags that are not versions. Keep versions above the running version, up to the latest (number compare). Sort newest first. Join the notes with one heading per version.
+- [x] **9.3** Release range: drop drafts, pre-releases and tags that are not versions. Keep versions above the running version, up to the latest (number compare). Sort newest first. Join the notes with one heading per version.
   - **Test:** table tests. Hypothesis: the generator makes a release list that has a valid latest version (not a draft, not a pre-release) above the running version. The result is a sorted subset that contains the latest.
 - [ ] **9.4** `wt/versions/github.py`: httpx client, base URL `WT_GITHUB_API_URL`, headers `Accept: application/vnd.github+json`, `X-GitHub-Api-Version`, `User-Agent`, `Authorization: Bearer` if the token is set. Timeout 30 s. `latest(repo, etag)` gives a release, `not modified` (304) or `no release` (404). `releases(repo)` gets one page, `per_page=100`.
   - **Test (respx):** 200, 304 with ETag, 404, timeout, bad JSON.
