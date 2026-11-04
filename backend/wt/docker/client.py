@@ -34,12 +34,6 @@ class ContainerNotFoundError(Exception):
 
 
 @dataclass(frozen=True)
-class ContainerSummary:
-    id: str
-    name: str
-
-
-@dataclass(frozen=True)
 class ContainerInfo:
     id: str
     # With no leading "/".
@@ -69,7 +63,9 @@ class DockerEvent:
 class DockerApi(Protocol):
     async def ping(self) -> None: ...
 
-    async def list_containers(self) -> list[ContainerSummary]: ...
+    async def container_ids(self) -> list[str]:
+        """The ids of all containers, also the stopped ones."""
+        ...
 
     async def inspect(self, container_id: str) -> ContainerInfo: ...
 
@@ -84,12 +80,6 @@ class DockerApi(Protocol):
         ...
 
     async def close(self) -> None: ...
-
-
-def container_summary(data: Mapping[str, Any]) -> ContainerSummary:
-    """From an item of GET /containers/json."""
-    names: list[str] = data.get("Names") or [""]
-    return ContainerSummary(id=data["Id"], name=container_name(names[0]))
 
 
 def container_info(data: Mapping[str, Any]) -> ContainerInfo:
@@ -154,10 +144,10 @@ class DockerClient:
         with _errors():
             await self._docker.version()
 
-    async def list_containers(self) -> list[ContainerSummary]:
+    async def container_ids(self) -> list[str]:
         with _errors():
             containers = await self._docker.containers.list(all=True)
-        return [container_summary(container._container) for container in containers]  # pyright: ignore[reportPrivateUsage]
+        return [container.id for container in containers]
 
     async def inspect(self, container_id: str) -> ContainerInfo:
         with _errors():

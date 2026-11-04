@@ -7,7 +7,6 @@ from datetime import datetime
 from wt.docker.client import (
     ContainerInfo,
     ContainerNotFoundError,
-    ContainerSummary,
     DockerEvent,
     DockerUnavailableError,
     LogLine,
@@ -47,11 +46,9 @@ class FakeDocker:
     async def ping(self) -> None:
         self._check()
 
-    async def list_containers(self) -> list[ContainerSummary]:
+    async def container_ids(self) -> list[str]:
         self._check()
-        return [
-            ContainerSummary(info.id, info.name) for info in self.containers.values()
-        ]
+        return list(self.containers)
 
     async def inspect(self, container_id: str) -> ContainerInfo:
         self._check()

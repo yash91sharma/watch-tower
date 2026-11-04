@@ -14,7 +14,10 @@ async def test_ping_list_and_inspect_through_the_proxy(
     client = DockerClient(PROXY_URL.replace("http://", "tcp://"))
     try:
         await client.ping()
-        names = {summary.name for summary in await client.list_containers()}
+        names = {
+            (await client.inspect(container_id)).name
+            for container_id in await client.container_ids()
+        }
         healthy = await client.inspect("wt_test_healthy")
         versioned = await client.inspect(docker_env["wt_test_versioned"])
     finally:

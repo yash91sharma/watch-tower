@@ -13,11 +13,9 @@ from wt.docker import client
 from wt.docker.client import (
     ContainerInfo,
     ContainerNotFoundError,
-    ContainerSummary,
     DockerEvent,
     DockerUnavailableError,
     container_info,
-    container_summary,
     docker_event,
 )
 from wt.docker.fake import FakeDocker
@@ -62,12 +60,6 @@ def test_container_with_no_healthcheck_and_no_labels() -> None:
         "none",
         {},
         False,
-    )
-
-
-def test_container_summary_from_list() -> None:
-    assert container_summary({"Id": "abc", "Names": ["/web"]}) == ContainerSummary(
-        "abc", "web"
     )
 
 
@@ -121,7 +113,7 @@ async def test_fake_docker_has_the_same_calls() -> None:
     fake.add(info)
 
     await fake.ping()
-    assert await fake.list_containers() == [ContainerSummary("abc123", "web")]
+    assert await fake.container_ids() == ["abc123"]
     assert await fake.inspect("abc123") == info
     assert await fake.inspect("web") == info
     with pytest.raises(ContainerNotFoundError):

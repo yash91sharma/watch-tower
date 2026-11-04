@@ -51,9 +51,9 @@ class Inventory:
     async def sync_all(self, docker: DockerApi) -> list[ContainerInfo]:
         """List and inspect all containers. Replace the live state. Give the infos."""
         infos: list[ContainerInfo] = []
-        for summary in await docker.list_containers():
+        for container_id in await docker.container_ids():
             try:
-                infos.append(await docker.inspect(summary.id))
+                infos.append(await docker.inspect(container_id))
             except ContainerNotFoundError:
                 continue  # Removed after the list.
         self._live = {}

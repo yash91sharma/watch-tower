@@ -39,14 +39,13 @@ class Message:
 
 
 def update_message(update: UpdateInfo, public_url: str | None) -> Message:
-    return Message(
+    return _updates_message(
+        [update],
         title=_ascii(
             f"Update: {update.name} {update.from_version} -> {update.to_version}"
         ),
-        body=_short(update.summary or "Release notes are available"),
-        tags=_update_tags([update]),
+        body=update.summary or "Release notes are available",
         click=_click(public_url, f"/containers/{quote(update.name)}"),
-        priority=_update_priority([update]),
     )
 
 
@@ -56,12 +55,11 @@ def digest_message(updates: list[UpdateInfo], public_url: str | None) -> Message
         + (" (critical)" if update.severity is Severity.CRITICAL else "")
         for update in updates
     ]
-    return Message(
+    return _updates_message(
+        updates,
         title=f"{len(updates)} updates",
-        body=_short("\n".join(lines)),
-        tags=_update_tags(updates),
+        body="\n".join(lines),
         click=_click(public_url, "/"),
-        priority=_update_priority(updates),
     )
 
 
@@ -76,19 +74,18 @@ def health_message(name: str, kind: EventKind, public_url: str | None) -> Messag
     )
 
 
-def _update_priority(updates: list[UpdateInfo]) -> str:
-    """High if one of the updates is critical."""
-    return (
-        "high"
-        if any(update.severity is Severity.CRITICAL for update in updates)
-        else "default"
+def _updates_message(
+    updates: list[UpdateInfo], title: str, body: str, click: str | None
+) -> Message:
+    """If one of the updates is critical: high priority and a warning tag."""
+    critical = any(update.severity is Severity.CRITICAL for update in updates)
+    return Message(
+        title=title,
+        body=_short(body),
+        tags=("warning", "package") if critical else ("package",),
+        click=click,
+        priority="high" if critical else "default",
     )
-
-
-def _update_tags(updates: list[UpdateInfo]) -> tuple[str, ...]:
-    if any(update.severity is Severity.CRITICAL for update in updates):
-        return ("warning", "package")
-    return ("package",)
 
 
 def _click(public_url: str | None, path: str) -> str | None:
