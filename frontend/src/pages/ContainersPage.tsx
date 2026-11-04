@@ -11,7 +11,7 @@ import { HealthBadge, SeverityBadge, StatusBadge } from "@/components/badges";
 import { CheckNow } from "@/components/CheckNow";
 import { FormError } from "@/components/FormError";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 
 type Group = components["schemas"]["GroupOut"];
 
@@ -66,7 +66,6 @@ export function ContainersPage() {
 
 function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; onToggle: () => void }) {
   const id = useId();
-  const count = group.containers.length;
   return (
     <section aria-labelledby={id} className="rounded-xl border bg-card shadow-xs">
       <div className="flex items-center gap-2 px-2 py-1">
@@ -86,46 +85,46 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
           </button>
         </h2>
         <span className="pr-2 text-sm text-muted-foreground">
-          {count} {count === 1 ? "container" : "containers"}
+          {plural(group.containers.length, "container", "containers")}
         </span>
       </div>
       <div id={`${id}-table`} hidden={!open} className="border-t px-2 pb-1">
         <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>State</TableHead>
-            <TableHead>Health</TableHead>
-            <TableHead>Running</TableHead>
-            <TableHead>Latest</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Severity</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {group.containers.map((item) => (
-            <TableRow key={item.name}>
-              <TableCell>
-                <Link className="font-medium underline-offset-4 hover:underline" to={`/containers/${item.name}`}>
-                  {item.name}
-                </Link>
-              </TableCell>
-              <TableCell>{item.state}</TableCell>
-              <TableCell>
-                <HealthBadge health={item.health} />
-              </TableCell>
-              <TableCell>{item.tag ?? "-"}</TableCell>
-              <TableCell>{item.latest_version ?? "-"}</TableCell>
-              <TableCell>
-                <StatusBadge status={item.status} />
-              </TableCell>
-              <TableCell>
-                <SeverityBadge severity={item.severity} />
-              </TableCell>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>State</TableHead>
+              <TableHead>Health</TableHead>
+              <TableHead>Running</TableHead>
+              <TableHead>Latest</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Severity</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {group.containers.map((item) => (
+              <TableRow key={item.name}>
+                <TableCell>
+                  <Link className="font-medium underline-offset-4 hover:underline" to={`/containers/${item.name}`}>
+                    {item.name}
+                  </Link>
+                </TableCell>
+                <TableCell>{item.state}</TableCell>
+                <TableCell>
+                  <HealthBadge health={item.health} />
+                </TableCell>
+                <TableCell>{item.tag ?? "-"}</TableCell>
+                <TableCell>{item.latest_version ?? "-"}</TableCell>
+                <TableCell>
+                  <StatusBadge status={item.status} />
+                </TableCell>
+                <TableCell>
+                  <SeverityBadge severity={item.severity} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </section>
   );

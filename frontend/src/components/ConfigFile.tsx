@@ -8,8 +8,7 @@ import { settingsQuery } from "@/api/queries";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
-
-const plural = (count: number, one: string, many: string) => `${String(count)} ${count === 1 ? one : many}`;
+import { plural } from "@/lib/utils";
 
 export function ConfigFile() {
   const queryClient = useQueryClient();
