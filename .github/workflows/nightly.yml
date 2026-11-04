@@ -1,0 +1,29 @@
+# Nightly checks (task 17.2): mutation score, LLM eval (Ollama, small model), footprint and
+# a long schemathesis run. Each job runs .devcontainer/ci.sh <job> in the dev image.
+# Start it by hand with "Run workflow" (workflow_dispatch).
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: ${{ matrix.job }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        job: [mutation, llm-eval, footprint, schemathesis-long]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/dev-run
+        with:
+          job: ${{ matrix.job }}

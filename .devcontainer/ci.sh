@@ -33,6 +33,21 @@ case "${1:-}" in
     (cd frontend && pnpm audit --audit-level high)
     (cd e2e && pnpm audit --audit-level high)
     ;;
+  # Nightly jobs (.github/workflows/nightly.yml, task 17.2).
+  mutation) bash .devcontainer/mutation.sh ;;
+  footprint) FOOTPRINT=1 bash e2e/run.sh --project footprint ;;
+  schemathesis-long) (cd backend && WT_SCHEMATHESIS_EXAMPLES=500 uv run pytest -q tests/contract) ;;
+  llm-eval)
+    # Ollama with a small model, on the test network (this container joins it).
+    docker network create wt_test_net > /dev/null 2>&1 || true
+    docker network connect wt_test_net "$(hostname)" > /dev/null 2>&1 || true
+    docker rm -f wt_test_ollama > /dev/null 2>&1 || true
+    docker run -d --name wt_test_ollama --label wt.enable=false --network wt_test_net \
+      ollama/ollama:0.9.6 > /dev/null
+    until docker exec wt_test_ollama ollama list > /dev/null 2>&1; do sleep 1; done
+    docker exec wt_test_ollama ollama pull qwen2.5:3b
+    (cd backend && WT_EVAL_LLM_URL=http://wt_test_ollama:11434 uv run pytest -q -n0 -m llm_eval)
+    ;;
   *)
     echo "Unknown job: ${1:-} (see the case list in this script)"
     exit 2
