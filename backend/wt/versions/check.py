@@ -118,11 +118,17 @@ def current_update(session: Session, container: Container) -> Update | None:
     """The current update of a container: the row for the latest tag, while the status is
     "update". Older rows are not current.
     """
-    cache = session.get(RepoCache, container.release_source or "")
-    status = container_status(container.tag, container.release_source, cache)
-    if status is not Status.UPDATE or cache is None or container.id is None:
+    cache = _update_cache(session, container)
+    if cache is None or container.id is None:
         return None
     return _update_row(session, container.id, cache.latest_tag or "")
+
+
+def _update_cache(session: Session, container: Container) -> RepoCache | None:
+    """The repo cache of the container, if its status is "update". Else None."""
+    cache = session.get(RepoCache, container.release_source or "")
+    status = container_status(container.tag, container.release_source, cache)
+    return cache if status is Status.UPDATE else None
 
 
 @dataclass(frozen=True)
@@ -138,14 +144,8 @@ def _plan_updates(engine: Engine, rows: list[Container]) -> list[_UpdatePlan]:
     plans: list[_UpdatePlan] = []
     with Session(engine) as session:
         for row in rows:
-            cache = session.get(RepoCache, row.release_source or "")
-            status = container_status(row.tag, row.release_source, cache)
-            if (
-                status is not Status.UPDATE
-                or cache is None
-                or row.id is None
-                or row.tag is None
-            ):
+            cache = _update_cache(session, row)
+            if cache is None or row.id is None or row.tag is None:
                 continue
             latest = cache.latest_tag or ""
             existing = _update_row(session, row.id, latest)
