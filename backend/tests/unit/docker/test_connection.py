@@ -122,3 +122,32 @@ async def test_listener_gets_the_infos_after_each_sync(
         await asyncio.gather(task, return_exceptions=True)
 
     assert synced == [["web"]]
+
+
+async def test_each_connect_is_logged(
+    db_engine: Engine, clock: FakeClock, caplog: pytest.LogCaptureFixture
+) -> None:
+    # The log shows "not available" at a failure, so it must also show the connect after it.
+    fake = FakeDocker()
+    attempts = 0
+
+    def make_client() -> FakeDocker:
+        nonlocal attempts
+        attempts += 1
+        fake.fail = attempts == 1
+        return fake
+
+    inventory, bus, state = Inventory(db_engine), Bus(), DockerState()
+    subscription = bus.subscribe([Topic.DOCKER])
+    caplog.set_level("INFO", logger="wt.docker.connection")
+    task = asyncio.create_task(keep_connected(make_client, inventory, bus, state))
+    try:
+        while not await next_docker_state(subscription):
+            pass
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+    messages = [(r.levelname, r.getMessage()) for r in caplog.records]
+    assert messages[0][0] == "WARNING"
+    assert messages[1] == ("INFO", "Connected to Docker")

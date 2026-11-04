@@ -45,6 +45,7 @@ async def keep_connected(
             infos = await inventory.sync_all(client)
             if listener is not None:
                 listener.on_sync(infos)
+            log.info("Connected to Docker")
             _set(state, bus, connected=True)
             delay = FIRST_DELAY
             await follow_events(client, inventory, bus, listener)
