@@ -131,8 +131,10 @@ async def test_a_failed_send_goes_out_on_the_next_run(
 
 async def test_a_stale_row_is_not_sent(db_engine: Engine, clock: FakeClock) -> None:
     add_update(db_engine, clock, "web", to="1.1")
-    with respx.mock(assert_all_called=False):
-        route = respx.post(f"{NTFY}/wt").mock(return_value=httpx.Response(200))
+    # The route goes on this router. respx.post() would add it to the global router, and
+    # it would stay there for the next tests.
+    with respx.mock(assert_all_called=False) as mock:
+        route = mock.post(f"{NTFY}/wt").mock(return_value=httpx.Response(200))
 
         await notify_updates(db_engine, ENV)
 
