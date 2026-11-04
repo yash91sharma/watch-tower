@@ -26,15 +26,20 @@ def sse(message: Message) -> str:
     return f"event: {message.topic.value}\ndata: {json.dumps(dict(message.data))}\n\n"
 
 
+def sse_response(events: AsyncGenerator[str]) -> StreamingResponse:
+    """An SSE response. No cache, and no buffer in a reverse proxy."""
+    return StreamingResponse(
+        events,
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 @router.get("/stream", response_class=StreamingResponse)
 async def stream(ctx: Ctx) -> StreamingResponse:
     subscription = ctx.bus.subscribe(TOPICS)
     first = Message(Topic.DOCKER, {"connected": ctx.docker_state.connected})
-    return StreamingResponse(
-        _events(subscription, first),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
+    return sse_response(_events(subscription, first))
 
 
 async def _events(subscription: Subscription, first: Message) -> AsyncGenerator[str]:

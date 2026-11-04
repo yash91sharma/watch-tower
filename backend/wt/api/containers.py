@@ -15,8 +15,9 @@ from sqlmodel import Session, col, select
 
 from wt import clock
 from wt.api.deps import Ctx
+from wt.api.stream import sse_response
 from wt.context import AppContext
-from wt.db import LOCAL_HOST_ID
+from wt.db import find_container
 from wt.db.models import Container, Event, EventKind, RepoCache, Severity
 from wt.docker.client import DockerUnavailableError
 from wt.docker.inventory import LiveContainer
@@ -41,14 +42,18 @@ class ReleaseSourceOut(BaseModel):
 
 def get_container(session: Session, name: str) -> Container:
     """The container row by name. 404 if WT does not know it or it is excluded."""
-    row = session.exec(
-        select(Container).where(
-            Container.host_id == LOCAL_HOST_ID, Container.name == name
-        )
-    ).first()
+    row = find_container(session, name)
     if row is None or not row.enabled:
         raise HTTPException(404, f"No container {name!r}")
     return row
+
+
+def get_live(ctx: AppContext, name: str) -> LiveContainer:
+    """The live state of a container. 404 if it is not in Docker now."""
+    live = ctx.inventory.get(name)
+    if live is None:
+        raise HTTPException(404, f"No container {name!r}")
+    return live
 
 
 @router.put("/{name}/release-source")
@@ -105,7 +110,7 @@ def container_out(
 ) -> ContainerOut:
     cache = session.get(RepoCache, row.release_source or "")
     status = container_status(row.tag, row.release_source, cache)
-    known = status in (Status.UPDATE, Status.UP_TO_DATE) and cache is not None
+    known = status in (Status.UPDATE, Status.UP_TO_DATE)
     update = current_update(session, row)
     health = live.health if live.health in get_args(Health) else "none"
     return ContainerOut(
@@ -115,7 +120,7 @@ def container_out(
         image=row.image,
         tag=row.tag,
         status=status,
-        latest_version=cache.latest_tag if known and cache else None,
+        latest_version=cache.latest_tag if cache and known else None,
         severity=update.severity if update else None,
         release_source=row.release_source,
         source_confirmed=row.source_confirmed,
@@ -132,11 +137,7 @@ def list_containers(ctx: Ctx) -> list[GroupOut]:
     with Session(ctx.engine) as session:
         for name in ctx.inventory.names():
             live = ctx.inventory.get(name)
-            row = session.exec(
-                select(Container).where(
-                    Container.host_id == LOCAL_HOST_ID, Container.name == name
-                )
-            ).first()
+            row = find_container(session, name)
             if live is None or row is None or not row.enabled:
                 continue
             groups.setdefault(row.compose_project, []).append(
@@ -181,11 +182,9 @@ class ContainerDetail(ContainerOut):
 @router.get("/{name}")
 def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
     """One container with its current update and its events. 404 if it is not in Docker now."""
-    live = ctx.inventory.get(name)
     with Session(ctx.engine) as session:
         row = get_container(session, name)
-        if live is None or row.id is None:
-            raise HTTPException(404, f"No container {name!r}")
+        live = get_live(ctx, name)
         update = current_update(session, row)
         since = clock.now() - timedelta(days=EVENT_DAYS)
         events = session.exec(
@@ -215,10 +214,7 @@ def _live_container(ctx: AppContext, name: str) -> LiveContainer:
     """The live state of a container that is not excluded. 404 if it is not in Docker now."""
     with Session(ctx.engine) as session:
         get_container(session, name)
-    live = ctx.inventory.get(name)
-    if live is None:
-        raise HTTPException(404, f"No container {name!r}")
-    return live
+    return get_live(ctx, name)
 
 
 @router.get("/{name}/logs", response_class=StreamingResponse)
@@ -252,11 +248,7 @@ async def container_logs(
         finally:
             await docker.close()
 
-    return StreamingResponse(
-        events(),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
+    return sse_response(events())
 
 
 @router.get("/{name}/logs.txt", response_class=StreamingResponse)
