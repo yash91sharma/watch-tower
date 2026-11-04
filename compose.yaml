@@ -12,7 +12,7 @@ services:
     restart: unless-stopped
 
   wt:
-    image: ghcr.io/yash91sharma/watch-tower:latest
+    image: docker.io/yash91sharma/watch-tower:latest
     container_name: wt
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375

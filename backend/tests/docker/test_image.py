@@ -1,4 +1,4 @@
-"""The WT image (Dockerfile, tasks 15.1 and 16.21): config, CVE scan, run checks, amd64."""
+"""The WT image (Dockerfile, tasks 15.1 and 16.21): config, CVE scan, run checks."""
 
 import json
 import shutil
@@ -148,22 +148,3 @@ def test_only_data_and_tmp_are_writable(running: str) -> None:
     writable = docker("exec", running, "python", "-c", code).split()
 
     assert writable == ["/data", "/tmp"]  # noqa: S108 (paths in the container)
-
-
-def test_the_amd64_image_starts() -> None:
-    # The host is arm64 (or amd64): build the other one too. Docker emulates it.
-    docker(
-        "build",
-        "--quiet",
-        "--platform",
-        "linux/amd64",
-        "-t",
-        f"{IMAGE}-amd64",
-        str(REPO),
-    )
-
-    output = docker(
-        "run", "--rm", "--platform", "linux/amd64", f"{IMAGE}-amd64", "--help"
-    )
-
-    assert "serve" in output

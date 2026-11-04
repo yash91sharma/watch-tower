@@ -316,13 +316,16 @@ Rules:
 - [x] **16.18** Accessibility: `@axe-core/playwright` on each page. No serious or critical issues.
 - [x] **16.19** Visual: screenshots of the main pages at desktop and phone width, light and dark mode. The containers page screenshot covers only the E2E project group. Baselines from the Playwright image.
 - [x] **16.20** PWA (Playwright): valid manifest, service worker registers, app shell loads offline, `/api` not cached.
-- [x] **16.21** Image: Trivy finds no high or critical CVE. The user is not root. The healthcheck passes. Only `/data` and `/tmp` are writable. `linux/arm64` and `linux/amd64` start.
+- [x] **16.21** Image: Trivy finds no high or critical CVE. The user is not root. The healthcheck passes. Only `/data` and `/tmp` are writable. The image is `linux/arm64` only.
 - [x] **16.22** Footprint (run by hand): with 50 test containers, WT idle RAM < 200 MB (`docker stats`). After 5 s of a log stream at 1,000 lines/s, a click on pause updates the UI in < 200 ms.
 - [x] **16.23** Mutation (run by hand): mutmut on `versions/`, `health/`, `notify/` (pytest with `-n0`, 1.5). Score ≥ 80%.
 
 ## 17. CI
 
-Dropped for now: no CI/CD (no GitHub workflows, no Dependabot, no branch protection). The pre-commit hook runs `check.sh`. The other tests run by hand (see "By hand" in `design_doc.md`).
+Only the release workflow. No other workflows, no Dependabot, no branch protection. The pre-commit hook runs `check.sh`. The other tests run by hand (see "By hand" in `design_doc.md`).
+
+- [x] **17.1** Release workflow `.github/workflows/release.yml`: a `v*` tag builds `linux/arm64` on a GitHub ARM runner and pushes `docker.io/yash91sharma/watch-tower:<version>` and `:latest`. The token comes from the repo secret `DOCKERHUB_TOKEN`. Pin all actions by commit SHA.
+  - **Test:** `tests/unit/test_release_workflow.py` checks the trigger, the platform, the tags, the secret, the SHA pins and the `compose.yaml` image.
 
 ## 18. Release v0.0.0
 
@@ -330,14 +333,14 @@ Dropped for now: no CI/CD (no GitHub workflows, no Dependabot, no branch protect
 - [x] **18.2** Security review: no secrets in code, logs, tests or Git history. Check cookie flags, auth guard, trusted proxies, security headers, socket proxy GET only.
 - [ ] **18.3** Deploy to prod (OrbStack, M2) behind Traefik and Tailscale. Idle RAM < 200 MB.
 - [ ] **18.4** Manual test of all CUJs on desktop, iPhone (PWA) and Android (PWA). Record the result in the PR.
-- [ ] **18.5** Version `0.0.0` in `pyproject.toml` and `package.json`. Tag `v0.0.0`. Build both architectures and push `ghcr.io/yash91sharma/watch-tower:0.0.0` and `:latest` by hand. Write the release notes.
+- [ ] **18.5** Version `0.0.0` in `pyproject.toml` and `package.json`. Add the repo secret `DOCKERHUB_TOKEN`. Push the tag `v0.0.0`. Check that the release workflow pushes `docker.io/yash91sharma/watch-tower:0.0.0` and `:latest`. Write the release notes.
 - [ ] **18.6** Add the v0.0.0 DB dump to `tests/fixtures/db/`.
 
 ## CUJ coverage
 
 | CUJ | Tasks | E2E |
 |---|---|---|
-| Deploy WT with compose and env vars | 15.1-15.5, 18.3, 18.5 | 16.21 |
+| Deploy WT with compose and env vars | 15.1-15.5, 17.1, 18.3, 18.5 | 16.21 |
 | First setup: token, password, TOTP | 4.1-4.6, 13.4 | Flow 1 |
 | Log in, log out, login limit, session expiry | 4.3, 4.5, 4.7-4.9, 13.3, 13.5 | Flow 2 |
 | See containers by Compose project, with state and health | 6.3-6.5, 11.1, 11.2, 13.7, 13.9 | Flow 3 |

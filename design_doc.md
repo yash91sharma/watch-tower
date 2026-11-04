@@ -129,9 +129,9 @@ One process runs the API and the workers. Uvicorn runs 1 worker, because the wor
 ### Repository
 
  - Source: https://github.com/yash91sharma/watch-tower (public). Default branch: `main`.
- - Image: `ghcr.io/yash91sharma/watch-tower`. Tags: version (`0.0.0`) and `latest`.
- - No CI/CD for now. The pre-commit hook runs `check.sh`. Docker, E2E, image, mutation, footprint and LLM eval tests run by hand in `wt_dev`.
- - Releases: tag `v*`, then build and push the image by hand (`docker buildx`, both architectures).
+ - Image: `docker.io/yash91sharma/watch-tower` (Docker Hub). Tags: version (`0.0.0`) and `latest`.
+ - CI/CD: only the release workflow (`.github/workflows/release.yml`). The pre-commit hook runs `check.sh`. Docker, E2E, image, mutation, footprint and LLM eval tests run by hand in `wt_dev`.
+ - Releases: push a tag `v*`. The release workflow builds the `linux/arm64` image and pushes it to Docker Hub. The repo secret `DOCKERHUB_TOKEN` holds the Docker Hub token.
 
 ### Code layout
 
@@ -153,7 +153,7 @@ backend/wt/
 backend/tests/   unit/, integration/, contract/
 frontend/src/    React app, *.test.tsx next to each component
 e2e/             Playwright specs, compose.test.yaml, fakes/ (GitHub, LLM, test containers)
-Dockerfile, compose.yaml
+Dockerfile, compose.yaml, .github/workflows/release.yml
 ```
 
 ### Data model
@@ -252,7 +252,7 @@ The container key is (`host_id`, name). Compose makes a new Docker id on each re
 ### Deploy
 
  - One image, multi-stage build: Node builds the frontend, `python:3.14-slim` runs the backend. FastAPI serves the static files.
- - Multi-arch: `linux/arm64` and `linux/amd64`. Built and pushed to GHCR by hand.
+ - Architecture: `linux/arm64` only. The release workflow builds it on a GitHub ARM runner and pushes it to Docker Hub.
  - Non-root user, `no-new-privileges`, read-only root filesystem. Writable: `/data` and a `/tmp` tmpfs.
  - Healthcheck: `GET /api/health` (no auth).
  - The socket proxy is on an internal network with no published port.
@@ -268,7 +268,7 @@ services:
     tmpfs: [/run]
     networks: [docker]
   wt:
-    image: ghcr.io/yash91sharma/watch-tower
+    image: docker.io/yash91sharma/watch-tower
     container_name: wt
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
