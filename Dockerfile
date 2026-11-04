@@ -3,7 +3,7 @@
 # Build: docker build --build-arg VERSION=0.0.0 --build-arg REVISION=$(git rev-parse HEAD) .
 FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
 
-FROM node:24.22.2-trixie-slim AS frontend
+FROM node:26.13.0-trixie-slim AS frontend
 ARG PNPM_VERSION=12.16.1
 RUN npm install -g pnpm@${PNPM_VERSION} && npm cache clean --force
 WORKDIR /frontend
