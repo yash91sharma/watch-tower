@@ -6,7 +6,7 @@ import { Link, useParams } from "react-router";
 import { containerQuery } from "@/api/queries";
 import type { components } from "@/api/schema";
 import { HealthBadge } from "@/components/badges";
-import { FormError } from "@/components/FormError";
+import { QueryPending } from "@/components/QueryPending";
 import { ReleaseSource } from "@/components/ReleaseSource";
 import { UpdateBlock } from "@/components/UpdateBlock";
 import { Button } from "@/components/ui/button";
@@ -34,15 +34,7 @@ export function ContainerPage() {
           <Link to={`/containers/${name}/logs`}>Logs</Link>
         </Button>
       </div>
-      {data === undefined ? (
-        error ? (
-          <FormError error={error} />
-        ) : (
-          <p className="text-muted-foreground">Loading…</p>
-        )
-      ) : (
-        <Details container={data} />
-      )}
+      {data === undefined ? <QueryPending error={error} /> : <Details container={data} />}
     </div>
   );
 }

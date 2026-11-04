@@ -9,7 +9,7 @@ import { containersQuery } from "@/api/queries";
 import type { components } from "@/api/schema";
 import { HealthBadge, SeverityBadge, StatusBadge } from "@/components/badges";
 import { CheckNow } from "@/components/CheckNow";
-import { FormError } from "@/components/FormError";
+import { QueryPending } from "@/components/QueryPending";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn, plural } from "@/lib/utils";
 
@@ -38,11 +38,7 @@ export function ContainersPage() {
         <CheckNow />
       </div>
       {data === undefined ? (
-        error ? (
-          <FormError error={error} />
-        ) : (
-          <p className="text-muted-foreground">Loading containers…</p>
-        )
+        <QueryPending error={error} text="Loading containers…" />
       ) : data.length === 0 ? (
         <p className="text-muted-foreground">
           No containers. WT shows all containers on this Docker host, except the containers with the label{" "}

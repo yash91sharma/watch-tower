@@ -8,6 +8,7 @@ import type { components } from "@/api/schema";
 import { ConfigFile } from "@/components/ConfigFile";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
+import { QueryPending } from "@/components/QueryPending";
 import { Button } from "@/components/ui/button";
 
 type Settings = components["schemas"]["Settings"];
@@ -36,11 +37,7 @@ export function SettingsPage() {
     <div className="max-w-xl space-y-6">
       <h1 className="text-xl font-semibold">Settings</h1>
       {data === undefined ? (
-        error ? (
-          <FormError error={error} />
-        ) : (
-          <p className="text-muted-foreground">Loading…</p>
-        )
+        <QueryPending error={error} />
       ) : (
         <>
           <SettingsForm values={data.values} />
