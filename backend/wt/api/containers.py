@@ -10,7 +10,7 @@ from typing import Annotated, Literal, cast, get_args
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, TypeAdapter
 from sqlmodel import Session, col, select
 
 from wt import clock
@@ -19,7 +19,7 @@ from wt.api.stream import sse_response
 from wt.context import AppContext
 from wt.db import find_container
 from wt.db.models import Container, Event, EventKind, RepoCache, Severity
-from wt.docker.client import DockerUnavailableError
+from wt.docker.client import DockerUnavailableError, LogLine
 from wt.docker.inventory import LiveContainer
 from wt.docker.parse import release_source
 from wt.versions.check import current_update
@@ -49,7 +49,9 @@ def get_container(session: Session, name: str) -> Container:
 
 
 def get_live(ctx: AppContext, name: str) -> LiveContainer:
-    """The live state of a container. 404 if it is not in Docker now."""
+    """The live state of a container that is not excluded. 404 if it is not in Docker now."""
+    with Session(ctx.engine) as session:
+        get_container(session, name)
     live = ctx.inventory.get(name)
     if live is None:
         raise HTTPException(404, f"No container {name!r}")
@@ -183,8 +185,8 @@ class ContainerDetail(ContainerOut):
 def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
     """One container with its current update and its events. 404 if it is not in Docker now."""
     with Session(ctx.engine) as session:
-        row = get_container(session, name)
         live = get_live(ctx, name)
+        row = get_container(session, name)
         update = current_update(session, row)
         since = clock.now() - timedelta(days=EVENT_DAYS)
         events = session.exec(
@@ -204,17 +206,27 @@ def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
 MAX_TAIL = 10_000
 
 
-class LogLineOut(BaseModel):
-    time: datetime | None
-    stream: Literal["stdout", "stderr"]
-    text: str
+# Docker log line -> JSON.
+_LOG_LINE = TypeAdapter(LogLine)
 
 
-def _live_container(ctx: AppContext, name: str) -> LiveContainer:
-    """The live state of a container that is not excluded. 404 if it is not in Docker now."""
-    with Session(ctx.engine) as session:
-        get_container(session, name)
-    return get_live(ctx, name)
+async def _log_lines(
+    ctx: AppContext,
+    live: LiveContainer,
+    tail: int | None,
+    since: datetime | None,
+    follow: bool,
+) -> AsyncGenerator[LogLine]:
+    """The log lines of a container. Use it with aclosing: when the client goes, WT closes
+    the Docker stream, then the Docker client.
+    """
+    docker = ctx.docker_factory()
+    try:
+        async with aclosing(docker.logs(live.docker_id, tail, since, follow)) as lines:
+            async for line in lines:
+                yield line
+    finally:
+        await docker.close()
 
 
 @router.get("/{name}/logs", response_class=StreamingResponse)
@@ -229,24 +241,15 @@ async def container_logs(
 
     When the client goes, WT stops the Docker log stream.
     """
-    live = await asyncio.to_thread(_live_container, ctx, name)
-    docker = ctx.docker_factory()
+    live = await asyncio.to_thread(get_live, ctx, name)
 
     async def events() -> AsyncGenerator[str]:
-        try:
-            # aclosing: when the client goes, close the Docker stream before the client.
-            async with aclosing(
-                docker.logs(live.docker_id, tail, since, follow)
-            ) as lines:
+        async with aclosing(_log_lines(ctx, live, tail, since, follow)) as lines:
+            try:
                 async for line in lines:
-                    item = LogLineOut(
-                        time=line.time, stream=line.stream, text=line.text
-                    )
-                    yield f"data: {item.model_dump_json()}\n\n"
-        except DockerUnavailableError as error:
-            yield f"event: error\ndata: {json.dumps(str(error))}\n\n"
-        finally:
-            await docker.close()
+                    yield f"data: {_LOG_LINE.dump_json(line).decode()}\n\n"
+            except DockerUnavailableError as error:
+                yield f"event: error\ndata: {json.dumps(str(error))}\n\n"
 
     return sse_response(events())
 
@@ -254,23 +257,15 @@ async def container_logs(
 @router.get("/{name}/logs.txt", response_class=StreamingResponse)
 async def download_logs(name: str, ctx: Ctx) -> StreamingResponse:
     """The full log as a text file, no follow. Line: <time> <stream> <text>."""
-    live = await asyncio.to_thread(_live_container, ctx, name)
-    docker = ctx.docker_factory()
+    live = await asyncio.to_thread(get_live, ctx, name)
 
     async def text() -> AsyncGenerator[str]:
-        try:
-            async with aclosing(
-                docker.logs(live.docker_id, None, None, False)
-            ) as lines:
-                async for line in lines:
-                    time = (
-                        line.time.isoformat().replace("+00:00", "Z")
-                        if line.time
-                        else "-"
-                    )
-                    yield f"{time} {line.stream} {line.text}\n"
-        finally:
-            await docker.close()
+        async with aclosing(_log_lines(ctx, live, None, None, False)) as lines:
+            async for line in lines:
+                time = (
+                    line.time.isoformat().replace("+00:00", "Z") if line.time else "-"
+                )
+                yield f"{time} {line.stream} {line.text}\n"
 
     filename = f"{name}-{clock.now().date().isoformat()}.log"
     return StreamingResponse(
