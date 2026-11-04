@@ -106,11 +106,11 @@ async def test_on_sync_sets_the_baseline_and_skips_excluded(
     assert event_rows(db_engine) == [("web", EventKind.RECOVERED_HEALTH)]
 
 
-async def test_reload_changes_n(db_engine: Engine, clock: FakeClock) -> None:
+async def test_new_settings_change_n(db_engine: Engine, clock: FakeClock) -> None:
     add_container(db_engine)
     monitor = HealthMonitor(db_engine, Settings())
 
-    monitor.reload(Settings(restart_count=2))
+    monitor.settings = Settings(restart_count=2)
     for _ in range(2):
         await restart(monitor, clock)
 

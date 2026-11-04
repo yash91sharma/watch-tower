@@ -10,7 +10,7 @@ from datetime import timedelta
 
 from fastapi import Response
 from sqlalchemy import Engine
-from sqlmodel import Session, delete
+from sqlmodel import Session
 
 from wt import clock
 from wt.db.models import AuthSession
@@ -60,12 +60,6 @@ def delete_session(engine: Engine, token: str) -> None:
         if row is not None:
             session.delete(row)
             session.commit()
-
-
-def delete_all_sessions(engine: Engine) -> None:
-    with Session(engine) as session:
-        session.exec(delete(AuthSession))
-        session.commit()
 
 
 def set_cookie(response: Response, token: str) -> None:

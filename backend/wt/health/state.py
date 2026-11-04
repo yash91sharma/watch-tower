@@ -45,7 +45,7 @@ class HealthState:
         if event.action == "health_status":
             return self._health(container, event.health == "unhealthy")
         if event.action == "die":
-            container.window.die(event.time)
+            container.window.die()
         elif event.action == "start":
             container.window.start(event.time)
             if not container.restart_loop and container.window.in_loop(

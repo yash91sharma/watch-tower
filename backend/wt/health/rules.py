@@ -15,7 +15,7 @@ class RestartWindow:
     restart_times: list[datetime] = field(default_factory=list[datetime])
     _died: bool = False
 
-    def die(self, time: datetime) -> None:
+    def die(self) -> None:
         self._died = True
 
     def start(self, time: datetime) -> None:

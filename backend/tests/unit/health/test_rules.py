@@ -11,7 +11,7 @@ M = timedelta(minutes=10)
 
 def restarts(window: RestartWindow, times: list[timedelta]) -> None:
     for offset in times:
-        window.die(T0 + offset)
+        window.die()
         window.start(T0 + offset + timedelta(seconds=1))
 
 
@@ -52,7 +52,7 @@ def test_starts_with_no_die_do_not_count() -> None:
 
 def test_two_starts_after_one_die_count_once() -> None:
     window = RestartWindow()
-    window.die(T0)
+    window.die()
 
     for second in range(N):
         window.start(T0 + timedelta(seconds=second))

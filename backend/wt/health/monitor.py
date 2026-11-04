@@ -41,9 +41,6 @@ class HealthMonitor:
         # Called for each change, after it is saved (the health notification, 10.5).
         self._on_change = on_change
 
-    def reload(self, settings: Settings) -> None:
-        self.settings = settings
-
     @property
     def _window(self) -> timedelta:
         return timedelta(minutes=self.settings.restart_window_minutes)
@@ -101,7 +98,7 @@ async def run_health(monitor: HealthMonitor, engine: Engine, bus: Bus) -> None:
     async def settings_loop() -> None:
         while True:
             await subscription.get()
-            monitor.reload(await asyncio.to_thread(load_settings, engine))
+            monitor.settings = await asyncio.to_thread(load_settings, engine)
 
     with bus.subscribe([Topic.SETTINGS]) as subscription:
         await asyncio.gather(tick_loop(), settings_loop())

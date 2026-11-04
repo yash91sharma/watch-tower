@@ -96,14 +96,6 @@ def test_delete_session(db_engine: Engine, clock: FakeClock) -> None:
     assert sessions.touch_session(db_engine, other) is True
 
 
-def test_delete_all_sessions(db_engine: Engine, clock: FakeClock) -> None:
-    tokens = [sessions.create_session(db_engine) for _ in range(3)]
-
-    sessions.delete_all_sessions(db_engine)
-
-    assert all(sessions.touch_session(db_engine, token) is False for token in tokens)
-
-
 def test_delete_unknown_session_does_nothing(
     db_engine: Engine, clock: FakeClock
 ) -> None:

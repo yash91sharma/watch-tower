@@ -62,12 +62,9 @@ async def complete(
         return LlmResult.model_validate_json(content)
     except httpx.HTTPError as error:
         log.warning("LLM request failed: %s", type(error).__name__)
-    except (ValueError, KeyError, IndexError, TypeError) as error:
-        # ValidationError and JSON errors are ValueErrors.
-        reason = (
-            "the reply does not match the schema"
-            if isinstance(error, ValidationError)
-            else ("the reply is not valid")
-        )
-        log.warning("LLM reply is not usable: %s", reason)
+    except ValidationError:
+        log.warning("LLM reply is not usable: the reply does not match the schema")
+    except ValueError, KeyError, IndexError, TypeError:
+        # JSON errors are ValueErrors.
+        log.warning("LLM reply is not usable: the reply is not valid")
     return None
