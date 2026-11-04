@@ -166,3 +166,27 @@ async def test_docker_worker_connects_and_fills_the_inventory(
             while ctx.docker_state.connected is False:
                 await subscription.get()
         assert ctx.inventory.get("web") is not None
+
+
+@pytest.mark.anyio
+async def test_scheduler_worker_starts_after_the_first_docker_sync(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Before the first sync the inventory is empty: a check then checks no container.
+    started = asyncio.Event()
+
+    async def run_scheduler(runner: object, engine: object) -> None:
+        started.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(main, "run_scheduler", run_scheduler)
+    app = create_app(make_env(tmp_path), workers=[main.scheduler_worker])
+
+    async with app.router.lifespan_context(app):
+        ctx: AppContext = app.state.ctx
+        for _ in range(5):
+            await clock.sleep(0)
+        assert not started.is_set()
+
+        await ctx.inventory.sync_all(FakeDocker())
+        await asyncio.wait_for(started.wait(), timeout=5)

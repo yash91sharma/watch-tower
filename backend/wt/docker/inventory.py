@@ -39,6 +39,8 @@ class Inventory:
     def __init__(self, engine: Engine) -> None:
         self._engine = engine
         self._live: dict[str, LiveContainer] = {}
+        # Set after the first sync_all. Before it, the live state is empty.
+        self.synced = asyncio.Event()
 
     def get(self, name: str) -> LiveContainer | None:
         return self._live.get(name)
@@ -57,6 +59,7 @@ class Inventory:
         self._live = {}
         for info in infos:
             await self.update(info)
+        self.synced.set()
         return infos
 
     async def update(self, info: ContainerInfo) -> LiveContainer | None:

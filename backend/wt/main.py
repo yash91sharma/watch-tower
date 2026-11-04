@@ -53,6 +53,8 @@ async def health_worker(ctx: AppContext) -> None:
 
 
 async def scheduler_worker(ctx: AppContext) -> None:
+    # A check before the first Docker sync finds no containers and still counts as a run.
+    await ctx.inventory.synced.wait()
     await run_scheduler(ctx.checker, ctx.engine)
 
 

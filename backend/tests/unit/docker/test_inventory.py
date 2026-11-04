@@ -178,3 +178,12 @@ async def test_update_and_remove_one_container(db_engine: Engine) -> None:
     assert inventory.get("web") is not None
     assert inventory.remove("web", "id-web") is True
     assert inventory.get("web") is None
+
+
+async def test_synced_is_set_after_the_first_sync(db_engine: Engine) -> None:
+    inventory = Inventory(db_engine)
+    assert not inventory.synced.is_set()
+
+    await inventory.sync_all(FakeDocker())
+
+    assert inventory.synced.is_set()
