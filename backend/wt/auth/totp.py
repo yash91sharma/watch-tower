@@ -5,6 +5,7 @@ pyotp `verify` gives only a bool. WT needs the matched step to stop a replay, so
 """
 
 import hmac
+import io
 from datetime import timedelta
 
 import pyotp
@@ -49,5 +50,13 @@ def verify(secret: str, code: str, last_step: int | None) -> int | None:
 
 
 def qr_svg(uri: str) -> str:
-    """The QR code of `uri` as an SVG document."""
-    return segno.make(uri, error="m").svg_inline(scale=5, border=2)
+    """The QR code of `uri` as an SVG document, with the SVG namespace.
+
+    The UI shows it in an <img>, and browsers render an SVG image only with the namespace.
+    (segno `svg_inline` leaves it out.)
+    """
+    buffer = io.BytesIO()
+    segno.make(uri, error="m").save(
+        buffer, kind="svg", scale=5, border=2, xmldecl=False, nl=False
+    )
+    return buffer.getvalue().decode()

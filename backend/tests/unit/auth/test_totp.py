@@ -84,3 +84,12 @@ def test_spaces_in_the_code_are_ignored(clock: FakeClock) -> None:
     assert totp.verify(
         secret, f" {code[:3]} {code[3:]} ", last_step=None
     ) == current_step(clock)
+
+
+def test_qr_svg_is_a_standalone_svg_document() -> None:
+    # The UI shows it in <img src="data:image/svg+xml,...">. Browsers render that only
+    # with the SVG namespace.
+    svg = totp.qr_svg(totp.provisioning_uri("JBSWY3DPEHPK3PXP"))
+
+    assert svg.startswith("<svg")
+    assert 'xmlns="http://www.w3.org/2000/svg"' in svg

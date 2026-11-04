@@ -59,7 +59,10 @@ export async function setUp(page: Page): Promise<void> {
   await page.getByLabel("Setup token").fill(setupToken());
   await page.getByRole("button", { name: "Next" }).click();
 
-  await expect(page.getByRole("img", { name: "QR code for the authenticator app" })).toBeVisible();
+  const qr = page.getByRole("img", { name: "QR code for the authenticator app" });
+  await expect(qr).toBeVisible();
+  // A broken image is visible too. naturalWidth is 0 when the browser cannot render it.
+  expect(await qr.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
   const secret = (await page.getByText(/^Secret:/).locator("code").textContent()) ?? "";
   expect(secret).toMatch(/^[A-Z2-7]+$/);
   saveSecret(secret);
