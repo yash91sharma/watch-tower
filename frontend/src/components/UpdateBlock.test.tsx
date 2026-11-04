@@ -64,3 +64,13 @@ test("with no update, the block shows the status", async () => {
 
   expect((await block()).getByText("No update. Status: up to date.")).toBeInTheDocument();
 });
+
+test("status update with no update row says that the next check gets the notes", async () => {
+  // For example after a release source change: the repo is known, the notes are not made yet.
+  answer(containerDetail({ status: "update", update: null }));
+  renderRoute("/containers/web");
+
+  expect(
+    (await block()).getByText("A new version is available. The next check gets the release notes."),
+  ).toBeInTheDocument();
+});

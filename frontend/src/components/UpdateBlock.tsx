@@ -16,7 +16,12 @@ export function UpdateBlock({ update, status }: { update: Update | null; status:
         Update
       </h2>
       {update === null ? (
-        <p className="text-sm text-muted-foreground">No update. Status: {status}.</p>
+        <p className="text-sm text-muted-foreground">
+          {/* Status "update" with no row: the repo is known, but no check made the notes yet. */}
+          {status === "update"
+            ? "A new version is available. The next check gets the release notes."
+            : `No update. Status: ${status}.`}
+        </p>
       ) : (
         <>
           <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
