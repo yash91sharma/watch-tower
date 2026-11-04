@@ -2,7 +2,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type SubmitEvent } from "react";
 
-import { authStateQuery } from "@/api/auth";
+import { authStateQuery } from "@/api/queries";
 import { api, ApiError, unwrap } from "@/api/client";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";

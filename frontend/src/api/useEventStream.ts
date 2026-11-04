@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import { authStateQuery } from "@/api/auth";
+import { authStateQuery } from "@/api/queries";
 
 const RETRY_MS = 3000;
 

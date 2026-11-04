@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from wt.db.engine import create_db_engine
 from wt.db.migrate import upgrade
-from wt.db.models import Container, Host
+from wt.db.models import Admin, Container, Host
 
 # P0 watches one host: the Docker host that WT runs on.
 LOCAL_HOST_ID = 1
@@ -31,3 +31,9 @@ def find_container(session: Session, name: str) -> Container | None:
             Container.host_id == LOCAL_HOST_ID, Container.name == name
         )
     ).first()
+
+
+def has_admin(engine: Engine) -> bool:
+    """True if the admin is set up."""
+    with Session(engine) as session:
+        return session.exec(select(Admin)).first() is not None

@@ -3,12 +3,13 @@
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, col, select, update
+from sqlmodel import Session, col, update
 
 from wt.api.deps import Ctx, SessionCookie
 from wt.auth import sessions, totp
 from wt.auth.password import MIN_LENGTH, hash_password, verify_password
 from wt.context import AppContext
+from wt.db import has_admin
 from wt.db.models import ADMIN_ID, Admin
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -36,11 +37,6 @@ class SetupFinishIn(BaseModel):
     totp_code: str = Field(max_length=16)
 
 
-def has_admin(ctx: AppContext) -> bool:
-    with Session(ctx.engine) as session:
-        return session.exec(select(Admin)).first() is not None
-
-
 def check_limit(ctx: AppContext) -> None:
     """While the login limit blocks: 429 with Retry-After."""
     retry_after = ctx.login_limit.retry_after()
@@ -55,7 +51,7 @@ def check_limit(ctx: AppContext) -> None:
 def check_setup_token(ctx: AppContext, token: str) -> None:
     """Stop if the admin exists (409) or the token is wrong (403, counts as a failure)."""
     check_limit(ctx)
-    if has_admin(ctx):
+    if has_admin(ctx.engine):
         raise HTTPException(409, "The admin is already set up")
     if not ctx.setup_token.check(token):
         ctx.login_limit.failure()
@@ -67,7 +63,7 @@ def state(ctx: Ctx, wt_session: SessionCookie = None) -> AuthState:
     logged_in = wt_session is not None and sessions.touch_session(
         ctx.engine, wt_session
     )
-    return AuthState(setup_required=not has_admin(ctx), logged_in=logged_in)
+    return AuthState(setup_required=not has_admin(ctx.engine), logged_in=logged_in)
 
 
 @router.post("/setup/begin")

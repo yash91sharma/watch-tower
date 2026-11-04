@@ -4,7 +4,6 @@ import pytest
 
 from wt.auth.password import (
     MIN_LENGTH,
-    PasswordTooShortError,
     hash_password,
     verify_password,
 )
@@ -36,7 +35,7 @@ def test_bad_hash_fails() -> None:
 
 
 def test_short_password_is_rejected() -> None:
-    with pytest.raises(PasswordTooShortError):
+    with pytest.raises(ValueError, match="12 or more characters"):
         hash_password("x" * (MIN_LENGTH - 1))
 
 

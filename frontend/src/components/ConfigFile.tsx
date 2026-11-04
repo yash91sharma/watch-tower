@@ -1,18 +1,18 @@
 // Config export and import. Import: read the file, send it to the dry run, show the
 // counts and errors, and import it only after the admin confirms.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useId, useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 
 import { api, ApiError, unwrap } from "@/api/client";
 import { settingsQuery } from "@/api/queries";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
+import { Section } from "@/components/Section";
 import { Button } from "@/components/ui/button";
 import { plural } from "@/lib/utils";
 
 export function ConfigFile() {
   const queryClient = useQueryClient();
-  const id = useId();
   const [config, setConfig] = useState<unknown>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   // A new key empties the file input, so that the same file can be chosen again.
@@ -59,10 +59,7 @@ export function ConfigFile() {
     result && !result.valid ? new ApiError(422, "The file has errors.", { fields: result.errors }) : null;
 
   return (
-    <section aria-labelledby={id} className="space-y-3">
-      <h2 id={id} className="font-medium">
-        Export and import
-      </h2>
+    <Section title="Export and import" className="space-y-3">
       <p className="text-sm text-muted-foreground">
         The file has the settings and the release sources. It has no secrets.
       </p>
@@ -107,6 +104,6 @@ export function ConfigFile() {
           Imported.
         </p>
       )}
-    </section>
+    </Section>
   );
 }

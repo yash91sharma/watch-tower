@@ -1,4 +1,4 @@
-"""Health state machine (pure).
+"""Health state machine (pure). The time always comes from the caller.
 
 Per container name: the flags `unhealthy` and `restart_loop`. Each Docker event can
 change a flag. Each flag change gives one state change (an `EventKind`), which WT saves
@@ -11,7 +11,41 @@ from datetime import datetime, timedelta
 
 from wt.db.models import EventKind
 from wt.docker.client import ContainerInfo, DockerEvent
-from wt.health.rules import RestartWindow
+
+
+@dataclass
+class RestartWindow:
+    """Restarts of one container: `start` events that follow a `die`.
+
+    N or more restarts in M minutes is a restart loop. The loop ends when no restart
+    comes in M minutes.
+    """
+
+    restart_times: list[datetime] = field(default_factory=list[datetime])
+    _died: bool = False
+
+    def die(self) -> None:
+        self._died = True
+
+    def start(self, time: datetime) -> None:
+        if self._died:
+            self.restart_times.append(time)
+            self._died = False
+
+    def in_loop(self, now: datetime, count: int, window: timedelta) -> bool:
+        """True if `count` or more restarts came in the last `window`."""
+        self._drop_old(now, window)
+        return len(self.restart_times) >= count
+
+    def quiet(self, now: datetime, window: timedelta) -> bool:
+        """True if no restart came in the last `window`."""
+        self._drop_old(now, window)
+        return not self.restart_times
+
+    def _drop_old(self, now: datetime, window: timedelta) -> None:
+        self.restart_times = [
+            time for time in self.restart_times if now - time < window
+        ]
 
 
 @dataclass

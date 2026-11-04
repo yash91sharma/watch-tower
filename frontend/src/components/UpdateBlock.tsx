@@ -1,20 +1,15 @@
 // The current update of a container. Summary and release notes show as plain text only
 // (React escapes them; never use them as HTML).
-import { useId } from "react";
-
 import type { components } from "@/api/schema";
 import { SeverityBadge } from "@/components/badges";
+import { Section } from "@/components/Section";
 
 type Update = components["schemas"]["UpdateOut"];
 type Status = components["schemas"]["Status"];
 
 export function UpdateBlock({ update, status }: { update: Update | null; status: Status }) {
-  const id = useId();
   return (
-    <section aria-labelledby={id} className="space-y-2">
-      <h2 id={id} className="font-medium">
-        Update
-      </h2>
+    <Section title="Update">
       {update === null ? (
         <p className="text-sm text-muted-foreground">
           {/* Status "update" with no row: the repo is known, but no check made the notes yet. */}
@@ -43,6 +38,6 @@ export function UpdateBlock({ update, status }: { update: Update | null; status:
           </pre>
         </>
       )}
-    </section>
+    </Section>
   );
 }

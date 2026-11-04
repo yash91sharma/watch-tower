@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { Navigate } from "react-router";
 
-import { authStateQuery } from "@/api/auth";
+import { authStateQuery } from "@/api/queries";
 
 type Area = "setup" | "login" | "app";
 

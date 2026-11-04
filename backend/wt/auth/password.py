@@ -10,15 +10,10 @@ _hasher = PasswordHasher(
 )
 
 
-class PasswordTooShortError(ValueError):
-    def __init__(self) -> None:
-        super().__init__(f"The password must have {MIN_LENGTH} or more characters")
-
-
 def hash_password(password: str) -> str:
     """Give the Argon2id hash. The hash has the salt and the params."""
     if len(password) < MIN_LENGTH:
-        raise PasswordTooShortError
+        raise ValueError(f"The password must have {MIN_LENGTH} or more characters")
     return _hasher.hash(password)
 
 

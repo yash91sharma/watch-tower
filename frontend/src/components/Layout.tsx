@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router";
 
-import { authStateQuery } from "@/api/auth";
+import { authStateQuery } from "@/api/queries";
 import { api, unwrap } from "@/api/client";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { Button } from "@/components/ui/button";

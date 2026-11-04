@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from wt.llm.client import complete
-from wt.llm.prompt import build_messages
+from wt.llm.summary import build_messages
 
 pytestmark = [pytest.mark.llm_eval, pytest.mark.anyio]
 

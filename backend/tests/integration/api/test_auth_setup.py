@@ -4,6 +4,7 @@ import httpx
 import pyotp
 import pytest
 from fastapi import FastAPI
+from sqlalchemy import Engine
 from sqlmodel import Session, select
 
 from wt.context import AppContext
@@ -163,7 +164,7 @@ async def test_admin_saved_by_another_request_gives_409(
     token = token_of(app)
     secret = (await begin(client, token)).json()["totp_secret"]
 
-    def no_admin(ctx: AppContext) -> bool:
+    def no_admin(engine: Engine) -> bool:
         return False
 
     monkeypatch.setattr("wt.api.auth.has_admin", no_admin)

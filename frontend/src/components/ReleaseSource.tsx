@@ -1,17 +1,17 @@
 // The release source of a container: show it, confirm it, or edit it.
 // A saved edit is confirmed. An empty value clears the source.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useId, useState, type SubmitEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 
 import { api, unwrap } from "@/api/client";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
+import { Section } from "@/components/Section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export function ReleaseSource({ name, source, confirmed }: { name: string; source: string | null; confirmed: boolean }) {
   const queryClient = useQueryClient();
-  const id = useId();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
 
@@ -31,10 +31,7 @@ export function ReleaseSource({ name, source, confirmed }: { name: string; sourc
   }
 
   return (
-    <section aria-labelledby={id} className="space-y-2">
-      <h2 id={id} className="font-medium">
-        Release source
-      </h2>
+    <Section title="Release source">
       {editing ? (
         <form className="space-y-3" onSubmit={onSave}>
           <Field
@@ -91,6 +88,6 @@ export function ReleaseSource({ name, source, confirmed }: { name: string; sourc
         </div>
       )}
       <FormError error={save.error} />
-    </section>
+    </Section>
   );
 }

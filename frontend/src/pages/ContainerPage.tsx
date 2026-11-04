@@ -1,6 +1,5 @@
 // One container: state, health, release source, update, events of the last 7 days, link to the logs.
 import { useQuery } from "@tanstack/react-query";
-import { useId } from "react";
 import { Link, useParams } from "react-router";
 
 import { containerQuery } from "@/api/queries";
@@ -8,6 +7,7 @@ import type { components } from "@/api/schema";
 import { HealthBadge } from "@/components/badges";
 import { QueryPending } from "@/components/QueryPending";
 import { ReleaseSource } from "@/components/ReleaseSource";
+import { Section } from "@/components/Section";
 import { UpdateBlock } from "@/components/UpdateBlock";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/time";
@@ -40,7 +40,6 @@ export function ContainerPage() {
 }
 
 function Details({ container }: { container: ContainerDetail }) {
-  const eventsId = useId();
   return (
     <>
       <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
@@ -57,10 +56,7 @@ function Details({ container }: { container: ContainerDetail }) {
       </dl>
       <ReleaseSource name={container.name} source={container.release_source} confirmed={container.source_confirmed} />
       <UpdateBlock update={container.update} status={container.status} />
-      <section aria-labelledby={eventsId} className="space-y-2">
-        <h2 id={eventsId} className="font-medium">
-          Events (last 7 days)
-        </h2>
+      <Section title="Events (last 7 days)">
         {container.events.length === 0 ? (
           <p className="text-sm text-muted-foreground">No events in the last 7 days.</p>
         ) : (
@@ -72,7 +68,7 @@ function Details({ container }: { container: ContainerDetail }) {
             ))}
           </ul>
         )}
-      </section>
+      </Section>
     </>
   );
 }

@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router";
 
-import { authStateQuery } from "@/api/auth";
+import { authStateQuery } from "@/api/queries";
 import { onUnauthorized } from "@/api/client";
 import { routes } from "@/routes";
 

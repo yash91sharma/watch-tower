@@ -255,6 +255,10 @@ def _parse_time(stamp: str) -> datetime | None:
     return time
 
 
+# The size of a frame header in the log stream.
+_HEADER = 8
+
+
 class LogDecoder:
     """Bytes from GET /containers/{id}/logs to lines.
 
@@ -295,9 +299,6 @@ class LogDecoder:
     def _lines(self, stream: Stream, data: bytes) -> list[LogLine]:
         *complete, self._partial[stream] = (self._partial[stream] + data).split(b"\n")
         return [_line(raw, stream) for raw in complete]
-
-
-_HEADER = 8
 
 
 def _line(raw: bytes, stream: Stream) -> LogLine:

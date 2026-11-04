@@ -1,6 +1,6 @@
 // Settings: the UI settings form, the secret state (env vars set the secrets), export and import.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useId, useState, type SubmitEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 
 import { api, unwrap } from "@/api/client";
 import { settingsQuery } from "@/api/queries";
@@ -9,6 +9,7 @@ import { ConfigFile } from "@/components/ConfigFile";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { QueryPending } from "@/components/QueryPending";
+import { Section } from "@/components/Section";
 import { Button } from "@/components/ui/button";
 
 type Settings = components["schemas"]["Settings"];
@@ -98,12 +99,8 @@ function SettingsForm({ values }: { values: Settings }) {
 }
 
 function Secrets({ secrets }: { secrets: SecretState }) {
-  const id = useId();
   return (
-    <section aria-labelledby={id} className="space-y-2">
-      <h2 id={id} className="font-medium">
-        Secrets
-      </h2>
+    <Section title="Secrets">
       <p className="text-sm text-muted-foreground">Env vars set the secrets. Restart WT after a change.</p>
       <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1 text-sm">
         {SECRETS.map(({ key, label }) => [
@@ -113,6 +110,6 @@ function Secrets({ secrets }: { secrets: SecretState }) {
           <dd key={key}>{secrets[key]}</dd>,
         ])}
       </dl>
-    </section>
+    </Section>
   );
 }

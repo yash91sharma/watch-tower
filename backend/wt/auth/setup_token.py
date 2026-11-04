@@ -10,9 +10,8 @@ import secrets
 from typing import Self
 
 from sqlalchemy import Engine
-from sqlmodel import Session, select
 
-from wt.db.models import Admin
+from wt.db import has_admin
 
 log = logging.getLogger(__name__)
 
@@ -28,9 +27,7 @@ class SetupToken:
     @classmethod
     def at_start(cls, engine: Engine) -> Self:
         """Make a token if there is no admin, and log it."""
-        with Session(engine) as session:
-            has_admin = session.exec(select(Admin)).first() is not None
-        if has_admin:
+        if has_admin(engine):
             return cls(None)
         value = secrets.token_urlsafe(TOKEN_BYTES)
         log.warning("No admin is set up. Open WT and use this setup token: %s", value)

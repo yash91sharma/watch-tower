@@ -2,7 +2,7 @@ import { act, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
-import { authStateQuery } from "@/api/auth";
+import { authStateQuery } from "@/api/queries";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 

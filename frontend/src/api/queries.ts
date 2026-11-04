@@ -3,6 +3,12 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { api, unwrap } from "@/api/client";
 
+// The auth guard reads the auth state. A 401 resets it.
+export const authStateQuery = queryOptions({
+  queryKey: ["auth", "state"],
+  queryFn: async () => unwrap(await api.GET("/api/auth/state")),
+});
+
 export const containersQuery = queryOptions({
   queryKey: ["containers"],
   queryFn: async () => unwrap(await api.GET("/api/containers")),

@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type SubmitEvent } from "react";
 
-import { authStateQuery } from "@/api/auth";
+import { authStateQuery } from "@/api/queries";
 import { api, unwrap } from "@/api/client";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
@@ -16,8 +16,7 @@ export function SetupPage() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [code, setCode] = useState("");
-  const [mismatch, setMismatch] = useState(false);
-  const [badCode, setBadCode] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const begin = useMutation({
     mutationFn: async () => unwrap(await api.POST("/api/auth/setup/begin", { body: { token } })),
@@ -37,10 +36,10 @@ export function SetupPage() {
 
   function onFinish(event: SubmitEvent) {
     event.preventDefault();
-    const bad = !isTotpCode(code);
-    setMismatch(password !== password2);
-    setBadCode(bad);
-    if (password === password2 && !bad) finish.mutate();
+    const error =
+      password !== password2 ? "The two passwords are not the same" : isTotpCode(code) ? null : TOTP_CODE_ERROR;
+    setFormError(error);
+    if (error === null) finish.mutate();
   }
 
   const totp = begin.data;
@@ -107,9 +106,7 @@ export function SetupPage() {
               setCode(event.target.value);
             }}
           />
-          <FormError
-            error={mismatch ? "The two passwords are not the same" : badCode ? TOTP_CODE_ERROR : finish.error}
-          />
+          <FormError error={formError ?? finish.error} />
           <Button type="submit" disabled={finish.isPending}>
             Set up
           </Button>
