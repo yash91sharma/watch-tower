@@ -10,9 +10,9 @@ import logging
 from dataclasses import dataclass
 
 from sqlalchemy import Engine
-from sqlmodel import Session, select
+from sqlmodel import Session
 
-from wt.db import LOCAL_HOST_ID
+from wt.db import LOCAL_HOST_ID, find_container
 from wt.db.models import Container
 from wt.docker.client import ContainerInfo, ContainerNotFoundError, DockerApi
 from wt.docker.parse import (
@@ -95,11 +95,9 @@ def _upsert(engine: Engine, info: ContainerInfo) -> None:
         )
         repo, tag = None, None
     with Session(engine) as session:
-        row = session.exec(
-            select(Container).where(
-                Container.host_id == LOCAL_HOST_ID, Container.name == info.name
-            )
-        ).first() or Container(host_id=LOCAL_HOST_ID, name=info.name)
+        row = find_container(session, info.name) or Container(
+            host_id=LOCAL_HOST_ID, name=info.name
+        )
         row.docker_id = info.id
         row.compose_project = compose_project(info.labels)
         row.image, row.tag = repo, tag

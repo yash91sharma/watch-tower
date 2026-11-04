@@ -11,13 +11,13 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 
 from sqlalchemy import Engine
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from wt import clock
 from wt.bus import Bus, Topic
 from wt.config import Settings, load_settings
-from wt.db import LOCAL_HOST_ID
-from wt.db.models import Container, Event, EventKind
+from wt.db import find_container
+from wt.db.models import Event, EventKind
 from wt.docker.client import ContainerInfo, DockerEvent
 from wt.docker.parse import is_excluded
 from wt.health.state import HealthState
@@ -73,11 +73,7 @@ class HealthMonitor:
 
 def _save_event(engine: Engine, name: str, kind: EventKind, time: datetime) -> None:
     with Session(engine) as session:
-        container = session.exec(
-            select(Container).where(
-                Container.host_id == LOCAL_HOST_ID, Container.name == name
-            )
-        ).first()
+        container = find_container(session, name)
         if container is None or container.id is None:
             log.warning(
                 "No container row for %s. The %s event is not saved.", name, kind.value
