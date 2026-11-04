@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 RUN pnpm build
 
-FROM python:3.14.10-slim-trixie AS backend
+FROM python:3.15.0-slim-trixie AS backend
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 WORKDIR /app
@@ -24,7 +24,7 @@ COPY --from=frontend /frontend/dist ./wt/static
 # The root filesystem is read-only at run time, so compile the WT code here too.
 RUN uv sync --frozen --no-dev && python -m compileall -q wt
 
-FROM python:3.14.10-slim-trixie
+FROM python:3.15.0-slim-trixie
 ARG VERSION=0.0.0
 ARG REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/yash91sharma/watch-tower" \
