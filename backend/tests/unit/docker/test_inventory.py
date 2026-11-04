@@ -7,7 +7,7 @@ from sqlalchemy import Engine
 from sqlmodel import Session, select
 
 from wt.db.models import Container
-from wt.docker.client import ContainerInfo
+from wt.docker.client import ContainerInfo, ContainerNotFoundError
 from wt.docker.fake import FakeDocker
 from wt.docker.inventory import Inventory, LiveContainer
 
@@ -187,3 +187,23 @@ async def test_synced_is_set_after_the_first_sync(db_engine: Engine) -> None:
     await inventory.sync_all(FakeDocker())
 
     assert inventory.synced.is_set()
+
+
+async def test_sync_all_skips_a_container_removed_after_the_list(
+    db_engine: Engine,
+) -> None:
+    class RemovedAfterList(FakeDocker):
+        async def inspect(self, container_id: str) -> ContainerInfo:
+            if container_id == "id-gone":
+                raise ContainerNotFoundError(container_id)
+            return await super().inspect(container_id)
+
+    docker = RemovedAfterList()
+    docker.add(info("web"))
+    docker.add(info("gone"))
+    inventory = Inventory(db_engine)
+
+    infos = await inventory.sync_all(docker)
+
+    assert [item.name for item in infos] == ["web"]
+    assert inventory.names() == ["web"]

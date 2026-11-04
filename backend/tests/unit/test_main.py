@@ -190,3 +190,30 @@ async def test_scheduler_worker_starts_after_the_first_docker_sync(
 
         await ctx.inventory.sync_all(FakeDocker())
         await asyncio.wait_for(started.wait(), timeout=5)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("worker", "target"),
+    [
+        (main.cleanup_worker, "wt.db.cleanup.run"),
+        (main.health_worker, "wt.main.run_health"),
+    ],
+)
+async def test_worker_calls_its_loop(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    worker: Worker,
+    target: str,
+) -> None:
+    called = asyncio.Event()
+
+    async def loop(*args: object) -> None:
+        called.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(target, loop)
+    app = create_app(make_env(tmp_path), workers=[worker])
+
+    async with app.router.lifespan_context(app):
+        await asyncio.wait_for(called.wait(), timeout=5)

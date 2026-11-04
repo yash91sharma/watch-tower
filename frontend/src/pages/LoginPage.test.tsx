@@ -98,3 +98,30 @@ test("a code with a space is sent as typed (the backend ignores spaces)", async 
   expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
   expect(loginBody).toEqual({ password: "a-long-password", totp_code: "123 456" });
 });
+
+test("a wait of one minute or less says '1 minute'", async () => {
+  server.use(
+    http.post("*/api/auth/login", () =>
+      HttpResponse.json(
+        { error: "Too Many Requests", detail: "Too many failed attempts. Try again later." },
+        { status: 429, headers: { "Retry-After": "30" } },
+      ),
+    ),
+  );
+
+  await logIn();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Too many failed attempts. Try again in 1 minute.");
+});
+
+test("a 429 with no Retry-After shows the backend text", async () => {
+  server.use(
+    http.post("*/api/auth/login", () =>
+      HttpResponse.json({ error: "Too Many Requests", detail: "Too many failed attempts. Try again later." }, { status: 429 }),
+    ),
+  );
+
+  await logIn();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Too many failed attempts. Try again later.");
+});

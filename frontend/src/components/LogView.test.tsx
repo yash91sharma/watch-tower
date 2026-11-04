@@ -83,3 +83,23 @@ test("the Pause button stops follow. The Follow button starts it again", async (
   await user.click(screen.getByRole("button", { name: "Follow" }));
   expect(log.scrollTop).toBe(900);
 });
+
+test("a current match that is not in the lines keeps follow on", () => {
+  const { rerender } = render(<LogView lines={lines(2)} currentId={null} />);
+  const log = screen.getByRole("log");
+  fakeScroll(log);
+
+  rerender(<LogView lines={lines(3)} currentId={99} />);
+
+  expect(log.scrollTop).toBe(900);
+  expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+});
+
+test("a current match pauses follow", () => {
+  const { rerender } = render(<LogView lines={lines(50)} currentId={null} />);
+  fakeScroll(screen.getByRole("log"));
+
+  rerender(<LogView lines={lines(50)} currentId={10} />);
+
+  expect(screen.getByRole("button", { name: "Follow" })).toBeInTheDocument();
+});

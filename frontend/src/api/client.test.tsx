@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 
 import { api, ApiError, unwrap } from "@/api/client";
 import { renderRoute } from "@/test/render";
@@ -95,4 +95,36 @@ test("unwrap gives the field errors of a 422", async () => {
   const error = await api.GET("/api/settings").then(unwrap).catch((caught: unknown) => caught);
 
   expect(error).toMatchObject({ status: 422, message: "Unprocessable Content", fields });
+});
+
+test("unwrap of an error with no WT body gives the status text", async () => {
+  server.use(http.get("*/api/settings", () => new HttpResponse("Bad Gateway", { status: 502, statusText: "Bad Gateway" })));
+
+  const error = await api.GET("/api/settings").then(unwrap).catch((caught: unknown) => caught);
+
+  expect(error).toBeInstanceOf(ApiError);
+  expect(error).toMatchObject({ status: 502, message: "Bad Gateway", fields: [], retryAfter: null });
+});
+
+test("unwrap of a 422 with no error name gives the status text", async () => {
+  const fields = [{ field: "tail", message: "Input should be a valid integer" }];
+  server.use(
+    http.get("*/api/settings", () =>
+      HttpResponse.json({ detail: fields }, { status: 422, statusText: "Unprocessable Content" }),
+    ),
+  );
+
+  const error = await api.GET("/api/settings").then(unwrap).catch((caught: unknown) => caught);
+
+  expect(error).toMatchObject({ status: 422, message: "Unprocessable Content", fields });
+});
+
+test("before the app sets a 401 handler, a 401 does nothing", async () => {
+  vi.resetModules();
+  const fresh = await import("@/api/client");
+  server.use(http.get("*/api/containers", unauthorized));
+
+  const result = await fresh.api.GET("/api/containers");
+
+  expect(result.response.status).toBe(401);
 });

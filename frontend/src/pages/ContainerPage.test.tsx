@@ -57,3 +57,13 @@ test("an unknown container shows the API error", async () => {
 
   expect(await screen.findByRole("alert")).toHaveTextContent("No container 'web'");
 });
+
+test("no image and no tag show a dash", async () => {
+  answer(containerDetail({ image: null, tag: null }));
+  renderRoute("/containers/web");
+
+  const image = (await screen.findByText("Image")).nextElementSibling;
+  const running = screen.getByText("Running").nextElementSibling;
+  expect(image).toHaveTextContent("-");
+  expect(running).toHaveTextContent("-");
+});

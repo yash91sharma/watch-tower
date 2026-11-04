@@ -1,6 +1,7 @@
 """Tests for wt.docker.client (parse of the Docker API data) and FakeDocker."""
 
 import asyncio
+import socket
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -8,11 +9,13 @@ from pathlib import Path
 
 import pytest
 
+from wt.docker import client
 from wt.docker.client import (
     ContainerInfo,
     ContainerNotFoundError,
     ContainerSummary,
     DockerEvent,
+    DockerUnavailableError,
     container_info,
     container_summary,
     docker_event,
@@ -160,3 +163,51 @@ def test_ruff_bans_aiodocker_outside_wt_docker() -> None:
     )
 
     assert "TID251" in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("error", "expected", "text"),
+    [
+        (
+            client.aiodocker.DockerError(404, "No such container: web"),
+            ContainerNotFoundError,
+            "No such container: web",
+        ),
+        (
+            client.aiodocker.DockerError(403, "Forbidden"),
+            DockerUnavailableError,
+            "Docker error 403: Forbidden",
+        ),
+        (
+            client.aiohttp.ClientConnectionError("refused"),
+            DockerUnavailableError,
+            "Cannot connect to Docker: refused",
+        ),
+        (OSError("no route"), DockerUnavailableError, "Cannot connect"),
+        (TimeoutError(), DockerUnavailableError, "Cannot connect"),
+    ],
+)
+def test_docker_errors_become_wt_errors(
+    error: Exception, expected: type[Exception], text: str
+) -> None:
+    errors = client._errors  # pyright: ignore[reportPrivateUsage]
+    with pytest.raises(expected, match=text), errors():
+        raise error
+
+
+def test_other_errors_pass_through() -> None:
+    errors = client._errors  # pyright: ignore[reportPrivateUsage]
+    with pytest.raises(ValueError, match="bug"), errors():
+        raise ValueError("bug")
+
+
+def test_keepalive_socket_options() -> None:
+    addr_info = (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("127.0.0.1", 2375))
+    sock = client._keepalive_socket(addr_info)  # pyright: ignore[reportPrivateUsage, reportUnknownMemberType]
+    try:
+        assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE) == 1
+        assert sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE) == 10
+        assert sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL) == 5
+        assert sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT) == 3
+    finally:
+        sock.close()

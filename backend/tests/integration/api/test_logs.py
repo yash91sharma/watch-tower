@@ -158,3 +158,27 @@ async def test_download_of_unknown_or_excluded_gives_404(
     assert (
         await user_client.get(f"/api/containers/{name}/logs.txt")
     ).status_code == 404
+
+
+async def test_gone_container_gives_404(
+    app: FastAPI, fake: FakeDocker, user_client: httpx.AsyncClient
+) -> None:
+    ctx: AppContext = app.state.ctx
+    ctx.inventory.remove("web", "id-web")
+
+    response = await user_client.get("/api/containers/web/logs?follow=false")
+
+    assert response.status_code == 404
+
+
+async def test_docker_error_gives_an_error_event(
+    fake: FakeDocker, user_client: httpx.AsyncClient
+) -> None:
+    fake.fail = True
+
+    response = await user_client.get("/api/containers/web/logs?follow=false")
+
+    assert response.status_code == 200
+    assert response.text.startswith("event: error\ndata: ")
+    assert "Docker is not there" in response.text
+    assert fake.closed is True

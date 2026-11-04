@@ -86,3 +86,14 @@ test("save shows the backend field errors", async () => {
   expect(alert).toHaveTextContent("ntfy_url: URL scheme should be 'http' or 'https'");
   expect(screen.queryByText("Saved.")).not.toBeInTheDocument();
 });
+
+test("a settings load error shows the API error", async () => {
+  server.use(
+    http.get("*/api/settings", () =>
+      HttpResponse.json({ error: "Internal Server Error", detail: "An error occurred. See the WT log." }, { status: 500 }),
+    ),
+  );
+  renderRoute("/settings");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("An error occurred. See the WT log.");
+});

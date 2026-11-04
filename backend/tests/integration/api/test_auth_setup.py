@@ -153,3 +153,27 @@ async def test_blocked_after_5_failures_gives_429(
 
     assert response.status_code == 429
     assert int(response.headers["retry-after"]) == 900
+
+
+@pytest.mark.anyio
+async def test_admin_saved_by_another_request_gives_409(
+    app: FastAPI, client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Two setup requests pass the admin check. The second save fails on the admin key.
+    token = token_of(app)
+    secret = (await begin(client, token)).json()["totp_secret"]
+
+    def no_admin(ctx: AppContext) -> bool:
+        return False
+
+    monkeypatch.setattr("wt.api.auth.has_admin", no_admin)
+    with Session(ctx_of(app).engine) as session:
+        session.add(
+            Admin(id=1, password_hash="x", totp_secret=secret, last_totp_step=0)
+        )
+        session.commit()
+
+    response = await finish(client, token, pyotp.TOTP(secret).now())
+
+    assert response.status_code == 409
+    assert "set-cookie" not in response.headers

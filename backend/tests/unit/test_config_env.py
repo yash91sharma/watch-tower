@@ -144,3 +144,17 @@ def test_no_secret_value_in_repr_or_str(monkeypatch: pytest.MonkeyPatch) -> None
 
     for text in (repr(env), str(env)):
         assert "s3cret" not in text
+
+
+def test_secret_file_source_reads_no_single_field() -> None:
+    # pydantic-settings calls __call__ for all values; get_field_value gives nothing.
+    from wt.config import _SecretFiles  # pyright: ignore[reportPrivateUsage]
+
+    source = _SecretFiles(Env)
+    field = Env.model_fields["github_token"]
+
+    assert source.get_field_value(field, "github_token") == (
+        None,
+        "github_token",
+        False,
+    )

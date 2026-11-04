@@ -36,6 +36,7 @@ test.describe("logged in", () => {
     ["/containers/wt_test_e2e_old_a", "wt_test_e2e_old_a"],
     ["/containers/wt_test_e2e_json/logs", "Logs: wt_test_e2e_json"],
     ["/settings", "Settings"],
+    ["/no/such/page", "Page not found"],
   ] as const;
 
   for (const colorScheme of MODES) {

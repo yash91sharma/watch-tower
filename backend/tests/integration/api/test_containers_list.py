@@ -152,3 +152,20 @@ async def test_gone_container_is_absent(
     ]
 
     assert "db" not in names
+
+
+async def test_live_container_with_no_db_row_is_absent(
+    ctx: AppContext, user_client: httpx.AsyncClient
+) -> None:
+    with Session(ctx.engine) as session:
+        tool = session.exec(select(Container).where(Container.name == "tool")).one()
+        session.delete(tool)
+        session.commit()
+
+    names = [
+        item["name"]
+        for group in await get_groups(user_client)
+        for item in group["containers"]
+    ]
+    assert "tool" not in names
+    assert "web" in names

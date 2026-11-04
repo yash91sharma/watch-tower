@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, expect, test } from "vitest";
@@ -91,4 +91,15 @@ test("a file that is not JSON shows an error and sends nothing", async () => {
 
   expect(await section.findByRole("alert")).toHaveTextContent("The file is not JSON.");
   expect(calls).toEqual([]);
+});
+
+test("a file dialog closed with no file sends nothing", async () => {
+  renderRoute("/settings");
+  const section = within(await screen.findByRole("region", { name: "Export and import" }));
+  const input = section.getByLabelText("Config file");
+
+  fireEvent.change(input, { target: { files: [] } });
+
+  expect(calls).toEqual([]);
+  expect(section.queryByRole("alert")).not.toBeInTheDocument();
 });

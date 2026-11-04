@@ -312,7 +312,7 @@ Each feature has tests at all levels. A pull request merges only if all PR check
 | Frontend unit | Vitest, Testing Library, MSW | Components, hooks, log parse, search, JSON pretty-print, error and empty states. |
 | E2E | Playwright | Full stack from `compose.test.yaml`. See E2E flows. |
 | Accessibility | @axe-core/playwright | No serious or critical issues on any page. |
-| Visual | Playwright screenshots | Main pages at desktop and phone width, light and dark mode. |
+| Visual | Playwright screenshots | All pages (login, list, container, logs, settings, not found) at desktop and phone width, light and dark mode. |
 | PWA | Playwright | Valid manifest. Service worker registers. App shell loads offline. `/api` is not cached. |
 | Image | Trivy, pytest | No high or critical CVEs. Non-root user. Healthcheck passes. Both architectures start. |
 | Dependencies | pip-audit, `pnpm audit` | No known vulnerable packages. |
@@ -341,8 +341,8 @@ Each feature has tests at all levels. A pull request merges only if all PR check
 Flows 1-12 run once on Chromium at desktop size, because they change WT state. A read-only smoke spec, accessibility and visual tests run on Chromium and WebKit (Safari engine), at desktop, iPhone and Pixel sizes.
 
 **Coverage gates**
- - Backend: ≥ 90% line and branch. Rule modules: 100% branch.
- - Frontend: ≥ 85% line and branch.
+ - Backend: ≥ 97% line and branch (the real Docker client has its tests in the Docker run). Rule modules: 100% branch.
+ - Frontend: ≥ 99% line, ≥ 97% branch.
  - Each requirement has at least one E2E flow.
 
 **By hand** (in `wt_dev`; no CI for now)

@@ -105,3 +105,32 @@ test("a new tail size opens a new stream and closes the old one", () => {
   expect(first.closed).toBe(true);
   expect(FakeEventSource.last.url).toBe("/api/containers/web/logs?tail=1000");
 });
+
+test("a connection error (no data) gives no error text", () => {
+  const { result } = renderHook(() => useLogStream("web", 500));
+
+  act(() => {
+    FakeEventSource.last.emit("error");
+  });
+
+  expect(result.current.error).toBeNull();
+});
+
+test("unmount closes the stream and cancels a waiting frame", () => {
+  const { unmount } = renderHook(() => useLogStream("web", 500));
+  const source = FakeEventSource.last;
+  send("a");
+
+  unmount();
+
+  expect(source.closed).toBe(true);
+  expect(cancelAnimationFrame).toHaveBeenCalledTimes(1);
+});
+
+test("unmount with no waiting frame cancels nothing", () => {
+  const { unmount } = renderHook(() => useLogStream("web", 500));
+
+  unmount();
+
+  expect(cancelAnimationFrame).not.toHaveBeenCalled();
+});

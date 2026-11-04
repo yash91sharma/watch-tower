@@ -1,10 +1,13 @@
 """Tests for the static frontend files and the SPA fallback (wt.api.static)."""
 
-from collections.abc import AsyncIterator
+import json
+from collections.abc import AsyncIterator, Awaitable, Callable
 from pathlib import Path
+from typing import cast
 
 import httpx
 import pytest
+from fastapi import Request, Response
 
 from wt.config import Env
 from wt.main import create_app
@@ -106,3 +109,23 @@ async def test_no_static_dir_gives_json_404(tmp_path: Path) -> None:
 
     assert response.status_code == 404
     assert response.json()["error"] == "Not Found"
+
+
+@pytest.mark.anyio
+async def test_404_handler_for_another_error_type_gives_json_404(
+    tmp_path: Path, static_dir: Path
+) -> None:
+    app = create_app(Env(data_dir=tmp_path / "data"), workers=[], static_dir=static_dir)
+    handler = cast(
+        Callable[[Request, Exception], Awaitable[Response]],
+        app.exception_handlers[404],
+    )
+    request = Request({"type": "http", "method": "POST", "path": "/x", "headers": []})
+
+    response = await handler(request, RuntimeError("not an HTTP error"))
+
+    assert response.status_code == 404
+    assert json.loads(bytes(response.body)) == {
+        "error": "Not Found",
+        "detail": "Not Found",
+    }

@@ -111,3 +111,14 @@ test("a bad value shows the field error", async () => {
 
   expect(await form.findByRole("alert")).toHaveTextContent("source: Give a GitHub URL or owner/repo");
 });
+
+test("with no source, the page says so and edit starts with an empty value", async () => {
+  const user = start(null, false);
+  const form = await section();
+
+  expect(form.getByText("No release source")).toBeInTheDocument();
+  expect(form.queryByRole("button", { name: "Confirm" })).not.toBeInTheDocument();
+  await user.click(form.getByRole("button", { name: "Edit" }));
+
+  expect(form.getByLabelText("GitHub URL or owner/repo")).toHaveValue("");
+});

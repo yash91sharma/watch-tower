@@ -1,11 +1,17 @@
 """Tests for the error shape {error, detail} (wt.api.errors)."""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 
 import httpx
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from wt.api.errors import (
+    _http_error,  # pyright: ignore[reportPrivateUsage]
+    _validation_error,  # pyright: ignore[reportPrivateUsage]
+)
 
 
 class Body(BaseModel):
@@ -102,3 +108,18 @@ async def test_bad_json_is_a_validation_error(test_client: httpx.AsyncClient) ->
 
     assert response.status_code == 422
     assert response.json()["error"] == "Unprocessable Content"
+
+
+def plain_request() -> Request:
+    return Request({"type": "http", "method": "GET", "path": "/x", "headers": []})
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("handler", [_http_error, _validation_error])
+async def test_a_handler_for_another_error_type_gives_500(
+    handler: Callable[[Request, Exception], Awaitable[JSONResponse]],
+) -> None:
+    response = await handler(plain_request(), RuntimeError("secret internal detail"))
+
+    assert response.status_code == 500
+    assert b"secret" not in response.body

@@ -49,5 +49,20 @@ test.describe("logged in", () => {
 
       await expect(page).toHaveScreenshot(`settings-${colorScheme}.png`, { fullPage: true });
     });
+
+    test(`logs page, ${colorScheme}`, async ({ page }) => {
+      await open(page, "/containers/wt_test_e2e_json/logs", "Logs: wt_test_e2e_json", colorScheme);
+      const log = page.getByRole("log");
+      await expect(log.locator("[data-index]").first()).toBeVisible();
+
+      // The lines change on each run: mask them.
+      await expect(page).toHaveScreenshot(`logs-${colorScheme}.png`, { fullPage: true, mask: [log] });
+    });
+
+    test(`not found page, ${colorScheme}`, async ({ page }) => {
+      await open(page, "/no/such/page", "Page not found", colorScheme);
+
+      await expect(page).toHaveScreenshot(`not-found-${colorScheme}.png`, { fullPage: true });
+    });
   }
 });
