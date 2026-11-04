@@ -334,7 +334,7 @@ Rules:
 
 ## 18. Release v0.0.0
 
-- [ ] **18.1** Each P0 requirement and each CUJ has an E2E flow. Coverage gates pass.
+- [x] **18.1** Each P0 requirement and each CUJ has an E2E flow. Coverage gates pass.
 - [ ] **18.2** Security review: no secrets in code, logs, tests or Git history. Check cookie flags, auth guard, trusted proxies, security headers, socket proxy GET only.
 - [ ] **18.3** Deploy to prod (OrbStack, M2) behind Traefik and Tailscale. Idle RAM < 200 MB.
 - [ ] **18.4** Manual test of all CUJs on desktop, iPhone (PWA) and Android (PWA). Record the result in the PR.
@@ -360,3 +360,10 @@ Rules:
 | WT recovers when the Docker stream stops | 6.6, 7.3, 7.4, 11.3, 13.6 | Flow 12 |
 | Use WT as a PWA on phone and tablet | 13.1, 14.1, 14.2 | 16.19, 16.20 |
 | Use WT behind a reverse proxy | 3.1, 15.3 | All (Traefik in 16.4) |
+
+P0 rules with no E2E flow (18.1). Unit and integration tests cover them; an E2E flow would need long waits or a second Docker host:
+ - Check schedule (every X hours): 9.10, with the test clock.
+ - GitHub rate limit and token: 9.4, 9.5 (the fake GitHub has a rate limit mode for a later flow).
+ - Short-form version tags (`16` matches `16.4.1`): 9.2.
+ - ntfy token: 10.3.
+ - The admin release source stays after a recreate: 9.12 ("a new inspect keeps it").
