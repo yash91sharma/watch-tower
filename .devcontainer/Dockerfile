@@ -2,7 +2,7 @@
 # Pinned tool versions. Dependabot updates the base images.
 FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
 FROM docker:29.9.2-cli AS docker
-FROM node:24.22.2-trixie-slim AS node
+FROM node:26.13.0-trixie-slim AS node
 
 FROM python:3.14.10-slim-trixie
 
