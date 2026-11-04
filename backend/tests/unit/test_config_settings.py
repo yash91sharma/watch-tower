@@ -78,6 +78,11 @@ def test_empty_strings_mean_not_set() -> None:
         {"check_interval_hours": 0},
         {"restart_count": 1},
         {"restart_window_minutes": 0},
+        # Upper limits: a very big number does not load back from SQLite (a float).
+        {"check_interval_hours": 721},
+        {"restart_count": 101},
+        {"restart_window_minutes": 1441},
+        {"restart_count": 1.7054105166433223e21},
         {"ntfy_url": "ftp://ntfy.example.com"},
         {"llm_url": "ollama:11434"},
         {"public_url": "javascript:alert(1)"},
@@ -89,3 +94,13 @@ def test_empty_strings_mean_not_set() -> None:
 def test_bad_values_fail(values: dict[str, Any]) -> None:
     with pytest.raises(ValidationError):
         Settings.model_validate(values)
+
+
+def test_the_upper_limits_save_and_load(db_engine: Engine) -> None:
+    settings = Settings(
+        check_interval_hours=720, restart_count=100, restart_window_minutes=1440
+    )
+
+    save_settings(db_engine, settings)
+
+    assert load_settings(db_engine) == settings

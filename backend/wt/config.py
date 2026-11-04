@@ -164,10 +164,12 @@ class Settings(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    check_interval_hours: int = Field(default=24, ge=1)
+    # Upper limits: big numbers make no sense, and a very big one loads back from SQLite
+    # as a float that is not a valid int (then each settings read fails).
+    check_interval_hours: int = Field(default=24, ge=1, le=720)
     # Restart loop: N or more restarts in M minutes.
-    restart_count: int = Field(default=3, ge=2)
-    restart_window_minutes: int = Field(default=10, ge=1)
+    restart_count: int = Field(default=3, ge=2, le=100)
+    restart_window_minutes: int = Field(default=10, ge=1, le=1440)
     ntfy_url: Annotated[HttpUrl | None, EmptyIsNone] = None
     ntfy_topic: Annotated[NtfyTopic | None, EmptyIsNone] = None
     llm_url: Annotated[HttpUrl | None, EmptyIsNone] = None

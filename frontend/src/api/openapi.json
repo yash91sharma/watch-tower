@@ -1731,18 +1731,21 @@
         "properties": {
           "check_interval_hours": {
             "type": "integer",
+            "maximum": 720.0,
             "minimum": 1.0,
             "title": "Check Interval Hours",
             "default": 24
           },
           "restart_count": {
             "type": "integer",
+            "maximum": 100.0,
             "minimum": 2.0,
             "title": "Restart Count",
             "default": 3
           },
           "restart_window_minutes": {
             "type": "integer",
+            "maximum": 1440.0,
             "minimum": 1.0,
             "title": "Restart Window Minutes",
             "default": 10
