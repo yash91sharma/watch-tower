@@ -15,7 +15,7 @@ from wt.docker.inventory import Inventory
 
 pytestmark = pytest.mark.anyio
 
-WEB = ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False, 0)
+WEB = ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False)
 
 
 async def next_docker_state(subscription: Subscription) -> bool:

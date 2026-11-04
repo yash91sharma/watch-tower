@@ -23,7 +23,6 @@ from wt.docker.fake import FakeDocker
 INSPECT = {
     "Id": "abc123",
     "Name": "/web",
-    "RestartCount": 2,
     "State": {"Status": "running", "Health": {"Status": "healthy"}},
     "Config": {
         "Image": "nginx:1.27",
@@ -42,7 +41,6 @@ def test_container_info_from_inspect() -> None:
         state="running",
         health="healthy",
         tty=False,
-        restart_count=2,
     )
 
 

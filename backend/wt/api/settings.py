@@ -7,8 +7,7 @@ from pydantic import BaseModel
 
 from wt.api.deps import Ctx
 from wt.bus import Topic
-from wt.config import Env, Settings, load_settings, save_settings
-from wt.context import AppContext
+from wt.config import SECRET_FIELDS, Env, Settings, load_settings, save_settings
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -28,24 +27,17 @@ class SettingsOut(BaseModel):
     secrets: SecretState
 
 
-def secret_state(env: Env) -> SecretState:
-    def state(value: object) -> SecretValue:
-        return "not set" if value is None else "set"
-
-    return SecretState(
-        github_token=state(env.github_token),
-        ntfy_token=state(env.ntfy_token),
-        llm_api_key=state(env.llm_api_key),
-    )
-
-
-def settings_out(ctx: AppContext, values: Settings) -> SettingsOut:
-    return SettingsOut(values=values, secrets=secret_state(ctx.env))
+def settings_out(env: Env, values: Settings) -> SettingsOut:
+    secrets = {
+        name: "not set" if getattr(env, name) is None else "set"
+        for name in SECRET_FIELDS
+    }
+    return SettingsOut(values=values, secrets=SecretState.model_validate(secrets))
 
 
 @router.get("")
 def get_settings(ctx: Ctx) -> SettingsOut:
-    return settings_out(ctx, load_settings(ctx.engine))
+    return settings_out(ctx.env, load_settings(ctx.engine))
 
 
 @router.put("")
@@ -53,4 +45,4 @@ def put_settings(values: Settings, ctx: Ctx) -> SettingsOut:
     """Save all settings. Workers reload them on the `settings` bus topic."""
     save_settings(ctx.engine, values)
     ctx.bus.publish(Topic.SETTINGS)
-    return settings_out(ctx, values)
+    return settings_out(ctx.env, values)

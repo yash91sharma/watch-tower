@@ -37,17 +37,15 @@ async def handle_event(
     if event.action == "destroy":
         if inventory.remove(event.name, event.container_id):
             bus.publish(Topic.CONTAINER, {"name": event.name})
-        if listener is not None:
-            await listener.on_event(event)
-        return
-    try:
-        info = await docker.inspect(event.container_id)
-    except ContainerNotFoundError:
-        log.debug("Container %s is gone before the inspect", event.name)
-        return
-    if await inventory.update(info) is None:
-        return
-    bus.publish(Topic.CONTAINER, {"name": info.name})
+    else:
+        try:
+            info = await docker.inspect(event.container_id)
+        except ContainerNotFoundError:
+            log.debug("Container %s is gone before the inspect", event.name)
+            return
+        if await inventory.update(info) is None:
+            return
+        bus.publish(Topic.CONTAINER, {"name": info.name})
     if listener is not None:
         await listener.on_event(event)
 

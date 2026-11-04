@@ -31,7 +31,6 @@ WEB = ContainerInfo(
     "running",
     "none",
     False,
-    0,
 )
 
 

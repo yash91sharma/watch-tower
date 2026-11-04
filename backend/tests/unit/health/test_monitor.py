@@ -83,7 +83,7 @@ async def test_on_sync_sets_the_baseline_and_skips_excluded(
 
     monitor.on_sync(
         [
-            ContainerInfo("id-1", "web", "x", {}, "running", "unhealthy", False, 0),
+            ContainerInfo("id-1", "web", "x", {}, "running", "unhealthy", False),
             ContainerInfo(
                 "id-2",
                 "secret",
@@ -92,7 +92,6 @@ async def test_on_sync_sets_the_baseline_and_skips_excluded(
                 "running",
                 "unhealthy",
                 False,
-                0,
             ),
         ]
     )

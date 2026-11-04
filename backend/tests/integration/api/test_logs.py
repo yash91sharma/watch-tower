@@ -28,9 +28,7 @@ def line(second: int, stream: Stream = "stdout") -> LogLine:
 async def fake(app: FastAPI) -> FakeDocker:
     ctx: AppContext = app.state.ctx
     docker = FakeDocker()
-    docker.add(
-        ContainerInfo("id-web", "web", "nginx:1", {}, "running", "none", False, 0)
-    )
+    docker.add(ContainerInfo("id-web", "web", "nginx:1", {}, "running", "none", False))
     docker.log_lines["web"] = [line(0), line(1, "stderr"), line(2), line(3)]
     app.state.ctx = replace(ctx, docker_factory=lambda: docker)
     await ctx.inventory.update(docker.containers["id-web"])
@@ -43,7 +41,6 @@ async def fake(app: FastAPI) -> FakeDocker:
             "running",
             "none",
             False,
-            0,
         )
     )
     return docker

@@ -19,7 +19,8 @@ from wt.config import Env, load_settings
 from wt.db import LOCAL_HOST_ID
 from wt.db.models import Container, RepoCache, Setting, Update
 from wt.docker.inventory import Inventory
-from wt.llm.summary import Summary, summarize
+from wt.llm.client import LlmResult
+from wt.llm.summary import summarize
 from wt.versions.cache import cached_releases, refresh_repo
 from wt.versions.github import GitHub
 from wt.versions.rules import (
@@ -156,7 +157,7 @@ def _plan_updates(engine: Engine, rows: list[Container]) -> list[_UpdatePlan]:
     return plans
 
 
-def _save_update(engine: Engine, plan: _UpdatePlan, summary: Summary) -> None:
+def _save_update(engine: Engine, plan: _UpdatePlan, summary: LlmResult) -> None:
     """Add the row, or change it. A changed row keeps notified_at (no new message)."""
     with Session(engine) as session:
         row = _update_row(session, plan.container_id, plan.to_version) or Update(

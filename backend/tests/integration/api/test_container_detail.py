@@ -19,7 +19,7 @@ SOURCE = "org.opencontainers.image.source"
 
 async def add(ctx: AppContext, name: str, image: str, **labels: str) -> int:
     await ctx.inventory.update(
-        ContainerInfo(f"id-{name}", name, image, labels, "running", "healthy", False, 0)
+        ContainerInfo(f"id-{name}", name, image, labels, "running", "healthy", False)
     )
     with Session(ctx.engine) as session:
         row = session.exec(select(Container).where(Container.name == name)).one()

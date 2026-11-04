@@ -150,9 +150,7 @@ async def test_docker_worker_connects_and_fills_the_inventory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     fake = FakeDocker()
-    fake.add(
-        ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False, 0)
-    )
+    fake.add(ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False))
 
     def make_client(docker_host: str | None) -> FakeDocker:
         return fake

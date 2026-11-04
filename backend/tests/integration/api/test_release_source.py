@@ -15,7 +15,7 @@ LABEL = {"org.opencontainers.image.source": "https://github.com/label/source"}
 
 
 def web(labels: dict[str, str] = LABEL) -> ContainerInfo:
-    return ContainerInfo("id-1", "web", "app:1.0", labels, "running", "none", False, 0)
+    return ContainerInfo("id-1", "web", "app:1.0", labels, "running", "none", False)
 
 
 def saved(ctx: AppContext) -> tuple[str | None, bool]:
@@ -108,7 +108,6 @@ async def test_excluded_container_gives_404(
             "running",
             "none",
             False,
-            0,
         )
     )
 

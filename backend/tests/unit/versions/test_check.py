@@ -37,9 +37,7 @@ async def add(
     all_labels = {SOURCE: f"https://github.com/{source}"} if source else {}
     all_labels.update(labels)
     await inventory.update(
-        ContainerInfo(
-            f"id-{name}", name, image, all_labels, "running", "none", False, 0
-        )
+        ContainerInfo(f"id-{name}", name, image, all_labels, "running", "none", False)
     )
 
 

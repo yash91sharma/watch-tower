@@ -20,7 +20,7 @@ LATEST = "https://api.github.com/repos/o/web/releases/latest"
 async def add_web(ctx: AppContext) -> None:
     labels = {SOURCE: "https://github.com/o/web"}
     await ctx.inventory.update(
-        ContainerInfo("id-1", "web", "app:1.0", labels, "running", "none", False, 0)
+        ContainerInfo("id-1", "web", "app:1.0", labels, "running", "none", False)
     )
 
 

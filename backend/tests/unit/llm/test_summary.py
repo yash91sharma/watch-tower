@@ -8,7 +8,8 @@ import respx
 
 from wt.config import Settings
 from wt.db.models import Severity
-from wt.llm.summary import Summary, summarize
+from wt.llm.client import LlmResult
+from wt.llm.summary import summarize
 
 pytestmark = pytest.mark.anyio
 
@@ -27,7 +28,7 @@ async def test_llm_off_uses_keywords_and_no_summary(settings: Settings) -> None:
 
         result = await summarize(NOTES, settings, api_key=None)
 
-    assert result == Summary(Severity.CRITICAL, "")
+    assert result == LlmResult(severity=Severity.CRITICAL, summary="")
     assert not route.called
 
 
@@ -39,7 +40,7 @@ async def test_llm_error_uses_keywords_and_no_summary() -> None:
             NOTES, Settings(llm_url=URL, llm_model="m"), api_key=None
         )
 
-    assert result == Summary(Severity.CRITICAL, "")
+    assert result == LlmResult(severity=Severity.CRITICAL, summary="")
 
 
 async def test_llm_good_uses_the_llm_result() -> None:
@@ -54,7 +55,9 @@ async def test_llm_good_uses_the_llm_result() -> None:
             "New dark mode.", Settings(llm_url=URL, llm_model="m"), None
         )
 
-    assert result == Summary(Severity.NORMAL, "The update adds dark mode.")
+    assert result == LlmResult(
+        severity=Severity.NORMAL, summary="The update adds dark mode."
+    )
     assert (
         json.loads(route.calls.last.request.content)["messages"][1]["content"]
         == "New dark mode."

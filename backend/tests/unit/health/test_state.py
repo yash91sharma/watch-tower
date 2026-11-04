@@ -115,7 +115,7 @@ def test_another_action_gives_no_change() -> None:
 
 
 def info(health: str, docker_id: str = "id-1", name: str = "web") -> ContainerInfo:
-    return ContainerInfo(docker_id, name, "nginx:1", {}, "running", health, False, 0)
+    return ContainerInfo(docker_id, name, "nginx:1", {}, "running", health, False)
 
 
 def test_baseline_unhealthy_gives_no_change_then_recovered_health() -> None:

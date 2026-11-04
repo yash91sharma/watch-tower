@@ -34,7 +34,7 @@ ENGINE = open_db(DATA_DIR)
 
 _docker = FakeDocker()
 _docker.add(
-    ContainerInfo("id-web", "web", "nginx:1.27", {}, "running", "healthy", False, 0)
+    ContainerInfo("id-web", "web", "nginx:1.27", {}, "running", "healthy", False)
 )
 
 

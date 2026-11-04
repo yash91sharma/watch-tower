@@ -25,7 +25,6 @@ def info(name: str, docker_id: str | None = None, **changes: object) -> Containe
         state="running",
         health="healthy",
         tty=False,
-        restart_count=0,
     )
     return replace(base, **changes)  # type: ignore[arg-type]
 

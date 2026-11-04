@@ -28,7 +28,7 @@ def info(
     if project:
         all_labels["com.docker.compose.project"] = project
     return ContainerInfo(
-        f"id-{name}", name, image, all_labels, "running", health, False, 0
+        f"id-{name}", name, image, all_labels, "running", health, False
     )
 
 

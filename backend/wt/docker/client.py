@@ -46,7 +46,6 @@ class ContainerInfo:
     # healthy, unhealthy, starting, or none (no healthcheck).
     health: str
     tty: bool
-    restart_count: int
 
 
 @dataclass(frozen=True)
@@ -95,7 +94,6 @@ def container_info(data: Mapping[str, Any]) -> ContainerInfo:
         state=str(state.get("Status", "")),
         health=str(health.get("Status", "none")),
         tty=bool(config.get("Tty", False)),
-        restart_count=int(data.get("RestartCount", 0)),
     )
 
 

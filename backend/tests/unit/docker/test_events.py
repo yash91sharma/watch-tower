@@ -15,7 +15,7 @@ from wt.docker.inventory import Inventory
 pytestmark = pytest.mark.anyio
 
 T0 = datetime(2026, 1, 1, tzinfo=UTC)
-WEB = ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False, 0)
+WEB = ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False)
 
 
 def event(
