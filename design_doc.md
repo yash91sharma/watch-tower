@@ -290,7 +290,7 @@ volumes:
 
 ### Tests
 
-Each feature has tests at all levels. A pull request merges only if all PR checks pass.
+Each feature has tests at all levels. A commit goes in only if `check.sh` passes (pre-commit hook).
 
 **Testability rules**
  - Code gets the time only from `wt/clock.py`. Tests set the time (restart window, TOTP, session expiry).
@@ -314,7 +314,7 @@ Each feature has tests at all levels. A pull request merges only if all PR check
 | Accessibility | @axe-core/playwright | No serious or critical issues on any page. |
 | Visual | Playwright screenshots | All pages (login, list, container, logs, settings, not found) at desktop and phone width, light and dark mode. |
 | PWA | Playwright | Valid manifest. Service worker registers. App shell loads offline. `/api` is not cached. |
-| Image | Trivy, pytest | No high or critical CVEs. Non-root user. Healthcheck passes. Both architectures start. |
+| Image | Trivy, pytest | No high or critical CVEs. Non-root user. Healthcheck passes. The `linux/arm64` image starts. |
 | Dependencies | pip-audit, `pnpm audit` | No known vulnerable packages. |
 | Footprint | pytest, `docker stats` | Idle RAM < 200 MB with 50 test containers. After 5 s of a log stream at 1,000 lines/s, a click on pause updates the UI in < 200 ms. |
 | Mutation | mutmut | Rule modules (`versions/`, `health/`, `notify/`). Score ≥ 80%. |

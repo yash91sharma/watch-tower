@@ -1,6 +1,8 @@
 """The release workflow (task 17.1): a v* tag builds the arm64 image, pushes to Docker Hub."""
 
+import json
 import re
+import tomllib
 from pathlib import Path
 
 REPO = Path(__file__).parents[3]
@@ -43,3 +45,10 @@ def test_each_action_is_pinned_by_commit_sha() -> None:
 
 def test_compose_runs_the_docker_hub_image() -> None:
     assert f"image: {IMAGE}:latest" in (REPO / "compose.yaml").read_text()
+
+
+def test_backend_and_frontend_have_the_same_version() -> None:
+    backend = tomllib.loads((REPO / "backend" / "pyproject.toml").read_text())
+    frontend = json.loads((REPO / "frontend" / "package.json").read_text())
+
+    assert frontend.get("version") == backend["project"]["version"]
