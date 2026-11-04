@@ -130,9 +130,8 @@ One process runs the API and the workers. Uvicorn runs 1 worker, because the wor
 
  - Source: https://github.com/yash91sharma/watch-tower (public). Default branch: `main`.
  - Image: `ghcr.io/yash91sharma/watch-tower`. Tags: version (`0.0.0`) and `latest`.
- - Releases: a Git tag `v*` starts the image build. Each release has GitHub release notes.
- - `main` is protected. Changes go in through pull requests. All PR checks must pass.
- - Dependabot updates Python, npm, GitHub Actions and Docker base images.
+ - No CI/CD for now. The pre-commit hook runs `check.sh`. Docker, E2E, image, mutation, footprint and LLM eval tests run by hand in `wt_dev`.
+ - Releases: tag `v*`, then build and push the image by hand (`docker buildx`, both architectures).
 
 ### Code layout
 
@@ -154,7 +153,7 @@ backend/wt/
 backend/tests/   unit/, integration/, contract/
 frontend/src/    React app, *.test.tsx next to each component
 e2e/             Playwright specs, compose.test.yaml, fakes/ (GitHub, LLM, test containers)
-Dockerfile, compose.yaml, .github/workflows/
+Dockerfile, compose.yaml
 ```
 
 ### Data model
@@ -253,7 +252,7 @@ The container key is (`host_id`, name). Compose makes a new Docker id on each re
 ### Deploy
 
  - One image, multi-stage build: Node builds the frontend, `python:3.14-slim` runs the backend. FastAPI serves the static files.
- - Multi-arch: `linux/arm64` and `linux/amd64`. GitHub Actions builds and pushes to GHCR.
+ - Multi-arch: `linux/arm64` and `linux/amd64`. Built and pushed to GHCR by hand.
  - Non-root user, `no-new-privileges`, read-only root filesystem. Writable: `/data` and a `/tmp` tmpfs.
  - Healthcheck: `GET /api/health` (no auth).
  - The socket proxy is on an internal network with no published port.
@@ -296,7 +295,7 @@ Each feature has tests at all levels. A pull request merges only if all PR check
 **Testability rules**
  - Code gets the time only from `wt/clock.py`. Tests set the time (restart window, TOTP, session expiry).
  - All external URLs come from config (GitHub, ntfy, LLM). Tests point them to fakes.
- - Tests do not call the real GitHub, ntfy or LLM. Exception: the nightly LLM eval.
+ - Tests do not call the real GitHub, ntfy or LLM. Exception: the LLM eval (run by hand).
 
 **Test types**
 
@@ -316,14 +315,14 @@ Each feature has tests at all levels. A pull request merges only if all PR check
 | Visual | Playwright screenshots | Main pages at desktop and phone width, light and dark mode. |
 | PWA | Playwright | Valid manifest. Service worker registers. App shell loads offline. `/api` is not cached. |
 | Image | Trivy, pytest | No high or critical CVEs. Non-root user. Healthcheck passes. Both architectures start. |
-| Dependencies | pip-audit, `pnpm audit`, Dependabot | No known vulnerable packages. |
+| Dependencies | pip-audit, `pnpm audit` | No known vulnerable packages. |
 | Footprint | pytest, `docker stats` | Idle RAM < 200 MB with 50 test containers. After 5 s of a log stream at 1,000 lines/s, a click on pause updates the UI in < 200 ms. |
 | Mutation | mutmut | Rule modules (`versions/`, `health/`, `notify/`). Score ≥ 80%. |
 | LLM eval | pytest, real Ollama | 20 known release notes. Severity matches the expected value. The reply matches the schema. |
 
 **E2E stack** (`compose.test.yaml`): WT, socket proxy, Traefik with a self-signed certificate (browsers need HTTPS for `Secure` cookies), ntfy server, fake GitHub API, fake LLM API, test containers (healthy, unhealthy, restart loop, `latest` tag, excluded, JSON logs). Playwright runs in the official Playwright image with the Docker CLI added. Support services have `wt.enable=false`. Tests check only the E2E Compose project. Fake GitHub starts with no updates. Each flow adds its releases.
 
-**Pre-commit** runs static checks and all tests except Docker, E2E and LLM eval. CI runs all tests.
+**Pre-commit** runs static checks and all tests except Docker, E2E and LLM eval. The other tests run by hand (no CI for now).
 
 **E2E flows**
 1. Setup: read the token from the WT log, set the password, scan TOTP (the test computes the code).
@@ -346,9 +345,13 @@ Flows 1-12 run once on Chromium at desktop size, because they change WT state. A
  - Frontend: ≥ 85% line and branch.
  - Each requirement has at least one E2E flow.
 
-**CI**
- - Each PR: static, unit, property, integration, Docker, migration, contract, auth, frontend unit, E2E, accessibility, visual, PWA, image, dependencies.
- - Nightly: mutation, LLM eval, footprint, long schemathesis run.
+**By hand** (in `wt_dev`; no CI for now)
+ - Docker and image: `cd backend && uv run pytest -m docker -n0`
+ - E2E, accessibility, visual, PWA: `bash e2e/run.sh`
+ - Footprint: `FOOTPRINT=1 bash e2e/run.sh --project footprint`
+ - Mutation: `bash .devcontainer/mutation.sh`
+ - LLM eval (needs Ollama): `cd backend && uv run pytest -m llm_eval -n0`
+ - Dependencies: `cd backend && uv run pip-audit --skip-editable`; `pnpm audit --audit-level high` in `frontend/` and `e2e/`
 
 ### Future: multi-host
 

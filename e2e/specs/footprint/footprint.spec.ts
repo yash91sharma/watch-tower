@@ -1,4 +1,4 @@
-// Footprint (task 16.22, nightly): run with FOOTPRINT=1 bash e2e/run.sh --project footprint
+// Footprint (task 16.22, run by hand): run with FOOTPRINT=1 bash e2e/run.sh --project footprint
 // The stack then has 50 more test containers and wt_test_e2e_fast (1,000 log lines/s).
 import { expect, test } from "@playwright/test";
 

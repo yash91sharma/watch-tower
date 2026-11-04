@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mutation test (task 16.23, nightly): mutmut on wt/versions, wt/health and wt/notify (see
+# Mutation test (task 16.23, run by hand): mutmut on wt/versions, wt/health and wt/notify (see
 # [tool.mutmut] in backend/pyproject.toml). Run it in wt_dev. It fails if the score is < 80%.
 # A timeout counts as killed. See the survived mutants with: uv run mutmut results
 set -euo pipefail

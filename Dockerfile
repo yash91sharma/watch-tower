@@ -1,5 +1,5 @@
 # WT image. Node builds the frontend. python:3.14-slim runs the backend and serves the
-# frontend files. Pinned base images (Dependabot updates them).
+# frontend files. Pinned base images.
 # Build: docker build --build-arg VERSION=0.0.0 --build-arg REVISION=$(git rev-parse HEAD) .
 FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
 

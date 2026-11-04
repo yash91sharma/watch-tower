@@ -32,7 +32,7 @@ export default defineConfig({
       timeout: 120_000,
       use: { ...devices["Desktop Chrome"] },
     },
-    // Nightly only (FOOTPRINT=1 run.sh): it needs the footprint containers. No flows first:
+    // Only with FOOTPRINT=1 run.sh: it needs the footprint containers. No flows first:
     // the 50 more containers would change the flow 3 list.
     ...(process.env.FOOTPRINT
       ? [

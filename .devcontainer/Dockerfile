@@ -1,5 +1,5 @@
 # Dev image: Python 3.14 + uv, Node 24 + pnpm, Docker CLI.
-# Pinned tool versions. Dependabot updates the base images.
+# Pinned tool versions.
 FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
 FROM docker:29.9.2-cli AS docker
 FROM node:24.22.2-trixie-slim AS node

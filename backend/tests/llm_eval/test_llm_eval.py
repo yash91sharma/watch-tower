@@ -1,4 +1,4 @@
-"""LLM eval (marker llm_eval, nightly): severity of known release notes with a real LLM.
+"""LLM eval (marker llm_eval, run by hand): severity of known release notes with a real LLM.
 
 Set WT_EVAL_LLM_URL (default http://ollama:11434) and WT_EVAL_LLM_MODEL (default
 qwen2.5:3b). The notes in cases.json are made up for this test.

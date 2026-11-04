@@ -3,7 +3,7 @@
 # It starts the stack from zero (new WT data), builds the runner and runs it as
 # wt_test_playwright on the e2e network with the host Docker socket. Then it copies the
 # report and the results to e2e/ (Git ignores them).
-# Footprint test (task 16.22, nightly): FOOTPRINT=1 bash e2e/run.sh --project footprint
+# Footprint test (task 16.22, run by hand): FOOTPRINT=1 bash e2e/run.sh --project footprint
 set -euo pipefail
 cd "$(dirname "$0")"
 

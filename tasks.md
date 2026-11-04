@@ -30,8 +30,7 @@ Rules:
   - **Test:** a lint error makes `check.sh` fail. A missed branch makes it fail.
 - [x] **1.9** Dev run: publish `127.0.0.1:8000` (API) and `127.0.0.1:5173` (Vite) from `wt_dev`. Add `.env.dev.example` with no secrets.
   - **Test:** the host browser opens the app that runs in `wt_dev`.
-- [ ] **1.10** PR workflow `.github/workflows/pr.yml`: build the dev image, run `check.sh` in it. Pin all actions by commit SHA.
-  - **Test:** a PR runs the workflow and it passes.
+- **1.10** Dropped (no CI for now, see section 17).
 
 ## 2. Backend core
 
@@ -162,7 +161,7 @@ Rules:
 - [x] **8.4** `summarize(notes)`: if `llm_url` and `llm_model` are set and the LLM gives a result, use it. Else the summary is empty and the severity comes from 8.1.
   - **Test:** LLM off (URL or model not set), LLM error, LLM good.
 - [x] **8.5** LLM eval: 20 release notes with the expected severity in `tests/llm_eval/`. A test with marker `llm_eval` calls a real Ollama and checks the severity and the reply schema.
-  - **Test:** runs nightly (17.2).
+  - **Test:** run by hand (`uv run pytest -m llm_eval -n0`, needs Ollama).
 
 ## 9. Version check
 
@@ -318,19 +317,12 @@ Rules:
 - [x] **16.19** Visual: screenshots of the main pages at desktop and phone width, light and dark mode. The containers page screenshot covers only the E2E project group. Baselines from the Playwright image.
 - [x] **16.20** PWA (Playwright): valid manifest, service worker registers, app shell loads offline, `/api` not cached.
 - [x] **16.21** Image: Trivy finds no high or critical CVE. The user is not root. The healthcheck passes. Only `/data` and `/tmp` are writable. `linux/arm64` and `linux/amd64` start.
-- [x] **16.22** Footprint (nightly): with 50 test containers, WT idle RAM < 200 MB (`docker stats`). After 5 s of a log stream at 1,000 lines/s, a click on pause updates the UI in < 200 ms.
-- [x] **16.23** Mutation (nightly): mutmut on `versions/`, `health/`, `notify/` (pytest with `-n0`, 1.5). Score ≥ 80%.
+- [x] **16.22** Footprint (run by hand): with 50 test containers, WT idle RAM < 200 MB (`docker stats`). After 5 s of a log stream at 1,000 lines/s, a click on pause updates the UI in < 200 ms.
+- [x] **16.23** Mutation (run by hand): mutmut on `versions/`, `health/`, `notify/` (pytest with `-n0`, 1.5). Score ≥ 80%.
 
 ## 17. CI
 
-- [ ] **17.1** PR workflow jobs: static, unit, property, integration, Docker, migration, contract, auth, frontend unit, E2E, accessibility, visual, PWA, image, dependencies (`pip-audit`, `pnpm audit`). Cache the dev image and deps.
-  - **Test:** all jobs pass on a PR.
-- [ ] **17.2** Nightly workflow: mutation, LLM eval (Ollama service, small model), footprint, long schemathesis run.
-  - **Test:** a manual trigger passes.
-- [ ] **17.3** Release workflow: a `v*` tag builds `linux/arm64` and `linux/amd64` (buildx), pushes `ghcr.io/yash91sharma/watch-tower:<version>` and `:latest`, and makes a GitHub release with notes.
-  - **Test:** a dry run builds both architectures.
-- [x] **17.4** Dependabot: `uv`, `npm`, `github-actions`, `docker` (`Dockerfile`, `.devcontainer/Dockerfile`).
-- [ ] **17.5** Branch protection on `main` (the user sets it in GitHub): PRs only, all 17.1 jobs required.
+Dropped for now: no CI/CD (no GitHub workflows, no Dependabot, no branch protection). The pre-commit hook runs `check.sh`. The other tests run by hand (see "By hand" in `design_doc.md`).
 
 ## 18. Release v0.0.0
 
@@ -338,14 +330,14 @@ Rules:
 - [x] **18.2** Security review: no secrets in code, logs, tests or Git history. Check cookie flags, auth guard, trusted proxies, security headers, socket proxy GET only.
 - [ ] **18.3** Deploy to prod (OrbStack, M2) behind Traefik and Tailscale. Idle RAM < 200 MB.
 - [ ] **18.4** Manual test of all CUJs on desktop, iPhone (PWA) and Android (PWA). Record the result in the PR.
-- [ ] **18.5** Version `0.0.0` in `pyproject.toml` and `package.json`. Tag `v0.0.0`. Check the GHCR image and the release notes.
+- [ ] **18.5** Version `0.0.0` in `pyproject.toml` and `package.json`. Tag `v0.0.0`. Build both architectures and push `ghcr.io/yash91sharma/watch-tower:0.0.0` and `:latest` by hand. Write the release notes.
 - [ ] **18.6** Add the v0.0.0 DB dump to `tests/fixtures/db/`.
 
 ## CUJ coverage
 
 | CUJ | Tasks | E2E |
 |---|---|---|
-| Deploy WT with compose and env vars | 15.1-15.5, 17.3, 18.3 | 16.21 |
+| Deploy WT with compose and env vars | 15.1-15.5, 18.3, 18.5 | 16.21 |
 | First setup: token, password, TOTP | 4.1-4.6, 13.4 | Flow 1 |
 | Log in, log out, login limit, session expiry | 4.3, 4.5, 4.7-4.9, 13.3, 13.5 | Flow 2 |
 | See containers by Compose project, with state and health | 6.3-6.5, 11.1, 11.2, 13.7, 13.9 | Flow 3 |

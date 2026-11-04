@@ -4,7 +4,7 @@
 
 The app runs with a session cookie and FakeDocker. The GitHub URL is a closed local port,
 so that no test calls the real GitHub. WT_SCHEMATHESIS_EXAMPLES sets the number of
-examples per route (default 10 for the PR run; the nightly run sets more).
+examples per route (default 10; set more for a long run).
 """
 
 import os
