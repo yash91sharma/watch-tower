@@ -329,7 +329,7 @@ Rules:
   - **Test:** a manual trigger passes.
 - [ ] **17.3** Release workflow: a `v*` tag builds `linux/arm64` and `linux/amd64` (buildx), pushes `ghcr.io/yash91sharma/watch-tower:<version>` and `:latest`, and makes a GitHub release with notes.
   - **Test:** a dry run builds both architectures.
-- [ ] **17.4** Dependabot: `uv`, `npm`, `github-actions`, `docker` (`Dockerfile`, `.devcontainer/Dockerfile`).
+- [x] **17.4** Dependabot: `uv`, `npm`, `github-actions`, `docker` (`Dockerfile`, `.devcontainer/Dockerfile`).
 - [ ] **17.5** Branch protection on `main` (the user sets it in GitHub): PRs only, all 17.1 jobs required.
 
 ## 18. Release v0.0.0
