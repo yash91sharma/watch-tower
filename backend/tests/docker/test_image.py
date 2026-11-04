@@ -71,6 +71,19 @@ def test_the_image_has_the_frontend_the_bytecode_and_a_data_dir(
     assert "serve" in docker("run", "--rm", IMAGE, "--help")
 
 
+def test_the_image_has_only_the_venv_and_no_pip(image: dict[str, Any]) -> None:
+    """WT is a normal package in the venv. No project files, no pip wheel."""
+    assert image
+    code = (
+        "import importlib.util, os, sysconfig, wt;"
+        "print(os.listdir('/app'),"
+        " wt.__file__.startswith('/app/.venv/'),"
+        " importlib.util.find_spec('pip') is None,"
+        " os.path.exists(os.path.join(sysconfig.get_path('stdlib'), 'ensurepip')))"
+    )
+    assert run_python(code) == "['.venv'] True True False"
+
+
 # Task 16.21: image checks.
 TRIVY_IMAGE = "aquasec/trivy:0.58.1"
 RUN_NAME = "wt_test_image"
@@ -137,7 +150,7 @@ def test_the_healthcheck_passes(running: str) -> None:
 def test_only_data_and_tmp_are_writable(running: str) -> None:
     code = (
         "import os\n"
-        "for d in ['/', '/app', '/app/wt', '/usr', '/etc', '/data', '/tmp']:\n"
+        "for d in ['/', '/app', '/app/.venv', '/usr', '/etc', '/data', '/tmp']:\n"
         "    try:\n"
         "        open(os.path.join(d, 'wt-write-test'), 'w').close()\n"
         "        os.remove(os.path.join(d, 'wt-write-test'))\n"

@@ -21,8 +21,9 @@ COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY backend/wt ./wt
 COPY --from=frontend /frontend/dist ./wt/static
-# The root filesystem is read-only at run time, so compile the WT code here too.
-RUN uv sync --frozen --no-dev && python -m compileall -q wt
+# Install WT as a normal package (not editable), so that the final image needs only the venv.
+# UV_COMPILE_BYTECODE compiles WT too, because the root filesystem is read-only at run time.
+RUN uv sync --frozen --no-dev --no-editable
 
 FROM python:3.14.10-slim-trixie
 ARG VERSION=0.0.0
@@ -30,11 +31,13 @@ ARG REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/yash91sharma/watch-tower" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
-# WT does not need pip at run time. Its vendored packages (urllib3, msgpack) had CVEs.
+# WT does not need pip or the ensurepip wheel at run time. Their vendored packages
+# (urllib3, msgpack) had CVEs.
 RUN python -m pip uninstall --yes --quiet pip \
+    && rm -rf /usr/local/lib/python3.14/ensurepip \
     && useradd --system --user-group --uid 10001 --no-create-home --home-dir /nonexistent wt \
     && install -d -o wt -g wt -m 700 /data
-COPY --from=backend /app /app
+COPY --from=backend /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:${PATH}" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
 USER wt
