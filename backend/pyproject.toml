@@ -97,6 +97,15 @@ extraPaths = ["../e2e"]
 typeCheckingMode = "strict"
 
 [tool.mutmut]
-paths_to_mutate = ["wt/"]
+source_paths = ["wt/versions/", "wt/health/", "wt/notify/"]
+# The tests import the rest of wt too.
+also_copy = ["wt/", "alembic.ini"]
+# The tests of the mutated modules, and the API tests that use them.
+tests_dir = [
+    "tests/unit/versions/",
+    "tests/unit/health/",
+    "tests/unit/notify/",
+    "tests/integration/",
+]
 # mutmut does not work with xdist.
 pytest_add_cli_args = ["-n0"]
