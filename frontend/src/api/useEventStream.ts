@@ -3,6 +3,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import { authStateQuery } from "@/api/auth";
+
 const RETRY_MS = 3000;
 
 export function useEventStream(): { wt: boolean; docker: boolean } {
@@ -30,6 +32,9 @@ export function useEventStream(): { wt: boolean; docker: boolean } {
         source.close();
         lost = true;
         setWt(false);
+        // EventSource does not give the status. If the session is gone (401), the new auth
+        // state makes the auth guard open /login. That unmount stops the retry.
+        void queryClient.invalidateQueries({ queryKey: authStateQuery.queryKey });
         retry = setTimeout(connect, RETRY_MS);
       });
       source.addEventListener("container", () => {

@@ -125,3 +125,31 @@ test("unmount closes the stream", async () => {
 
   expect(FakeEventSource.last.closed).toBe(true);
 });
+
+test("an error refetches the auth state at once", async () => {
+  // EventSource does not give the HTTP status. When the session is gone (401), the new auth
+  // state makes the auth guard open /login, and the stream stops with the unmount.
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  let authFetches = 0;
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  renderHook(
+    () => {
+      useQuery({ queryKey: ["auth", "state"], queryFn: () => ++authFetches });
+      return useEventStream();
+    },
+    { wrapper },
+  );
+  await waitFor(() => {
+    expect(authFetches).toBe(1);
+  });
+
+  act(() => {
+    FakeEventSource.last.emit("error");
+  });
+
+  await waitFor(() => {
+    expect(authFetches).toBe(2);
+  });
+});
