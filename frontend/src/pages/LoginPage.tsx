@@ -7,6 +7,7 @@ import { api, ApiError, unwrap } from "@/api/client";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
+import { isTotpCode, TOTP_CODE_ERROR } from "@/lib/totp";
 
 /** The error text. After the login limit (429), the wait time from Retry-After. */
 function loginError(error: Error | null): Error | string | null {
@@ -21,6 +22,7 @@ export function LoginPage() {
   const queryClient = useQueryClient();
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
+  const [badCode, setBadCode] = useState(false);
 
   const login = useMutation({
     mutationFn: async () => unwrap(await api.POST("/api/auth/login", { body: { password, totp_code: code } })),
@@ -31,7 +33,9 @@ export function LoginPage() {
 
   function onSubmit(event: SubmitEvent) {
     event.preventDefault();
-    login.mutate();
+    const bad = !isTotpCode(code);
+    setBadCode(bad);
+    if (!bad) login.mutate();
   }
 
   return (
@@ -58,7 +62,7 @@ export function LoginPage() {
             setCode(event.target.value);
           }}
         />
-        <FormError error={loginError(login.error)} />
+        <FormError error={badCode ? TOTP_CODE_ERROR : loginError(login.error)} />
         <Button type="submit" disabled={login.isPending}>
           Log in
         </Button>

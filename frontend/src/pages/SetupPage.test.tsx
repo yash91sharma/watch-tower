@@ -108,3 +108,12 @@ test("a field error shows the field and the message", async () => {
 
   expect(await screen.findByRole("alert")).toHaveTextContent("password: String should have at least 12 characters");
 });
+
+test("a value that is not a 6-digit code shows a clear error and sends nothing", async () => {
+  const user = await enterToken(TOKEN);
+
+  await finish(user, PASSWORD, SECRET);
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Enter the 6-digit code from your authenticator app");
+  expect(finishBody).toBeUndefined();
+});

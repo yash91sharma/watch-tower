@@ -8,6 +8,7 @@ import { api, unwrap } from "@/api/client";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
+import { isTotpCode, TOTP_CODE_ERROR } from "@/lib/totp";
 
 export function SetupPage() {
   const queryClient = useQueryClient();
@@ -16,6 +17,7 @@ export function SetupPage() {
   const [password2, setPassword2] = useState("");
   const [code, setCode] = useState("");
   const [mismatch, setMismatch] = useState(false);
+  const [badCode, setBadCode] = useState(false);
 
   const begin = useMutation({
     mutationFn: async () => unwrap(await api.POST("/api/auth/setup/begin", { body: { token } })),
@@ -35,8 +37,10 @@ export function SetupPage() {
 
   function onFinish(event: SubmitEvent) {
     event.preventDefault();
+    const bad = !isTotpCode(code);
     setMismatch(password !== password2);
-    if (password === password2) finish.mutate();
+    setBadCode(bad);
+    if (password === password2 && !bad) finish.mutate();
   }
 
   const totp = begin.data;
@@ -103,7 +107,9 @@ export function SetupPage() {
               setCode(event.target.value);
             }}
           />
-          <FormError error={mismatch ? "The two passwords are not the same" : finish.error} />
+          <FormError
+            error={mismatch ? "The two passwords are not the same" : badCode ? TOTP_CODE_ERROR : finish.error}
+          />
           <Button type="submit" disabled={finish.isPending}>
             Set up
           </Button>

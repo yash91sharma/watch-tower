@@ -27,11 +27,11 @@ beforeEach(() => {
   );
 });
 
-async function logIn() {
+async function logIn(code = "123456") {
   const user = userEvent.setup();
   renderRoute("/login");
   await user.type(await screen.findByLabelText("Password"), "a-long-password");
-  await user.type(screen.getByLabelText("TOTP code"), "123456");
+  await user.type(screen.getByLabelText("TOTP code"), code);
   await user.click(screen.getByRole("button", { name: "Log in" }));
   return user;
 }
@@ -82,4 +82,19 @@ test("log out calls logout and opens /login", async () => {
 
   expect(await screen.findByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
   expect(loggedIn).toBe(false);
+});
+
+test("a value that is not a 6-digit code shows a clear error and sends nothing", async () => {
+  // For example the TOTP secret, pasted by mistake.
+  await logIn("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Enter the 6-digit code from your authenticator app");
+  expect(loginBody).toBeUndefined();
+});
+
+test("a code with a space is sent as typed (the backend ignores spaces)", async () => {
+  await logIn("123 456");
+
+  expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
+  expect(loginBody).toEqual({ password: "a-long-password", totp_code: "123 456" });
 });
