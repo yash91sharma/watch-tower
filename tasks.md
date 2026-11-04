@@ -335,7 +335,7 @@ Rules:
 ## 18. Release v0.0.0
 
 - [x] **18.1** Each P0 requirement and each CUJ has an E2E flow. Coverage gates pass.
-- [ ] **18.2** Security review: no secrets in code, logs, tests or Git history. Check cookie flags, auth guard, trusted proxies, security headers, socket proxy GET only.
+- [x] **18.2** Security review: no secrets in code, logs, tests or Git history. Check cookie flags, auth guard, trusted proxies, security headers, socket proxy GET only.
 - [ ] **18.3** Deploy to prod (OrbStack, M2) behind Traefik and Tailscale. Idle RAM < 200 MB.
 - [ ] **18.4** Manual test of all CUJs on desktop, iPhone (PWA) and Android (PWA). Record the result in the PR.
 - [ ] **18.5** Version `0.0.0` in `pyproject.toml` and `package.json`. Tag `v0.0.0`. Check the GHCR image and the release notes.
