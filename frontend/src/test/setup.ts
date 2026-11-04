@@ -1,4 +1,4 @@
-// Vitest setup: DOM matchers, MSW server, fake EventSource, and cleanup after each test.
+// Vitest setup: DOM matchers, MSW server, fake EventSource, and cleanup (DOM, handlers, localStorage) after each test.
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
@@ -17,6 +17,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  localStorage.clear();
 });
 afterAll(() => {
   server.close();

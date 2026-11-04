@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { delay, http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
@@ -25,6 +26,43 @@ test("groups show in API order with their containers", async () => {
   expect(within(media).getByRole("link", { name: "plex" })).toHaveAttribute("href", "/containers/plex");
 });
 
+test("a click on the group name collapses and expands the group", async () => {
+  const user = userEvent.setup();
+  answer([{ project: "media", label: "media", containers: [container({ name: "plex" }), container({ name: "sonarr" })] }]);
+  renderRoute("/");
+
+  const toggle = await screen.findByRole("button", { name: "media" });
+  expect(toggle).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByText("2 containers")).toBeInTheDocument();
+
+  await user.click(toggle);
+  expect(toggle).toHaveAttribute("aria-expanded", "false");
+  expect(screen.queryByRole("link", { name: "plex" })).not.toBeInTheDocument();
+  expect(screen.getByText("2 containers")).toBeInTheDocument();
+
+  await user.click(toggle);
+  expect(toggle).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByRole("link", { name: "plex" })).toBeInTheDocument();
+});
+
+test("a collapsed group stays collapsed when the page opens again", async () => {
+  const user = userEvent.setup();
+  answer([
+    { project: "media", label: "media", containers: [container({ name: "plex" })] },
+    { project: null, label: "Other", containers: [container({ name: "adhoc" })] },
+  ]);
+  const first = renderRoute("/");
+  await user.click(await screen.findByRole("button", { name: "media" }));
+  first.unmount();
+
+  renderRoute("/");
+
+  expect(await screen.findByRole("button", { name: "media" })).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "true");
+  expect(screen.queryByRole("link", { name: "plex" })).not.toBeInTheDocument();
+  expect(within(screen.getByRole("region", { name: "media" })).getByText("1 container")).toBeInTheDocument();
+});
+
 test("a row shows the container fields", async () => {
   answer([
     {
@@ -49,6 +87,7 @@ test("a row shows the container fields", async () => {
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
   expect(cells).toEqual(["app", "running", "unhealthy", "2.1.0", "2.3.0", "update", "critical"]);
+  expect(within(row).getByText("update")).toHaveAttribute("data-variant", "info");
 });
 
 test("health none shows no healthcheck, and empty values show a dash", async () => {

@@ -4,7 +4,7 @@
 // API data is private and live.
 import type { VitePWAOptions } from "vite-plugin-pwa";
 
-const THEME_COLOR = "#171717";
+const THEME_COLOR = "#151923";
 
 export const pwaOptions: Partial<VitePWAOptions> = {
   registerType: "autoUpdate",

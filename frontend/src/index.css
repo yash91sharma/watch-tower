@@ -26,6 +26,14 @@
     --color-input: var(--input);
     --color-border: var(--border);
     --color-destructive: var(--destructive);
+    --color-destructive-muted: var(--destructive-muted);
+    --color-success: var(--success);
+    --color-success-muted: var(--success-muted);
+    --color-warning: var(--warning);
+    --color-warning-muted: var(--warning-muted);
+    --color-info: var(--info);
+    --color-info-muted: var(--info-muted);
+    --color-header: var(--header);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
     --color-muted-foreground: var(--muted-foreground);
@@ -49,26 +57,35 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Theme "Mist": cool blue-grey surfaces, one powder-blue accent, matte pastel status tints.
+   Each status pair (color on its -muted tint) has a contrast of 4.5:1 or more (axe). */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    /* Tailwind red-700, not red-600: small red text on a red tint needs 4.5:1 (axe). */
-    --destructive: oklch(0.505 0.213 27.518);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    --background: #f3f5f9;
+    --foreground: #262b38;
+    --card: #ffffff;
+    --card-foreground: #262b38;
+    --popover: #ffffff;
+    --popover-foreground: #262b38;
+    --header: #e8eef7;
+    --primary: #4f70a6;
+    --primary-foreground: #ffffff;
+    --secondary: #e8edf6;
+    --secondary-foreground: #2f3a52;
+    --muted: #eef1f6;
+    --muted-foreground: #5f6779;
+    --accent: #e3e9f7;
+    --accent-foreground: #2f3a52;
+    --destructive: #9a3a44;
+    --destructive-muted: #f8e0e1;
+    --success: #2f6a4c;
+    --success-muted: #ddf0e6;
+    --warning: #85581f;
+    --warning-muted: #fbebd8;
+    --info: #3e528a;
+    --info-muted: #e3e9f7;
+    --border: #e0e5ee;
+    --input: #d3dae6;
+    --ring: #8fa6cf;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -87,24 +104,32 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
+    --background: #151923;
+    --foreground: #e5e8f0;
+    --card: #1d2230;
+    --card-foreground: #e5e8f0;
+    --popover: #1d2230;
+    --popover-foreground: #e5e8f0;
+    --header: #1a1f2c;
+    --primary: #9ab3dd;
+    --primary-foreground: #141a26;
+    --secondary: #232a3b;
+    --secondary-foreground: #e5e8f0;
+    --muted: #232a3b;
+    --muted-foreground: #9aa2b6;
+    --accent: #2a3347;
+    --accent-foreground: #e5e8f0;
+    --destructive: #efaab4;
+    --destructive-muted: #402630;
+    --success: #a6d8bd;
+    --success-muted: #1f3a2e;
+    --warning: #ebcb97;
+    --warning-muted: #3b3122;
+    --info: #b4c5ec;
+    --info-muted: #26304a;
+    --border: #2d3446;
+    --input: #363e52;
+    --ring: #6f86b0;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);

@@ -1,6 +1,7 @@
 // Page frame for the logged-in app: top nav and the page below it.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, Outlet, useNavigate } from "react-router";
+import type { ReactNode } from "react";
+import { Link, NavLink, Outlet, useNavigate } from "react-router";
 
 import { authStateQuery } from "@/api/auth";
 import { api, unwrap } from "@/api/client";
@@ -23,32 +24,46 @@ export function Layout() {
   });
 
   return (
-    <div className="mx-auto flex min-h-svh max-w-5xl flex-col">
-      <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
-        <span className="font-semibold">Watch Tower</span>
-        <nav aria-label="Main" className="flex items-center gap-1">
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/">Containers</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/settings">Settings</Link>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={logout.isPending}
-            onClick={() => {
-              logout.mutate();
-            }}
-          >
-            Log out
-          </Button>
-        </nav>
+    <div className="flex min-h-svh flex-col">
+      <header className="border-b bg-header">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
+          <Link to="/" className="flex items-center gap-2 rounded-md font-semibold">
+            <img src="/icon.svg" alt="" className="size-6" />
+            Watch Tower
+          </Link>
+          <nav aria-label="Main" className="flex items-center gap-1">
+            <NavItem to="/">Containers</NavItem>
+            <NavItem to="/settings">Settings</NavItem>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={logout.isPending}
+              onClick={() => {
+                logout.mutate();
+              }}
+            >
+              Log out
+            </Button>
+          </nav>
+        </div>
       </header>
-      <ConnectionBanner />
-      <main className="flex-1 px-4 py-4">
-        <Outlet />
-      </main>
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
+        <ConnectionBanner />
+        <main className="flex-1 px-4 py-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
+  );
+}
+
+// A nav link. It has a quiet raised look when its page is open.
+function NavItem({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Button asChild variant="ghost" size="sm">
+      <NavLink to={to} end className="aria-[current=page]:bg-card aria-[current=page]:shadow-xs dark:aria-[current=page]:bg-accent">
+        {children}
+      </NavLink>
+    </Button>
   );
 }

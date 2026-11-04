@@ -27,7 +27,6 @@ export function CheckNow() {
         </span>
         <Button
           size="sm"
-          variant="outline"
           disabled={data === undefined || running || start.isPending}
           onClick={() => {
             start.mutate();

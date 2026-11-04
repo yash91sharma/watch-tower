@@ -20,8 +20,8 @@ test("the manifest has the app fields", () => {
   expect(pwaOptions.manifest).toMatchObject({
     name: "Watch Tower",
     short_name: "WT",
-    theme_color: "#171717",
-    background_color: "#171717",
+    theme_color: "#151923",
+    background_color: "#151923",
     display: "standalone",
     start_url: "/",
   });
@@ -42,7 +42,7 @@ test("index.html has the favicon, the apple-touch-icon and the iOS meta tags", (
   expect(html).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />');
   expect(html).toContain('<meta name="apple-mobile-web-app-capable" content="yes" />');
   expect(html).toContain('<meta name="apple-mobile-web-app-title" content="Watch Tower" />');
-  expect(html).toContain('<meta name="theme-color" content="#171717" />');
+  expect(html).toContain('<meta name="theme-color" content="#151923" />');
   expect(existsSync(publicFile("icon.svg"))).toBe(true);
   expect(pngSize("apple-touch-icon.png")).toBe("180x180");
 });
