@@ -112,7 +112,11 @@ async function saveSession(browser: Browser): Promise<void> {
     if (state.logged_in) return;
   }
   const context = await browser.newContext(options);
-  await logInOk(await context.newPage());
+  const page = await context.newPage();
+  // A new WT (for example the footprint run, with no flows first): set up the admin.
+  const state = (await (await context.request.get("/api/auth/state")).json()) as { setup_required: boolean };
+  if (state.setup_required) await setUp(page);
+  else await logInOk(page);
   await context.storageState({ path: SESSION_FILE });
   await context.close();
 }

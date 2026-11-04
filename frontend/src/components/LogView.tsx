@@ -1,4 +1,4 @@
-// A virtual list of log lines. Follow mode keeps the end in view. Scroll up pauses it.
+// A virtual list of log lines. Follow mode keeps the end in view. Scroll up or Pause stops it.
 // Search: the matches of the query are marked, and the current match line is shown.
 // Pretty: JSON object lines show formatted (rows have their own height).
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -99,17 +99,16 @@ export function LogView({
           })}
         </div>
       </div>
-      {!follow && (
-        <Button
-          size="sm"
-          className="absolute right-4 bottom-4"
-          onClick={() => {
-            setFollow(true);
-          }}
-        >
-          Follow
-        </Button>
-      )}
+      <Button
+        size="sm"
+        variant={follow ? "outline" : "default"}
+        className="absolute right-4 bottom-4"
+        onClick={() => {
+          setFollow(!follow);
+        }}
+      >
+        {follow ? "Pause" : "Follow"}
+      </Button>
     </div>
   );
 }

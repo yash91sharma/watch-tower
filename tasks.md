@@ -318,7 +318,7 @@ Rules:
 - [x] **16.19** Visual: screenshots of the main pages at desktop and phone width, light and dark mode. The containers page screenshot covers only the E2E project group. Baselines from the Playwright image.
 - [x] **16.20** PWA (Playwright): valid manifest, service worker registers, app shell loads offline, `/api` not cached.
 - [x] **16.21** Image: Trivy finds no high or critical CVE. The user is not root. The healthcheck passes. Only `/data` and `/tmp` are writable. `linux/arm64` and `linux/amd64` start.
-- [ ] **16.22** Footprint (nightly): with 50 test containers, WT idle RAM < 200 MB (`docker stats`). After 5 s of a log stream at 1,000 lines/s, a click on pause updates the UI in < 200 ms.
+- [x] **16.22** Footprint (nightly): with 50 test containers, WT idle RAM < 200 MB (`docker stats`). After 5 s of a log stream at 1,000 lines/s, a click on pause updates the UI in < 200 ms.
 - [x] **16.23** Mutation (nightly): mutmut on `versions/`, `health/`, `notify/` (pytest with `-n0`, 1.5). Score ≥ 80%.
 
 ## 17. CI

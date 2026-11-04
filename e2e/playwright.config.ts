@@ -32,6 +32,18 @@ export default defineConfig({
       timeout: 120_000,
       use: { ...devices["Desktop Chrome"] },
     },
+    // Nightly only (FOOTPRINT=1 run.sh): it needs the footprint containers. No flows first:
+    // the 50 more containers would change the flow 3 list.
+    ...(process.env.FOOTPRINT
+      ? [
+          {
+            name: "footprint",
+            testMatch: ["footprint/**/*.spec.ts"],
+            timeout: 180_000,
+            use: { ...devices["Desktop Chrome"] },
+          },
+        ]
+      : []),
     ...BROWSERS.flatMap((browserName) =>
       Object.entries(SIZES).map(([size, device]) => ({
         name: `${browserName}-${size}`,

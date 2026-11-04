@@ -1,5 +1,6 @@
 #!/bin/sh
-# Test app. It writes one log line each second. Env MODE: "normal" or "json".
+# Test app. It writes one log line each second. Env MODE: "normal", "json" or "fast"
+# (1,000 lines each second).
 #   Unhealthy:  docker exec <name> rm /tmp/ok        (back: touch /tmp/ok)
 #   Crash K times (with restart: on-failure):
 #               docker exec <name> sh -c 'echo K > /tmp/crash'
@@ -26,6 +27,13 @@ while true; do
   if [ "$MODE" = "json" ]; then
     echo "{\"level\":\"info\",\"n\":$n,\"msg\":\"tick\"}"
     echo "error line $n" >&2
+  elif [ "$MODE" = "fast" ]; then
+    # 1,000 lines per second (the footprint test, task 16.22).
+    i=0
+    while [ "$i" -lt 1000 ]; do
+      echo "fast $n.$i"
+      i=$((i + 1))
+    done
   else
     echo "tick $n"
   fi

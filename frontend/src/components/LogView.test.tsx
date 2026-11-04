@@ -67,3 +67,19 @@ test("scroll up pauses follow. The button starts it again", async () => {
   expect(log.scrollTop).toBe(900);
   expect(screen.queryByRole("button", { name: "Follow" })).not.toBeInTheDocument();
 });
+
+test("the Pause button stops follow. The Follow button starts it again", async () => {
+  const user = userEvent.setup();
+  const { rerender } = render(<LogView lines={lines(2)} />);
+  const log = screen.getByRole("log");
+  fakeScroll(log);
+  log.scrollTop = 200;
+
+  await user.click(screen.getByRole("button", { name: "Pause" }));
+  rerender(<LogView lines={lines(3)} />);
+
+  expect(log.scrollTop).toBe(200);
+  expect(screen.queryByRole("button", { name: "Pause" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Follow" }));
+  expect(log.scrollTop).toBe(900);
+});

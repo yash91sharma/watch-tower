@@ -52,3 +52,16 @@ services:
         org.opencontainers.image.source: https://github.com/wt-e2e/old-b
     image: wt_test/e2e-old-b:2.0.0
     container_name: wt_test_e2e_old_b
+
+  # Footprint test (task 16.22, nightly): start with --profile footprint.
+  # 50 more containers, and one that logs 1,000 lines per second.
+  filler:
+    <<: *app
+    profiles: [footprint]
+    deploy:
+      replicas: 50
+  fast:
+    <<: *app
+    profiles: [footprint]
+    container_name: wt_test_e2e_fast
+    environment: [MODE=fast]
