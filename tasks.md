@@ -334,7 +334,7 @@ Only the release workflow. No other workflows, no Dependabot, no branch protecti
 - [ ] **18.3** Deploy to prod (OrbStack, M2) behind Traefik and Tailscale. Idle RAM < 200 MB.
 - [ ] **18.4** Manual test of all CUJs on desktop, iPhone (PWA) and Android (PWA). Record the result in the PR.
 - [ ] **18.5** Version `0.0.0` in `pyproject.toml` and `package.json`. Add the repo secret `DOCKERHUB_TOKEN`. Push the tag `v0.0.0`. Check that the release workflow pushes `docker.io/yash91sharma/watch-tower:0.0.0` and `:latest`. Write the release notes.
-- [ ] **18.6** Add the v0.0.0 DB dump to `tests/fixtures/db/`.
+- [x] **18.6** Add the v0.0.0 DB dump to `tests/fixtures/db/`.
 
 ## CUJ coverage
 
