@@ -31,7 +31,7 @@ The token works one time only. WT then asks for the password and a TOTP code at 
 
 ## Traefik
 
-WT must have HTTPS, because the session cookie is `Secure`. Let Traefik do TLS. In `compose.yaml`, remove the `#` signs from the Traefik labels and set your host name:
+WT must have HTTPS, because the session cookie is `Secure`. Let Traefik do TLS. In `compose.yaml`, add these labels to `wt` and set your host name:
 
 ```yaml
 labels:

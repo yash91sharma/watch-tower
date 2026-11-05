@@ -27,14 +27,6 @@ services:
     cpus: 0.5
     networks: [docker, default]
     restart: unless-stopped
-    # Traefik: remove the # signs and set your host name. Traefik and WT must share a
-    # network (for example, add an external "proxy" network to both).
-    # labels:
-    #   - traefik.enable=true
-    #   - traefik.http.routers.wt.rule=Host(`wt.example.com`)
-    #   - traefik.http.routers.wt.entrypoints=websecure
-    #   - traefik.http.routers.wt.tls=true
-    #   - traefik.http.services.wt.loadbalancer.server.port=8000
 
 networks:
   docker:
