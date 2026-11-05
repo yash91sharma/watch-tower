@@ -1,9 +1,9 @@
-# WT image. Node builds the frontend. python:3.14-slim runs the backend and serves the
+# WT image. Node builds the frontend. python:3.15-slim runs the backend and serves the
 # frontend files. Pinned base images.
 # Build: docker build --build-arg VERSION=0.0.0 --build-arg REVISION=$(git rev-parse HEAD) .
 FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
 
-FROM node:24.22.2-trixie-slim AS frontend
+FROM node:26.13.0-trixie-slim AS frontend
 ARG PNPM_VERSION=12.16.1
 RUN npm install -g pnpm@${PNPM_VERSION} && npm cache clean --force
 WORKDIR /frontend
@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 RUN pnpm build
 
-FROM python:3.14.10-slim-trixie AS backend
+FROM python:3.15.2-slim-trixie AS backend
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 WORKDIR /app
@@ -25,7 +25,7 @@ COPY --from=frontend /frontend/dist ./wt/static
 # UV_COMPILE_BYTECODE compiles WT too, because the root filesystem is read-only at run time.
 RUN uv sync --frozen --no-dev --no-editable
 
-FROM python:3.14.10-slim-trixie
+FROM python:3.15.2-slim-trixie
 ARG VERSION=0.0.0
 ARG REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/yash91sharma/watch-tower" \
@@ -34,7 +34,7 @@ LABEL org.opencontainers.image.source="https://github.com/yash91sharma/watch-tow
 # WT does not need pip or the ensurepip wheel at run time. Their vendored packages
 # (urllib3, msgpack) had CVEs.
 RUN python -m pip uninstall --yes --quiet pip \
-    && rm -rf /usr/local/lib/python3.14/ensurepip \
+    && rm -rf /usr/local/lib/python3.15/ensurepip \
     && useradd --system --user-group --uid 10001 --no-create-home --home-dir /nonexistent wt \
     && install -d -o wt -g wt -m 700 /data
 COPY --from=backend /app/.venv /app/.venv

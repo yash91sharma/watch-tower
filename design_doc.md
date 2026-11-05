@@ -106,7 +106,7 @@ One process runs the API and the workers. Uvicorn runs 1 worker, because the wor
 
 | Area | Choice | Why | Other options |
 |---|---|---|---|
-| Backend | Python 3.14, FastAPI, Uvicorn | Fast to write. Good LLM libraries. ~80-120 MB RAM. | Go (less RAM), TypeScript, Rust |
+| Backend | Python 3.15, FastAPI, Uvicorn | Fast to write. Good LLM libraries. ~80-120 MB RAM. | Go (less RAM), TypeScript, Rust |
 | Docker client | aiodocker | Async streams for logs and events. Typed. | docker-py (blocking) |
 | Socket proxy | linuxserver/socket-proxy | Maintained Tecnativa fork. `POST=0` makes it read-only. | Tecnativa, wollomatic |
 | Database | SQLite (WAL) | One file. No server. | Postgres (too large) |
@@ -251,7 +251,7 @@ The container key is (`host_id`, name). Compose makes a new Docker id on each re
 
 ### Deploy
 
- - One image, multi-stage build: Node builds the frontend, `python:3.14-slim` runs the backend. FastAPI serves the static files.
+ - One image, multi-stage build: Node builds the frontend, `python:3.15-slim` runs the backend. FastAPI serves the static files.
  - Architecture: `linux/arm64` only. The release workflow builds it on a GitHub ARM runner and pushes it to Docker Hub.
  - Non-root user, `no-new-privileges`, read-only root filesystem. Writable: `/data` and a `/tmp` tmpfs.
  - Healthcheck: `GET /api/health` (no auth).

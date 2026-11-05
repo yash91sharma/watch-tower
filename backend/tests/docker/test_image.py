@@ -64,7 +64,7 @@ def test_the_image_has_the_frontend_the_bytecode_and_a_data_dir(
     code = (
         "import os, wt.api.static as s, wt.main as m;"
         "print((s.STATIC_DIR / 'index.html').is_file(),"
-        " m.__cached__ is not None and os.path.exists(m.__cached__),"
+        " os.path.exists(m.__spec__.cached),"
         " os.stat('/data').st_uid == os.getuid())"
     )
     assert run_python(code) == "True True True"

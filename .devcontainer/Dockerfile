@@ -1,17 +1,18 @@
-# Dev image: Python 3.14 + uv, Node 24 + pnpm, Docker CLI.
+# Dev image: Python 3.15 + uv, Node 26 + pnpm, Docker CLI.
 # Pinned tool versions.
 FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
-FROM docker:29.9.2-cli AS docker
-FROM node:24.22.2-trixie-slim AS node
+FROM docker:29.9.3-cli AS docker
+FROM node:26.13.0-trixie-slim AS node
 
-FROM python:3.14.10-slim-trixie
+FROM python:3.15.2-slim-trixie
 
 ARG PNPM_VERSION=12.16.1
 ARG USERNAME=dev
 ARG USER_UID=1000
 
+# Node 26 needs libatomic1.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git curl ca-certificates sudo \
+    && apt-get install -y --no-install-recommends git curl ca-certificates sudo libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=uv /uv /uvx /usr/local/bin/
