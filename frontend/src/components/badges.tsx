@@ -28,5 +28,5 @@ export function SeverityBadge({ severity }: { severity: Severity | null }) {
 }
 
 export function StatusBadge({ status }: { status: Status }) {
-  return <Badge variant={statusVariant[status]}>{status}</Badge>;
+  return <Badge variant={statusVariant[status]}>{status === "update" ? "update available" : status}</Badge>;
 }

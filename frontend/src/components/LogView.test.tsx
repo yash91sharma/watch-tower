@@ -103,3 +103,11 @@ test("a current match pauses follow", () => {
 
   expect(screen.getByRole("button", { name: "Follow" })).toBeInTheDocument();
 });
+
+test("every second line has a stripe color", () => {
+  render(<LogView lines={lines(3)} />);
+
+  expect(screen.getByText("line 0")).not.toHaveClass("bg-muted/60");
+  expect(screen.getByText("line 1")).toHaveClass("bg-muted/60");
+  expect(screen.getByText("line 2")).not.toHaveClass("bg-muted/60");
+});

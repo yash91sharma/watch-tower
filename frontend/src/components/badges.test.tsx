@@ -30,14 +30,14 @@ test("no severity shows no badge", () => {
 });
 
 test.each([
-  ["update", "info"],
-  ["up to date", "success"],
-  ["error", "destructive"],
-  ["no check", "outline"],
-  ["no source", "outline"],
-  ["not checked", "outline"],
-] as const)("status %s has the %s color", (status, variant) => {
+  ["update", "update available", "info"],
+  ["up to date", "up to date", "success"],
+  ["error", "error", "destructive"],
+  ["no check", "no check", "outline"],
+  ["no source", "no source", "outline"],
+  ["not checked", "not checked", "outline"],
+] as const)("status %s shows %s with the %s color", (status, text, variant) => {
   render(<StatusBadge status={status} />);
 
-  expect(screen.getByText(status)).toHaveAttribute("data-variant", variant);
+  expect(screen.getByText(text)).toHaveAttribute("data-variant", variant);
 });

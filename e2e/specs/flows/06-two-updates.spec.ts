@@ -42,7 +42,7 @@ test("two updates give one digest with high priority", async ({ page }) => {
     "healthy",
     "1.0.0",
     "1.2.0",
-    "update",
+    "update available",
     "critical",
   ]);
   await expect(row("wt_test_e2e_old_b").getByRole("cell").nth(6)).toHaveText("normal");

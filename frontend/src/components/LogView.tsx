@@ -80,6 +80,7 @@ export function LogView({
                 ref={virtualizer.measureElement}
                 className={cn(
                   "absolute top-0 left-0 w-full px-2 leading-5 break-all whitespace-pre-wrap",
+                  item.index % 2 === 1 && "bg-muted/60",
                   line.stream === "stderr" && "text-destructive",
                   line.id === currentId && "bg-accent",
                 )}

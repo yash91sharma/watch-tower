@@ -86,8 +86,8 @@ test("a row shows the container fields", async () => {
   const row = (await screen.findByRole("link", { name: "app" })).closest("tr");
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
-  expect(cells).toEqual(["app", "running", "unhealthy", "2.1.0", "2.3.0", "update", "critical"]);
-  expect(within(row).getByText("update")).toHaveAttribute("data-variant", "info");
+  expect(cells).toEqual(["app", "running", "unhealthy", "2.1.0", "2.3.0", "update available", "critical"]);
+  expect(within(row).getByText("update available")).toHaveAttribute("data-variant", "info");
 });
 
 test("health none shows no healthcheck, and empty values show a dash", async () => {
@@ -135,4 +135,34 @@ test("an API error shows the error", async () => {
   renderRoute("/");
 
   expect(await screen.findByRole("alert")).toHaveTextContent("An error occurred. See the WT log.");
+});
+
+test("the table has clear column names", async () => {
+  answer([{ project: "web", label: "web", containers: [container({ name: "app" })] }]);
+  renderRoute("/");
+
+  const region = await screen.findByRole("region", { name: "web" });
+  expect(within(region).getAllByRole("columnheader").map((head) => head.textContent)).toEqual([
+    "Name",
+    "State",
+    "Health",
+    "Current version",
+    "Latest version",
+    "Version status",
+    "Update severity",
+  ]);
+});
+
+test("every second row has a stripe color", async () => {
+  answer([
+    {
+      project: "web",
+      label: "web",
+      containers: [container({ name: "a" }), container({ name: "b" }), container({ name: "c" })],
+    },
+  ]);
+  renderRoute("/");
+
+  const rows = await Promise.all(["a", "b", "c"].map(async (name) => (await screen.findByRole("link", { name })).closest("tr")));
+  expect(rows.map((row) => row?.classList.contains("even:bg-muted/30"))).toEqual([true, true, true]);
 });

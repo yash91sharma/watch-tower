@@ -91,15 +91,15 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
               <TableHead>Name</TableHead>
               <TableHead>State</TableHead>
               <TableHead>Health</TableHead>
-              <TableHead>Running</TableHead>
-              <TableHead>Latest</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Severity</TableHead>
+              <TableHead>Current version</TableHead>
+              <TableHead>Latest version</TableHead>
+              <TableHead>Version status</TableHead>
+              <TableHead>Update severity</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {group.containers.map((item) => (
-              <TableRow key={item.name}>
+              <TableRow key={item.name} className="even:bg-muted/30">
                 <TableCell>
                   <Link className="font-medium underline-offset-4 hover:underline" to={`/containers/${item.name}`}>
                     {item.name}
