@@ -406,6 +406,8 @@ export interface components {
             status: components["schemas"]["Status"];
             /** Latest Version */
             latest_version: string | null;
+            /** Latest Url */
+            latest_url: string | null;
             severity: components["schemas"]["Severity"] | null;
             /** Release Source */
             release_source: string | null;
@@ -433,6 +435,8 @@ export interface components {
             status: components["schemas"]["Status"];
             /** Latest Version */
             latest_version: string | null;
+            /** Latest Url */
+            latest_url: string | null;
             severity: components["schemas"]["Severity"] | null;
             /** Release Source */
             release_source: string | null;

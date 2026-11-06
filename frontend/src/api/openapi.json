@@ -1311,6 +1311,17 @@
             ],
             "title": "Latest Version"
           },
+          "latest_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Url"
+          },
           "severity": {
             "anyOf": [
               {
@@ -1363,6 +1374,7 @@
           "tag",
           "status",
           "latest_version",
+          "latest_url",
           "severity",
           "release_source",
           "source_confirmed",
@@ -1427,6 +1439,17 @@
             ],
             "title": "Latest Version"
           },
+          "latest_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Url"
+          },
           "severity": {
             "anyOf": [
               {
@@ -1462,6 +1485,7 @@
           "tag",
           "status",
           "latest_version",
+          "latest_url",
           "severity",
           "release_source",
           "source_confirmed"

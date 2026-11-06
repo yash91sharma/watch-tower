@@ -14,6 +14,7 @@ export function container(fields: Partial<ContainerOut> = {}): ContainerOut {
     tag: "1.27.0",
     status: "up to date",
     latest_version: "1.27.0",
+    latest_url: "https://github.com/nginx/nginx/releases/tag/1.27.0",
     severity: null,
     release_source: "nginx/nginx",
     source_confirmed: true,

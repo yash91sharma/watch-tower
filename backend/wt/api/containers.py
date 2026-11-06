@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from datetime import datetime, timedelta
 from typing import Annotated, Literal, cast, get_args
+from urllib.parse import quote
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
@@ -94,6 +95,8 @@ class ContainerOut(BaseModel):
     tag: str | None
     status: Status
     latest_version: str | None
+    # The GitHub release page of the latest version. None with no latest version.
+    latest_url: str | None
     # The severity of the current update. None with no update.
     severity: Severity | None
     release_source: str | None
@@ -129,6 +132,7 @@ def container_out(
     known = status in (Status.UPDATE, Status.UP_TO_DATE)
     update = current_update(session, row)
     health = live.health if live.health in get_args(Health) else "none"
+    latest = cache.latest_tag if cache and known else None
     return ContainerOut(
         name=row.name,
         state=live.state,
@@ -136,7 +140,12 @@ def container_out(
         image=row.image,
         tag=row.tag,
         status=status,
-        latest_version=cache.latest_tag if cache and known else None,
+        latest_version=latest,
+        latest_url=(
+            f"https://github.com/{row.release_source}/releases/tag/{quote(latest)}"
+            if latest
+            else None
+        ),
         severity=update.severity if update else None,
         release_source=row.release_source,
         source_confirmed=row.source_confirmed,

@@ -119,6 +119,7 @@ async def test_fields_per_status(
         "tag": "1.26",
         "status": "update",
         "latest_version": "1.27",
+        "latest_url": "https://github.com/nginx/nginx/releases/tag/1.27",
         "severity": "critical",
         "release_source": "nginx/nginx",
         "source_confirmed": False,
@@ -190,3 +191,16 @@ async def test_group_update_level(
     }
 
     assert levels["site"] == "update"
+
+
+async def test_no_latest_url_without_a_latest_version(
+    ctx: AppContext, user_client: httpx.AsyncClient
+) -> None:
+    items = {
+        item["name"]: item
+        for group in await get_groups(user_client)
+        for item in group["containers"]
+    }
+
+    assert items["api"]["latest_url"] is None
+    assert items["tool"]["latest_url"] is None

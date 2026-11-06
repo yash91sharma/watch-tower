@@ -22,7 +22,8 @@ test("groups show in API order with their containers", async () => {
   const groups = await screen.findAllByRole("region");
   expect(groups.map((group) => within(group).getByRole("heading").textContent)).toEqual(["media", "Other"]);
   const media = screen.getByRole("region", { name: "media" });
-  expect(within(media).getAllByRole("link").map((link) => link.textContent)).toEqual(["plex", "sonarr"]);
+  const names = within(media).getAllByRole("link").filter((link) => !link.hasAttribute("target"));
+  expect(names.map((link) => link.textContent)).toEqual(["plex", "sonarr"]);
   expect(within(media).getByRole("link", { name: "plex" })).toHaveAttribute("href", "/containers/plex");
 });
 
@@ -97,7 +98,7 @@ test("health none shows no healthcheck, and empty values show a dash", async () 
       project: null,
       label: "Other",
       update: "none",
-      containers: [container({ name: "db", health: "none", tag: null, latest_version: null, status: "no check" })],
+      containers: [container({ name: "db", health: "none", tag: null, latest_version: null, latest_url: null, status: "no check" })],
     },
   ]);
   renderRoute("/");
@@ -183,4 +184,22 @@ test("the group header color shows the update level of the group", async () => {
   expect(header("a")).toHaveClass("bg-group-critical");
   expect(header("b")).toHaveClass("bg-group-update");
   expect(header("c")).toHaveClass("bg-group-ok");
+});
+
+test("the latest version links to its GitHub release in a new tab", async () => {
+  answer([
+    {
+      project: "web",
+      label: "web",
+      update: "none",
+      containers: [container({ name: "a" }), container({ name: "b", latest_version: null, latest_url: null })],
+    },
+  ]);
+  renderRoute("/");
+
+  const link = await screen.findByRole("link", { name: "1.27.0" });
+  expect(link).toHaveAttribute("href", "https://github.com/nginx/nginx/releases/tag/1.27.0");
+  expect(link).toHaveAttribute("target", "_blank");
+  expect(link).toHaveAttribute("rel", "noreferrer");
+  expect(screen.getAllByRole("link", { name: "1.27.0" })).toHaveLength(1);
 });

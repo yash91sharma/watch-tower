@@ -114,7 +114,20 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
                   <HealthBadge health={item.health} />
                 </TableCell>
                 <TableCell>{item.tag ?? "-"}</TableCell>
-                <TableCell>{item.latest_version ?? "-"}</TableCell>
+                <TableCell>
+                  {item.latest_url ? (
+                    <a
+                      className="underline-offset-4 hover:underline"
+                      href={item.latest_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {item.latest_version}
+                    </a>
+                  ) : (
+                    (item.latest_version ?? "-")
+                  )}
+                </TableCell>
                 <TableCell>
                   <StatusBadge status={item.status} />
                 </TableCell>
