@@ -6,7 +6,7 @@ have a version tag and a release source. Containers with the same repo share one
 
 import asyncio
 from collections import Counter
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Collection
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -47,8 +47,11 @@ def load_check_status(engine: Engine) -> CheckStatus:
         row = session.get(Setting, CHECK_STATUS_KEY)
     if row is None:
         return CheckStatus(None, {})
+    # last_run is None after partial runs only (no full run yet).
+    last_run = row.value["last_run"]
     return CheckStatus(
-        datetime.fromisoformat(row.value["last_run"]), dict(row.value["counts"])
+        datetime.fromisoformat(last_run) if last_run else None,
+        dict(row.value["counts"]),
     )
 
 
@@ -73,22 +76,27 @@ class CheckRunner:
     def running(self) -> bool:
         return self._lock.locked()
 
-    async def run(self) -> bool:
-        """Run a check. False if a run is active (then nothing starts)."""
+    async def run(self, names: Collection[str] | None = None) -> bool:
+        """Run a check. False if a run is active (then nothing starts).
+
+        With `names`, check only these containers (one app). This partial run keeps the
+        time of the last full run.
+        """
         if self._lock.locked():
             return False
         async with self._lock:
             self._bus.publish(Topic.CHECK, {"running": True})
             try:
-                await self._run()
+                await self._run(names)
             finally:
                 self._bus.publish(Topic.CHECK, {"running": False})
         return True
 
-    async def _run(self) -> None:
-        rows = await asyncio.to_thread(
+    async def _run(self, names: Collection[str] | None) -> None:
+        live = await asyncio.to_thread(
             _live_rows, self._engine, self._inventory.names()
         )
+        rows = live if names is None else [row for row in live if row.name in names]
         repos = sorted(
             {
                 row.release_source
@@ -103,7 +111,7 @@ class CheckRunner:
         finally:
             await github.close()
         await self._update_rows(rows)
-        await asyncio.to_thread(_save_status, self._engine, rows)
+        await asyncio.to_thread(_save_status, self._engine, live, names is None)
         if self._after_run is not None:
             await self._after_run()
 
@@ -196,7 +204,9 @@ def _live_rows(engine: Engine, names: list[str]) -> list[Container]:
         )
 
 
-def _save_status(engine: Engine, rows: list[Container]) -> None:
+def _save_status(engine: Engine, rows: list[Container], full: bool) -> None:
+    """Save the status counts of all live containers. Only a full run sets the run time."""
+    last_run = clock.now() if full else load_check_status(engine).last_run
     with Session(engine) as session:
         caches = {cache.repo: cache for cache in session.exec(select(RepoCache))}
         counts = Counter(
@@ -205,6 +215,9 @@ def _save_status(engine: Engine, rows: list[Container]) -> None:
             ).value
             for row in rows
         )
-        value = {"last_run": clock.now().isoformat(), "counts": dict(counts)}
+        value = {
+            "last_run": last_run.isoformat() if last_run else None,
+            "counts": dict(counts),
+        }
         session.merge(Setting(key=CHECK_STATUS_KEY, value=value))
         session.commit()

@@ -83,6 +83,7 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
         <span className="pr-2 text-sm text-muted-foreground">
           {plural(group.containers.length, "container", "containers")}
         </span>
+        <CheckNow group={group.label} />
       </div>
       <div id={`${id}-table`} hidden={!open} className="border-t px-2 pb-1">
         <Table>

@@ -78,3 +78,28 @@ test("a failed start shows the error", async () => {
 
   expect(await screen.findByRole("alert")).toHaveTextContent("A check is running");
 });
+
+test("the Check now button of an app checks only that app", async () => {
+  let group: string | null = null;
+  server.use(
+    http.get("*/api/checks/status", () => HttpResponse.json(status(false))),
+    http.get("*/api/containers", () =>
+      HttpResponse.json([{ project: "media", label: "media", containers: [] }]),
+    ),
+    http.post("*/api/checks", ({ request }) => {
+      group = new URL(request.url).searchParams.get("group");
+      return HttpResponse.json(status(true), { status: 202 });
+    }),
+  );
+  const user = userEvent.setup();
+  renderRoute("/");
+
+  await user.click(await screen.findByRole("button", { name: "Check now: media" }));
+
+  await waitFor(() => {
+    expect(group).toBe("media");
+  });
+  expect(await screen.findByText("Checking…")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Check now: media" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Check now" })).toBeDisabled();
+});

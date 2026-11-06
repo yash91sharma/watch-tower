@@ -197,6 +197,9 @@ export interface paths {
         /**
          * Start Check
          * @description Start a check run in the background. 409 if a run is active.
+         *
+         *     With `group` (a group label of the container list), check only the containers of
+         *     that app. 404 if no live container is in the group.
          */
         post: operations["start_check_api_checks_post"];
         delete?: never;
@@ -1043,7 +1046,9 @@ export interface operations {
     };
     start_check_api_checks_post: {
         parameters: {
-            query?: never;
+            query?: {
+                group?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: {

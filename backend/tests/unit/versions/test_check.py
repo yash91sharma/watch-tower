@@ -164,3 +164,46 @@ async def test_after_run_is_called_after_each_run(
     await runner.run()
 
     assert calls == ["after", "after"]
+
+
+async def test_a_run_for_some_names_checks_only_those(
+    runner: CheckRunner, db_engine: Engine, clock: FakeClock
+) -> None:
+    with respx.mock:
+        nginx = respx.get(f"{API}/repos/nginx/nginx/releases/latest").mock(
+            return_value=latest("1.27")
+        )
+        respx.get(f"{API}/repos/nginx/nginx/releases").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        postgres = respx.get(f"{API}/repos/docker-library/postgres/releases/latest")
+
+        assert await runner.run(["web1", "gone"]) is True
+
+    assert nginx.call_count == 1
+    assert not postgres.called
+    status = load_check_status(db_engine)
+    # A partial run keeps the time of the last full run. The counts are for all containers.
+    assert status.last_run is None
+    assert status.counts == {
+        "update": 1,
+        "up to date": 1,
+        "not checked": 1,
+        "no source": 1,
+        "no check": 1,
+    }
+
+
+async def test_a_partial_run_keeps_the_last_full_run_time(
+    runner: CheckRunner, db_engine: Engine, clock: FakeClock
+) -> None:
+    with respx.mock:
+        respx.get(url__regex=rf"{API}/repos/.*/releases/latest").mock(
+            return_value=httpx.Response(404)
+        )
+        await runner.run()
+        first = clock.now()
+        clock.advance(60)
+        await runner.run(["db"])
+
+    assert load_check_status(db_engine).last_run == first

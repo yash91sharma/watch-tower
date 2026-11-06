@@ -585,9 +585,25 @@
           "checks"
         ],
         "summary": "Start Check",
-        "description": "Start a check run in the background. 409 if a run is active.",
+        "description": "Start a check run in the background. 409 if a run is active.\n\nWith `group` (a group label of the container list), check only the containers of\nthat app. 404 if no live container is in the group.",
         "operationId": "start_check_api_checks_post",
         "parameters": [
+          {
+            "name": "group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Group"
+            }
+          },
           {
             "name": "wt_session",
             "in": "cookie",

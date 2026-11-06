@@ -70,3 +70,50 @@ async def test_start_409_during_a_run_and_status_after(
     assert status["last_run"] is not None
     assert status["counts"] == {"up to date": 1}
     assert messages == [{"running": True}, {"running": False}]
+
+
+async def test_start_for_one_app_checks_only_its_containers(
+    app: FastAPI, user_client: httpx.AsyncClient
+) -> None:
+    ctx: AppContext = app.state.ctx
+    await add_web(ctx)
+    project = {"com.docker.compose.project": "shop"}
+    await ctx.inventory.update(
+        ContainerInfo("id-2", "api", "api:1.0", project, "running", "none", False)
+    )
+
+    with respx.mock:
+        web = respx.get(LATEST)
+        started = await user_client.post("/api/checks", params={"group": "shop"})
+        assert started.status_code == 202
+        await wait_until_idle(ctx)
+
+    assert not web.called
+
+
+async def test_start_for_the_other_group(
+    app: FastAPI, user_client: httpx.AsyncClient
+) -> None:
+    ctx: AppContext = app.state.ctx
+    await add_web(ctx)
+
+    with respx.mock:
+        web = respx.get(LATEST).mock(
+            return_value=httpx.Response(200, json={"tag_name": "1.0"})
+        )
+        respx.get(LATEST.removesuffix("/latest")).mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        started = await user_client.post("/api/checks", params={"group": "Other"})
+        assert started.status_code == 202
+        await wait_until_idle(ctx)
+
+    assert web.call_count == 1
+
+
+async def test_start_for_an_unknown_group_is_404(
+    user_client: httpx.AsyncClient,
+) -> None:
+    response = await user_client.post("/api/checks", params={"group": "nope"})
+
+    assert response.status_code == 404
