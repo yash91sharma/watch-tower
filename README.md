@@ -84,6 +84,8 @@ To move only the settings and the release sources, use Export and Import on the 
 | `WT_NTFY_TOKEN` | none | Secret. ntfy access token. |
 | `WT_LLM_API_KEY` | none | Secret. API key of the LLM server. |
 
+`.env.example` does not have `DOCKER_HOST`, `WT_DATA_DIR` and `WT_GITHUB_API_URL`. `compose.yaml` sets `DOCKER_HOST`, and the defaults of the other two are correct for a deploy.
+
 Each secret can also come from a file: set `WT_<NAME>_FILE` (for example, `WT_NTFY_TOKEN_FILE=/run/secrets/ntfy_token`). Do not set both.
 
 All other settings (check interval, restart loop rule, ntfy, LLM, WT URL) are on the Settings page.
