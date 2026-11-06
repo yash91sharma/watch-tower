@@ -23,12 +23,29 @@ def test_compose_config_passes_and_has_the_deploy_rules(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
     )
-    services = json.loads(result.stdout)["services"]
+    config = json.loads(result.stdout)
+    services = config["services"]
 
     wt, proxy = services["wt"], services["socket-proxy"]
-    assert wt["restart"] == proxy["restart"] == "unless-stopped"
-    assert wt["read_only"] is True
-    assert wt["environment"]["DOCKER_HOST"] == "tcp://socket-proxy:2375"
-    assert "no-new-privileges:true" in wt["security_opt"]
+    for service in (wt, proxy):
+        assert service["restart"] == "unless-stopped"
+        assert service["read_only"] is True
+        assert "no-new-privileges:true" in service["security_opt"]
+        assert service["cap_drop"] == ["ALL"]
+        assert "ports" not in service
+    assert wt["environment"]["DOCKER_HOST"] == "tcp://wt-socket-proxy:2375"
     assert proxy["environment"]["POST"] == "0"
-    assert "ports" not in proxy
+
+    # Limits: Compose gives bytes and CPUs as numbers.
+    assert int(wt["mem_limit"]) == 364 * 1024 * 1024
+    assert float(wt["cpus"]) == 1.0
+    assert int(proxy["mem_limit"]) == 64 * 1024 * 1024
+    assert float(proxy["cpus"]) == 0.25
+
+    # Only WT gets to the internet (wt_egress) and to Traefik. The proxy is internal only.
+    assert set(proxy["networks"]) == {"docker"}
+    assert set(wt["networks"]) == {"docker", "egress", "traefik_internal"}
+    networks = config["networks"]
+    assert networks["docker"]["internal"] is True
+    assert not networks["egress"].get("internal", False)
+    assert networks["traefik_internal"]["external"] is True

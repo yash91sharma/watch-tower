@@ -1,36 +1,75 @@
 # Watch Tower deploy. Put the secrets in .env (see .env.example).
 # Start: docker compose up -d. First setup: docker logs wt gives the setup token.
+#
+#   socket-proxy   read-only Docker API for WT (network wt_docker, internal)
+#   wt             backend + web UI on port 8000
+#
+# Web traffic arrives through Traefik (network traefik_internal, http://wt:8000). See README.md.
+# No port is published.
+#
+# Internet access: only wt, through the network wt_egress. WT needs it for the GitHub API,
+# ntfy and the LLM server. The socket proxy has no route to the internet.
+name: wt
+
 services:
-  # Read-only Docker API for WT. Internal network only, no published port.
   socket-proxy:
     image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls104
+    container_name: wt-socket-proxy
     environment: [CONTAINERS=1, EVENTS=1, ALLOW_LOGS=1, POST=0]
     volumes: [/var/run/docker.sock:/var/run/docker.sock:ro]
-    read_only: true
     tmpfs: [/run]
-    networks: [docker]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    cap_drop: [ALL]
+    mem_limit: 64m
+    cpus: 0.25
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
+    networks: [docker] # NOT on traefik_internal or wt_egress: only wt can reach it
 
   wt:
     image: docker.io/yash91sharma/watch-tower:latest
     container_name: wt
+    # The image runs as uid 10001 (wt).
+    depends_on: [socket-proxy]
     environment:
-      DOCKER_HOST: tcp://socket-proxy:2375
+      DOCKER_HOST: tcp://wt-socket-proxy:2375
     env_file:
       - path: .env
         required: false
-    volumes: [wt-data:/data]
-    read_only: true
+    volumes:
+      # SQLite DB: settings, admin, sessions, container data. BACK THIS UP (see README.md).
+      - wt-data:/data
     tmpfs: [/tmp]
     security_opt: [no-new-privileges:true]
-    mem_limit: 256m
-    cpus: 0.5
-    networks: [docker, default]
+    read_only: true
+    cap_drop: [ALL]
+    mem_limit: 364m
+    cpus: 1.0
+    logging: *logging
     restart: unless-stopped
+    networks:
+      - docker
+      - egress
+      - traefik_internal
 
 networks:
+  # wt <-> socket-proxy only. internal: no route to the internet.
   docker:
+    name: wt_docker
     internal: true
+  # wt -> internet (GitHub API, ntfy, LLM server).
+  egress:
+    name: wt_egress
+  # Created by the Traefik stack (also internal). Traefik routes to http://wt:8000 over it.
+  traefik_internal:
+    name: traefik_internal
+    external: true
 
 volumes:
   wt-data:
+    name: wt-data

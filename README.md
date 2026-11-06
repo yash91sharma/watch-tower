@@ -14,7 +14,9 @@ WT is for 1 admin and some tens of containers on one Docker host.
    docker compose up -d
    ```
 
-WT reads Docker through a read-only socket proxy on an internal network. WT runs as a non-root user with a read-only root filesystem. The data is in the `wt-data` volume.
+`compose.yaml` needs the external Docker network `traefik_internal` from your Traefik stack. If you do not have it, make it: `docker network create --internal traefik_internal`.
+
+WT reads Docker through a read-only socket proxy on the internal network `wt_docker`. WT gets to the internet (GitHub, ntfy, LLM server) through `wt_egress`. The socket proxy has no internet access. No port is published. Both containers have a read-only root filesystem, no Linux capabilities and `no-new-privileges`. WT runs as a non-root user. The data is in the `wt-data` volume.
 
 ## First setup
 
@@ -31,18 +33,24 @@ The token works one time only. WT then asks for the password and a TOTP code at 
 
 ## Traefik
 
-WT must have HTTPS, because the session cookie is `Secure`. Let Traefik do TLS. In `compose.yaml`, add these labels to `wt` and set your host name:
+WT must have HTTPS, because the session cookie is `Secure`. Let Traefik do TLS. Traefik gets to WT at `http://wt:8000` on the `traefik_internal` network. Add this route to the Traefik dynamic config (file provider) and set your host name:
 
 ```yaml
-labels:
-  - traefik.enable=true
-  - traefik.http.routers.wt.rule=Host(`wt.example.com`)
-  - traefik.http.routers.wt.entrypoints=websecure
-  - traefik.http.routers.wt.tls=true
-  - traefik.http.services.wt.loadbalancer.server.port=8000
+http:
+  routers:
+    wt:
+      rule: Host(`wt.example.com`)
+      entryPoints: [websecure]
+      tls: {}
+      service: wt
+  services:
+    wt:
+      loadBalancer:
+        servers:
+          - url: http://wt:8000
 ```
 
-Traefik and WT must be on the same Docker network. WT does not read the `X-Forwarded-*` headers, so the WT log shows the IP of Traefik, not the IP of the client.
+WT does not read the `X-Forwarded-*` headers, so the WT log shows the IP of Traefik, not the IP of the client.
 
 ## Reset the admin
 
@@ -59,10 +67,10 @@ The reset deletes the password, the TOTP key and all sessions. After the restart
 ## Backup
 
 1. Stop WT: `docker compose stop wt`
-2. Copy the `wt-data` volume. Compose adds the folder name to the volume name: find it with `docker volume ls` (for example, `wt_wt-data`). Then:
+2. Copy the `wt-data` volume:
 
    ```sh
-   docker run --rm -v wt_wt-data:/data:ro -v "$PWD":/backup alpine tar czf /backup/wt-data.tgz -C /data .
+   docker run --rm -v wt-data:/data:ro -v "$PWD":/backup alpine tar czf /backup/wt-data.tgz -C /data .
    ```
 
 3. Start WT: `docker compose start wt`
