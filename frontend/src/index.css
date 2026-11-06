@@ -34,6 +34,9 @@
     --color-info: var(--info);
     --color-info-muted: var(--info-muted);
     --color-header: var(--header);
+    --color-group-ok: var(--group-ok);
+    --color-group-update: var(--group-update);
+    --color-group-critical: var(--group-critical);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
     --color-muted-foreground: var(--muted-foreground);
@@ -67,6 +70,10 @@
     --popover: #ffffff;
     --popover-foreground: #262b38;
     --header: #e8eef7;
+    /* App header tints on the container list: no update, update, critical update. */
+    --group-ok: #f1f4f9;
+    --group-update: #e6edf9;
+    --group-critical: #fbeced;
     --primary: #4f70a6;
     --primary-foreground: #ffffff;
     --secondary: #e8edf6;
@@ -111,6 +118,9 @@
     --popover: #1d2230;
     --popover-foreground: #e5e8f0;
     --header: #1a1f2c;
+    --group-ok: #20263a;
+    --group-update: #222c44;
+    --group-critical: #2f2027;
     --primary: #9ab3dd;
     --primary-foreground: #141a26;
     --secondary: #232a3b;

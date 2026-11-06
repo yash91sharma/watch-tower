@@ -14,8 +14,8 @@ function answer(groups: components["schemas"]["GroupOut"][]) {
 
 test("groups show in API order with their containers", async () => {
   answer([
-    { project: "media", label: "media", containers: [container({ name: "plex" }), container({ name: "sonarr" })] },
-    { project: null, label: "Other", containers: [container({ name: "adhoc" })] },
+    { project: "media", label: "media", update: "none", containers: [container({ name: "plex" }), container({ name: "sonarr" })] },
+    { project: null, label: "Other", update: "none", containers: [container({ name: "adhoc" })] },
   ]);
   renderRoute("/");
 
@@ -28,7 +28,7 @@ test("groups show in API order with their containers", async () => {
 
 test("a click on the group name collapses and expands the group", async () => {
   const user = userEvent.setup();
-  answer([{ project: "media", label: "media", containers: [container({ name: "plex" }), container({ name: "sonarr" })] }]);
+  answer([{ project: "media", label: "media", update: "none", containers: [container({ name: "plex" }), container({ name: "sonarr" })] }]);
   renderRoute("/");
 
   const toggle = await screen.findByRole("button", { name: "media" });
@@ -48,8 +48,8 @@ test("a click on the group name collapses and expands the group", async () => {
 test("a collapsed group stays collapsed when the page opens again", async () => {
   const user = userEvent.setup();
   answer([
-    { project: "media", label: "media", containers: [container({ name: "plex" })] },
-    { project: null, label: "Other", containers: [container({ name: "adhoc" })] },
+    { project: "media", label: "media", update: "none", containers: [container({ name: "plex" })] },
+    { project: null, label: "Other", update: "none", containers: [container({ name: "adhoc" })] },
   ]);
   const first = renderRoute("/");
   await user.click(await screen.findByRole("button", { name: "media" }));
@@ -68,6 +68,7 @@ test("a row shows the container fields", async () => {
     {
       project: "web",
       label: "web",
+      update: "none",
       containers: [
         container({
           name: "app",
@@ -95,6 +96,7 @@ test("health none shows no healthcheck, and empty values show a dash", async () 
     {
       project: null,
       label: "Other",
+      update: "none",
       containers: [container({ name: "db", health: "none", tag: null, latest_version: null, status: "no check" })],
     },
   ]);
@@ -138,7 +140,7 @@ test("an API error shows the error", async () => {
 });
 
 test("the table has clear column names", async () => {
-  answer([{ project: "web", label: "web", containers: [container({ name: "app" })] }]);
+  answer([{ project: "web", label: "web", update: "none", containers: [container({ name: "app" })] }]);
   renderRoute("/");
 
   const region = await screen.findByRole("region", { name: "web" });
@@ -158,6 +160,7 @@ test("every second row has a stripe color", async () => {
     {
       project: "web",
       label: "web",
+      update: "none",
       containers: [container({ name: "a" }), container({ name: "b" }), container({ name: "c" })],
     },
   ]);
@@ -165,4 +168,19 @@ test("every second row has a stripe color", async () => {
 
   const rows = await Promise.all(["a", "b", "c"].map(async (name) => (await screen.findByRole("link", { name })).closest("tr")));
   expect(rows.map((row) => row?.classList.contains("even:bg-muted/30"))).toEqual([true, true, true]);
+});
+
+test("the group header color shows the update level of the group", async () => {
+  answer([
+    { project: "a", label: "a", update: "critical", containers: [container({ name: "a1" })] },
+    { project: "b", label: "b", update: "update", containers: [container({ name: "b1" })] },
+    { project: "c", label: "c", update: "none", containers: [container({ name: "c1" })] },
+  ]);
+  renderRoute("/");
+
+  const header = (label: string) => screen.getByRole("heading", { name: label }).parentElement;
+  await screen.findByRole("heading", { name: "a" });
+  expect(header("a")).toHaveClass("bg-group-critical");
+  expect(header("b")).toHaveClass("bg-group-update");
+  expect(header("c")).toHaveClass("bg-group-ok");
 });

@@ -17,6 +17,9 @@ type Group = components["schemas"]["GroupOut"];
 
 const collapsedKey = "wt.collapsedGroups";
 
+// The header tint shows the update level of the group (the API decides the level).
+const headerColor = { none: "bg-group-ok", update: "bg-group-update", critical: "bg-group-critical" } as const;
+
 function readCollapsed() {
   return JSON.parse(localStorage.getItem(collapsedKey) ?? "[]") as string[];
 }
@@ -63,8 +66,8 @@ export function ContainersPage() {
 function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; onToggle: () => void }) {
   const id = useId();
   return (
-    <section aria-labelledby={id} className="rounded-xl border bg-card shadow-xs">
-      <div className="flex items-center gap-2 px-2 py-1">
+    <section aria-labelledby={id} className="overflow-hidden rounded-xl border bg-card shadow-xs">
+      <div className={cn("flex items-center gap-2 px-2 py-1", headerColor[group.update])}>
         <h2 id={id} className="flex-1 font-medium">
           <button
             type="button"

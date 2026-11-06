@@ -84,7 +84,7 @@ test("the Check now button of an app checks only that app", async () => {
   server.use(
     http.get("*/api/checks/status", () => HttpResponse.json(status(false))),
     http.get("*/api/containers", () =>
-      HttpResponse.json([{ project: "media", label: "media", containers: [] }]),
+      HttpResponse.json([{ project: "media", label: "media", update: "none", containers: [] }]),
     ),
     http.post("*/api/checks", ({ request }) => {
       group = new URL(request.url).searchParams.get("group");

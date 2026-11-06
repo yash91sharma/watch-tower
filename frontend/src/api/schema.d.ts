@@ -474,6 +474,11 @@ export interface components {
             project: string | null;
             /** Label */
             label: string;
+            /**
+             * Update
+             * @enum {string}
+             */
+            update: "none" | "update" | "critical";
             /** Containers */
             containers: components["schemas"]["ContainerOut"][];
         };

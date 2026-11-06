@@ -169,3 +169,24 @@ async def test_live_container_with_no_db_row_is_absent(
     ]
     assert "tool" not in names
     assert "web" in names
+
+
+async def test_group_update_level(
+    ctx: AppContext, user_client: httpx.AsyncClient
+) -> None:
+    levels = {
+        group["label"]: group["update"] for group in await get_groups(user_client)
+    }
+
+    assert levels == {"data": "none", "site": "critical", "Other": "none"}
+
+    with Session(ctx.engine) as session:
+        update = session.exec(select(Update)).one()
+        update.severity = Severity.NORMAL
+        session.add(update)
+        session.commit()
+    levels = {
+        group["label"]: group["update"] for group in await get_groups(user_client)
+    }
+
+    assert levels["site"] == "update"

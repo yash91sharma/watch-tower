@@ -26,7 +26,7 @@ test.each([
 ])("all controls on %s have a name", async (path, heading) => {
   server.use(
     http.get("*/api/containers", () =>
-      HttpResponse.json([{ project: null, label: "Other", containers: [container()] }]),
+      HttpResponse.json([{ project: null, label: "Other", update: "none", containers: [container()] }]),
     ),
     http.get("*/api/containers/:name", () =>
       HttpResponse.json(

@@ -100,11 +100,25 @@ class ContainerOut(BaseModel):
     source_confirmed: bool
 
 
+# The highest update of a group: "critical" if a container has a critical update, else
+# "update" if a container has an update, else "none".
+UpdateLevel = Literal["none", "update", "critical"]
+
+
 class GroupOut(BaseModel):
     # The Compose project. None for the group "Other".
     project: str | None
     label: str
+    update: UpdateLevel
     containers: list[ContainerOut]
+
+
+def update_level(containers: list[ContainerOut]) -> UpdateLevel:
+    if any(item.severity is Severity.CRITICAL for item in containers):
+        return "critical"
+    if any(item.status is Status.UPDATE for item in containers):
+        return "update"
+    return "none"
 
 
 def container_out(
@@ -151,6 +165,7 @@ def list_containers(ctx: Ctx) -> list[GroupOut]:
         GroupOut(
             project=project,
             label=project or OTHER_LABEL,
+            update=update_level(groups[project]),
             containers=sorted(groups[project], key=lambda item: item.name),
         )
         for project in ordered
