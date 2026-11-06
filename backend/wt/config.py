@@ -5,7 +5,6 @@
 `Settings` holds the UI settings. They are stored as rows in the `setting` table.
 """
 
-import ipaddress
 import logging
 import os
 import sys
@@ -26,7 +25,6 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
-    NoDecode,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
@@ -58,25 +56,12 @@ class Env(BaseSettings):
 
     docker_host: str | None = Field(default=None, validation_alias="DOCKER_HOST")
     data_dir: Path = Path("/data")
-    # IPs or networks (CIDR) of the reverse proxies. WT reads X-Forwarded-* only from them.
-    trusted_proxies: Annotated[list[str], NoDecode] = []
     log_level: LogLevel = "INFO"
     github_api_url: str = "https://api.github.com"
 
     github_token: SecretStr | None = None
     ntfy_token: SecretStr | None = None
     llm_api_key: SecretStr | None = None
-
-    @field_validator("trusted_proxies", mode="before")
-    @classmethod
-    def _split_proxies(cls, value: object) -> object:
-        """Read a comma-separated list. Each item must be an IP address or a network."""
-        if not isinstance(value, str):
-            return value
-        items = [item.strip() for item in value.split(",") if item.strip()]
-        for item in items:
-            ipaddress.ip_network(item, strict=False)
-        return items
 
     @field_validator("log_level", mode="before")
     @classmethod

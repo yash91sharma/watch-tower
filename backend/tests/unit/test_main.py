@@ -18,8 +18,8 @@ from wt.docker.fake import FakeDocker
 from wt.main import create_app
 
 
-def make_env(tmp_path: Path, trusted_proxies: list[str] | None = None) -> Env:
-    return Env(data_dir=tmp_path, trusted_proxies=trusted_proxies or [])
+def make_env(tmp_path: Path) -> Env:
+    return Env(data_dir=tmp_path)
 
 
 @pytest.mark.anyio
@@ -106,43 +106,14 @@ FORWARDED = {"X-Forwarded-For": "203.0.113.7", "X-Forwarded-Proto": "https"}
 
 
 @pytest.mark.anyio
-async def test_forwarded_headers_from_a_trusted_proxy(tmp_path: Path) -> None:
-    app = create_app(make_env(tmp_path, ["172.18.0.2"]), workers=[])
-    add_client_route(app)
-
-    result = await get_client(app, "172.18.0.2", FORWARDED)
-
-    assert result == {"host": "203.0.113.7", "scheme": "https"}
-
-
-@pytest.mark.anyio
-async def test_forwarded_headers_from_a_trusted_network(tmp_path: Path) -> None:
-    app = create_app(make_env(tmp_path, ["172.18.0.0/16"]), workers=[])
-    add_client_route(app)
-
-    result = await get_client(app, "172.18.5.9", FORWARDED)
-
-    assert result == {"host": "203.0.113.7", "scheme": "https"}
-
-
-@pytest.mark.anyio
-async def test_forwarded_headers_from_another_ip_are_ignored(tmp_path: Path) -> None:
-    app = create_app(make_env(tmp_path, ["172.18.0.2"]), workers=[])
-    add_client_route(app)
-
-    result = await get_client(app, "10.0.0.9", FORWARDED)
-
-    assert result == {"host": "10.0.0.9", "scheme": "http"}
-
-
-@pytest.mark.anyio
-async def test_no_trusted_proxies_ignores_forwarded_headers(tmp_path: Path) -> None:
+@pytest.mark.parametrize("client_ip", ["127.0.0.1", "172.18.0.2", "10.0.0.9"])
+async def test_forwarded_headers_are_ignored(tmp_path: Path, client_ip: str) -> None:
     app = create_app(make_env(tmp_path), workers=[])
     add_client_route(app)
 
-    result = await get_client(app, "127.0.0.1", FORWARDED)
+    result = await get_client(app, client_ip, FORWARDED)
 
-    assert result == {"host": "127.0.0.1", "scheme": "http"}
+    assert result == {"host": client_ip, "scheme": "http"}
 
 
 @pytest.mark.anyio

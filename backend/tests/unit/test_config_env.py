@@ -38,7 +38,6 @@ def test_defaults() -> None:
 
     assert env.docker_host is None
     assert env.data_dir == Path("/data")
-    assert env.trusted_proxies == []
     assert env.log_level == "INFO"
     assert env.github_api_url == "https://api.github.com"
     assert env.github_token is None
@@ -49,7 +48,6 @@ def test_defaults() -> None:
 def test_values_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DOCKER_HOST", "tcp://socket-proxy:2375")
     monkeypatch.setenv("WT_DATA_DIR", "/srv/wt")
-    monkeypatch.setenv("WT_TRUSTED_PROXIES", "172.18.0.2, 10.0.0.0/8")
     monkeypatch.setenv("WT_LOG_LEVEL", "debug")
     monkeypatch.setenv("WT_GITHUB_API_URL", "http://fake-github:8080/")
 
@@ -57,7 +55,6 @@ def test_values_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert env.docker_host == "tcp://socket-proxy:2375"
     assert env.data_dir == Path("/srv/wt")
-    assert env.trusted_proxies == ["172.18.0.2", "10.0.0.0/8"]
     assert env.log_level == "DEBUG"
     assert env.github_api_url == "http://fake-github:8080"
 
@@ -65,8 +62,6 @@ def test_values_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.parametrize(
     ("name", "value"),
     [
-        ("WT_TRUSTED_PROXIES", "traefik"),
-        ("WT_TRUSTED_PROXIES", "*"),
         ("WT_LOG_LEVEL", "LOUD"),
         ("WT_GITHUB_API_URL", "ftp://example.com"),
     ],
@@ -81,13 +76,23 @@ def test_bad_values_fail(
 
 
 def test_empty_values_use_the_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("WT_TRUSTED_PROXIES", "")
     monkeypatch.setenv("WT_GITHUB_TOKEN", "")
 
     env = Env()
 
-    assert env.trusted_proxies == []
     assert env.github_token is None
+
+
+def test_an_old_trusted_proxies_value_is_ignored(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # WT does not read X-Forwarded-* headers. An old .env can still have this var.
+    monkeypatch.setenv("WT_TRUSTED_PROXIES", "172.18.0.0/16")
+
+    env = Env()
+
+    assert "trusted_proxies" not in Env.model_fields
+    assert not hasattr(env, "trusted_proxies")
 
 
 @pytest.mark.parametrize(("env_name", "field"), SECRETS)

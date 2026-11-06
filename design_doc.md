@@ -237,7 +237,7 @@ The container key is (`host_id`, name). Compose makes a new Docker id on each re
 ### Config and secrets
 
  - Env vars hold secrets and deploy values. Each secret also accepts `<NAME>_FILE` (Docker secrets).
-   - `DOCKER_HOST`, `WT_DATA_DIR`, `WT_TRUSTED_PROXIES`, `WT_LOG_LEVEL`
+   - `DOCKER_HOST`, `WT_DATA_DIR`, `WT_LOG_LEVEL`
    - `WT_GITHUB_API_URL` (default `https://api.github.com`). Tests set it to the fake GitHub.
    - Secrets: `WT_GITHUB_TOKEN`, `WT_NTFY_TOKEN`, `WT_LLM_API_KEY`
  - The UI holds all other settings: check interval (default 24 h), N and M, ntfy URL and topic, LLM URL and model, WT public URL.
@@ -246,7 +246,7 @@ The container key is (`host_id`, name). Compose makes a new Docker id on each re
 
 ### Reverse proxy
 
- - WT reads `X-Forwarded-*` headers only from `WT_TRUSTED_PROXIES`.
+ - WT does not read `X-Forwarded-*` headers. No WT feature needs the client IP (the login limit is for all clients together).
  - WT serves at the root path of its host name (for example `wt.example.com`). No sub-path in P0.
 
 ### Deploy
@@ -272,7 +272,6 @@ services:
     container_name: wt
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
-      WT_TRUSTED_PROXIES: <traefik ip>
     env_file: .env          # secrets
     volumes: [wt-data:/data]
     read_only: true

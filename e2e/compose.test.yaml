@@ -42,8 +42,6 @@ services:
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
       WT_GITHUB_API_URL: http://github:8000
-      # The e2e network: Traefik sends X-Forwarded-* from there.
-      WT_TRUSTED_PROXIES: 10.199.0.0/24
       WT_LOG_LEVEL: DEBUG
     volumes: [wt-data:/data]
     read_only: true
@@ -109,10 +107,7 @@ configs:
 networks:
   docker:
     internal: true
-  e2e:
-    ipam:
-      config:
-        - subnet: 10.199.0.0/24
+  e2e: {}
 
 volumes:
   wt-data:

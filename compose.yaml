@@ -1,4 +1,4 @@
-# Watch Tower deploy. Put the secrets and WT_TRUSTED_PROXIES in .env (see .env.example).
+# Watch Tower deploy. Put the secrets in .env (see .env.example).
 # Start: docker compose up -d. First setup: docker logs wt gives the setup token.
 services:
   # Read-only Docker API for WT. Internal network only, no published port.

@@ -24,7 +24,7 @@ def serve() -> None:
         host="0.0.0.0",  # noqa: S104
         port=PORT,
         workers=1,
-        # WT reads X-Forwarded-* itself, only from WT_TRUSTED_PROXIES (see wt.main).
+        # WT does not use X-Forwarded-*. No WT feature needs the client IP.
         proxy_headers=False,
         server_header=False,
         # Use the WT log setup.

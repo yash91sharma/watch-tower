@@ -36,7 +36,7 @@ Rules:
 
 - [x] **2.1** `wt/clock.py`: `now()` (UTC, timezone-aware) and `async sleep(seconds)`. Pytest fixture `clock` sets the time. In tests, `sleep` moves the time with no real wait. Ban `datetime.now`, `datetime.utcnow`, `time.time` and `asyncio.sleep` outside `clock.py` (ruff `TID251`).
   - **Test:** the fixture sets and moves the time. A banned call in another module fails ruff.
-- [x] **2.2** `wt/config.py` env vars (pydantic-settings): `DOCKER_HOST`, `WT_DATA_DIR` (default `/data`), `WT_TRUSTED_PROXIES`, `WT_LOG_LEVEL` (default `INFO`), `WT_GITHUB_API_URL` (default `https://api.github.com`). Secrets `WT_GITHUB_TOKEN`, `WT_NTFY_TOKEN`, `WT_LLM_API_KEY` are `SecretStr`. Each secret also reads `<NAME>_FILE`.
+- [x] **2.2** `wt/config.py` env vars (pydantic-settings): `DOCKER_HOST`, `WT_DATA_DIR` (default `/data`), `WT_LOG_LEVEL` (default `INFO`), `WT_GITHUB_API_URL` (default `https://api.github.com`). Secrets `WT_GITHUB_TOKEN`, `WT_NTFY_TOKEN`, `WT_LLM_API_KEY` are `SecretStr`. Each secret also reads `<NAME>_FILE`.
   - **Test:** defaults, `_FILE` read, error if `<NAME>` and `<NAME>_FILE` are both set, no secret value in `repr` or `str`.
 - [x] **2.3** Logging: stdlib, stdout, level from `WT_LOG_LEVEL`, one line per record with time and module.
   - **Test:** a log of the config object shows no secret value.
@@ -58,8 +58,8 @@ Rules:
 
 ## 3. App base
 
-- [x] **3.1** `wt/main.py`: `create_app()` (routes in `wt/api/`) and a lifespan that starts and stops the workers. `create_app()` adds Uvicorn `ProxyHeadersMiddleware` with trusted hosts from `WT_TRUSTED_PROXIES` (empty: an empty list, trust no proxy). `wt serve` runs Uvicorn: 1 worker, port 8000, root path only, `proxy_headers=False`.
-  - **Test:** the lifespan starts and stops fake workers with no task leak. A test-only route gives `request.client.host` and `request.url.scheme`: WT uses `X-Forwarded-For` and `X-Forwarded-Proto` only from a trusted IP.
+- [x] **3.1** `wt/main.py`: `create_app()` (routes in `wt/api/`) and a lifespan that starts and stops the workers. `wt serve` runs Uvicorn: 1 worker, port 8000, root path only, `proxy_headers=False`.
+  - **Test:** the lifespan starts and stops fake workers with no task leak. A test-only route gives `request.client.host` and `request.url.scheme`: WT ignores `X-Forwarded-For` and `X-Forwarded-Proto` from all clients.
 - [x] **3.2** Cleanup worker, each hour: delete expired sessions and `event` rows older than 7 days.
   - **Test (clock):** 8-day events and expired sessions go. 6-day events and valid sessions stay.
 - [x] **3.3** `wt/bus.py`: in-process event bus, one asyncio queue per subscriber. Topics: `container`, `check`, `docker`, `settings`. Publish never blocks. A slow subscriber loses its oldest items.
@@ -330,7 +330,7 @@ Only the release workflow. No other workflows, no Dependabot, no branch protecti
 ## 18. Release v0.0.0
 
 - [x] **18.1** Each P0 requirement and each CUJ has an E2E flow. Coverage gates pass.
-- [x] **18.2** Security review: no secrets in code, logs, tests or Git history. Check cookie flags, auth guard, trusted proxies, security headers, socket proxy GET only.
+- [x] **18.2** Security review: no secrets in code, logs, tests or Git history. Check cookie flags, auth guard, security headers, socket proxy GET only.
 - [ ] **18.3** Deploy to prod (OrbStack, M2) behind Traefik and Tailscale. Idle RAM < 200 MB.
 - [ ] **18.4** Manual test of all CUJs on desktop, iPhone (PWA) and Android (PWA). Record the result in the PR.
 - [ ] **18.5** Version `0.0.0` in `pyproject.toml` and `package.json`. Add the repo secret `DOCKERHUB_TOKEN`. Push the tag `v0.0.0`. Check that the release workflow pushes `docker.io/yash91sharma/watch-tower:0.0.0` and `:latest`. Write the release notes.

@@ -42,7 +42,7 @@ labels:
   - traefik.http.services.wt.loadbalancer.server.port=8000
 ```
 
-Traefik and WT must be on the same Docker network. Set `WT_TRUSTED_PROXIES` in `.env` to the IP or the network of Traefik. WT reads the `X-Forwarded-*` headers only from these addresses.
+Traefik and WT must be on the same Docker network. WT does not read the `X-Forwarded-*` headers, so the WT log shows the IP of Traefik, not the IP of the client.
 
 ## Reset the admin
 
@@ -77,7 +77,6 @@ To move only the settings and the release sources, use Export and Import on the 
 | --- | --- | --- |
 | `DOCKER_HOST` | none | Docker API URL. `compose.yaml` sets it to the socket proxy. |
 | `WT_DATA_DIR` | `/data` | Folder for the SQLite DB. |
-| `WT_TRUSTED_PROXIES` | empty | IPs or networks (comma-separated) of the reverse proxy. |
 | `WT_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR`. |
 | `WT_GITHUB_API_URL` | `https://api.github.com` | GitHub API URL. Change it only for tests. |
 | `WT_GITHUB_TOKEN` | none | Secret. GitHub token for a higher API rate limit. |
