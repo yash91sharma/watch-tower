@@ -1,7 +1,7 @@
 // The container list: Compose groups in API order, one row per container.
 // The admin can collapse a group. The browser keeps the collapsed groups in localStorage.
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ExternalLink } from "lucide-react";
 import { useId, useState } from "react";
 import { Link } from "react-router";
 
@@ -105,7 +105,7 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
             {group.containers.map((item) => (
               <TableRow key={item.name} className="even:bg-muted/30">
                 <TableCell>
-                  <Link className="font-medium underline-offset-4 hover:underline" to={`/containers/${item.name}`}>
+                  <Link className="font-medium underline underline-offset-4" to={`/containers/${item.name}`}>
                     {item.name}
                   </Link>
                 </TableCell>
@@ -117,12 +117,13 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
                 <TableCell>
                   {item.latest_url ? (
                     <a
-                      className="underline-offset-4 hover:underline"
+                      className="inline-flex items-center gap-1 underline underline-offset-4"
                       href={item.latest_url}
                       target="_blank"
                       rel="noreferrer"
                     >
                       {item.latest_version}
+                      <ExternalLink aria-hidden className="size-3.5 shrink-0" />
                     </a>
                   ) : (
                     (item.latest_version ?? "-")

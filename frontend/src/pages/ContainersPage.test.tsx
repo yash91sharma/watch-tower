@@ -203,3 +203,13 @@ test("the latest version links to its GitHub release in a new tab", async () => 
   expect(link).toHaveAttribute("rel", "noreferrer");
   expect(screen.getAllByRole("link", { name: "1.27.0" })).toHaveLength(1);
 });
+
+test("the table links always have an underline, and the release link has an external-link icon", async () => {
+  answer([{ project: "web", label: "web", update: "none", containers: [container({ name: "a" })] }]);
+  renderRoute("/");
+
+  const release = await screen.findByRole("link", { name: "1.27.0" });
+  expect(release).toHaveClass("underline");
+  expect(release.querySelector("svg")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "a" })).toHaveClass("underline");
+});
