@@ -24,7 +24,7 @@ test("two updates give one digest with high priority", async ({ page }) => {
   await addRelease("wt-e2e/old-b", "2.1.0", "## 2.1.0\n- New API");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Check now" }).click();
+  await page.getByRole("button", { name: "Check now", exact: true }).click();
 
   await expect.poll(() => ntfyMessages(TOPIC), { timeout: 60_000 }).toHaveLength(1);
   const [digest] = await ntfyMessages(TOPIC);

@@ -19,7 +19,7 @@ async function checkNowAndWait(page: Page, timeout: number) {
     (await (await page.request.get("/api/checks/status")).json()) as { running: boolean; last_run: string | null };
   const before = (await status()).last_run;
   await page.goto("/");
-  await page.getByRole("button", { name: "Check now" }).click();
+  await page.getByRole("button", { name: "Check now", exact: true }).click();
   await expect
     .poll(
       async () => {

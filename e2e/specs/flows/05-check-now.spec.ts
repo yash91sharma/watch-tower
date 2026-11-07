@@ -13,7 +13,7 @@ const TOPIC = "wt-e2e-flow5";
 
 async function checkNow(page: Page) {
   await page.goto("/");
-  const button = page.getByRole("button", { name: "Check now" });
+  const button = page.getByRole("button", { name: "Check now", exact: true });
   await expect(button).toBeEnabled();
   await button.click();
   // The run ends when the button is on again (the stream refetches the status).
@@ -52,4 +52,17 @@ test("a second run sends nothing", async ({ page }) => {
   // Give WT time to send a (wrong) second message.
   await page.waitForTimeout(3000);
   expect(await ntfyMessages(TOPIC)).toHaveLength(1);
+});
+
+test("the Check now button of one app runs a check", async ({ page }) => {
+  await page.goto("/");
+  const button = page.getByRole("button", { name: "Check now: wt_test_e2e", exact: true });
+  await expect(button).toBeEnabled();
+  const before = await page.getByText(/^Last check: /).textContent();
+
+  await button.click();
+
+  await expect(button).toBeEnabled({ timeout: 60_000 });
+  // A check of one app keeps the time of the last full check.
+  await expect(page.getByText(/^Last check: /)).toHaveText(before ?? "");
 });

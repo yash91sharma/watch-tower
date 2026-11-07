@@ -41,7 +41,7 @@ test.describe("logged in", () => {
 
     const group = page.getByRole("region", { name: "wt_test_e2e" });
     await expect(group.getByRole("link", { name: "wt_test_e2e_healthy" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Check now" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Check now", exact: true })).toBeVisible();
   });
 
   test("a container page shows its parts", async ({ page }) => {
