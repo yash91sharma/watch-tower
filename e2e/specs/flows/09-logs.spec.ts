@@ -1,5 +1,5 @@
 // Flow 9 (task 16.14): the logs of wt_test_e2e_json (a JSON line on stdout and an "error
-// line" on stderr each second): live tail, search, JSON pretty-print and download.
+// line" on stderr each second): live tail, search, JSON pretty-print, download and the way back.
 import { readFileSync } from "node:fs";
 
 import { expect, type Page, test } from "@playwright/test";
@@ -54,4 +54,11 @@ test("download gives the full log as a text file", async ({ page }) => {
   const text = readFileSync(await download.path(), "utf8");
   expect(text).toMatch(/^\S+ stdout \{"level":"info","n":1,"msg":"tick"\}$/m);
   expect(text).toMatch(/^\S+ stderr error line 1$/m);
+});
+
+test("the breadcrumb goes back to the container page", async ({ page }) => {
+  await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "wt_test_e2e_json" }).click();
+
+  await expect(page).toHaveURL(/\/containers\/wt_test_e2e_json$/);
+  await expect(page.getByRole("heading", { level: 1, name: "wt_test_e2e_json" })).toBeVisible();
 });

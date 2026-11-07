@@ -115,3 +115,15 @@ test("the download link opens logs.txt", async () => {
   expect(link).toHaveAttribute("href", "/api/containers/my%20app/logs.txt");
   expect(link).toHaveAttribute("download");
 });
+
+test("the breadcrumb goes back to the container page", async () => {
+  const user = userEvent.setup();
+  const { router } = renderRoute("/containers/web/logs");
+  const crumbs = await screen.findByRole("navigation", { name: "Breadcrumb" });
+
+  expect(within(crumbs).getByRole("link", { name: "Containers" })).toHaveAttribute("href", "/");
+  expect(within(crumbs).getByText("Logs")).toHaveAttribute("aria-current", "page");
+  await user.click(within(crumbs).getByRole("link", { name: "web" }));
+
+  expect(router.state.location.pathname).toBe("/containers/web");
+});

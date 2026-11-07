@@ -67,3 +67,12 @@ test("no image and no tag show a dash", async () => {
   expect(image).toHaveTextContent("-");
   expect(running).toHaveTextContent("-");
 });
+
+test("the breadcrumb links to the container list", async () => {
+  answer(containerDetail({ name: "web" }));
+  renderRoute("/containers/web");
+  const crumbs = await screen.findByRole("navigation", { name: "Breadcrumb" });
+
+  expect(within(crumbs).getByRole("link", { name: "Containers" })).toHaveAttribute("href", "/");
+  expect(within(crumbs).getByText("web")).toHaveAttribute("aria-current", "page");
+});

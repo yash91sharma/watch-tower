@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
@@ -15,9 +15,9 @@ test.each([
   renderRoute(path);
 
   expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
-  expect(screen.getByRole("navigation")).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Containers" })).toHaveAttribute("href", "/");
-  expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
+  const nav = screen.getByRole("navigation", { name: "Main" });
+  expect(within(nav).getByRole("link", { name: "Containers" })).toHaveAttribute("href", "/");
+  expect(within(nav).getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
   expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
 });
 

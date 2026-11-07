@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router";
 
 import { containerQuery } from "@/api/queries";
 import type { components } from "@/api/schema";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { HealthBadge } from "@/components/badges";
 import { QueryPending } from "@/components/QueryPending";
 import { ReleaseSource } from "@/components/ReleaseSource";
@@ -28,6 +29,7 @@ export function ContainerPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb crumbs={[{ label: "Containers", to: "/" }, { label: name }]} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold break-all">{name}</h1>
         <Button asChild variant="outline" size="sm">
