@@ -50,7 +50,7 @@ test("a click on the logo opens the container list", async () => {
   const user = userEvent.setup();
   const { router } = renderRoute("/settings");
 
-  await user.click(await screen.findByRole("link", { name: "Watch Tower" }));
+  await user.click(await screen.findByRole("link", { name: "WT" }));
 
   expect(router.state.location.pathname).toBe("/");
   expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();

@@ -19,7 +19,7 @@ test("the manifest is valid and its icons exist", async ({ request }) => {
     icons: { src: string; purpose?: string }[];
   };
 
-  expect(manifest).toMatchObject({ name: "Watch Tower", display: "standalone", start_url: "/" });
+  expect(manifest).toMatchObject({ name: "WT", display: "standalone", start_url: "/" });
   expect(manifest.icons.some((icon) => icon.purpose === "maskable")).toBe(true);
   for (const icon of manifest.icons) {
     const response = await request.get(`/${icon.src}`);
@@ -41,7 +41,7 @@ test("the service worker registers, the shell loads offline, /api is not cached"
 
   // The app shell (HTML and JS) comes from the cache, so React renders. The API does not:
   // TanStack Query waits for the network, so the auth guard shows its loading text.
-  await expect(page).toHaveTitle("Watch Tower");
+  await expect(page).toHaveTitle("WT");
   await expect(page.getByText("Loading…")).toBeVisible();
   const api = await page.evaluate(() =>
     fetch("/api/health").then(

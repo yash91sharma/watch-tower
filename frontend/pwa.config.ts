@@ -10,7 +10,7 @@ export const pwaOptions: Partial<VitePWAOptions> = {
   registerType: "autoUpdate",
   includeAssets: ["icon.svg", "apple-touch-icon.png"],
   manifest: {
-    name: "Watch Tower",
+    name: "WT",
     short_name: "WT",
     description: "Watches the containers of a home-lab server.",
     theme_color: THEME_COLOR,

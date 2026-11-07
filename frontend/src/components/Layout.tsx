@@ -29,7 +29,7 @@ export function Layout() {
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
           <Link to="/" className="flex items-center gap-2 rounded-md font-semibold">
             <img src="/icon.svg" alt="" className="size-6" />
-            Watch Tower
+            WT
           </Link>
           <nav aria-label="Main" className="flex items-center gap-1">
             <NavItem to="/">Containers</NavItem>
