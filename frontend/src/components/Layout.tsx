@@ -1,10 +1,12 @@
-// Page frame for the logged-in app: top nav, the sidebar and the page.
+// Page frame for the logged-in app: top nav, the sidebar, the page and a footer with the version.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { PanelLeft } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router";
 
 import { authStateQuery } from "@/api/queries";
+import { version } from "../../package.json";
+
 import { api, unwrap } from "@/api/client";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { Logo } from "@/components/Logo";
@@ -73,6 +75,8 @@ export function Layout() {
           </main>
         </div>
       </div>
+      {/* The version of this build. The backend has the same version (a release test checks this). */}
+      <footer className="border-t px-4 py-2 text-center text-xs text-muted-foreground">WT v{version}</footer>
     </div>
   );
 }

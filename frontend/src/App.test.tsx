@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
+import { version } from "../package.json";
+
 import { App } from "@/App";
 import { server } from "@/test/server";
 
@@ -23,4 +25,11 @@ test("a 401 in the app opens the login page", async () => {
 
   expect(await screen.findByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
   expect(window.location.pathname).toBe("/login");
+});
+
+test("the footer shows the app version from package.json", async () => {
+  render(<App />);
+
+  const footer = await screen.findByRole("contentinfo");
+  expect(footer).toHaveTextContent(`WT v${version}`);
 });
