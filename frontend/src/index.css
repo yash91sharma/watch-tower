@@ -72,8 +72,8 @@
     --header: #e8eef7;
     /* App header tints on the container list: no update, update, critical update. */
     --group-ok: #f1f4f9;
-    --group-update: #e6edf9;
-    --group-critical: #fbeced;
+    --group-update: #dde7fa;
+    --group-critical: #fae3e5;
     --primary: #4f70a6;
     --primary-foreground: #ffffff;
     --secondary: #e8edf6;
@@ -118,9 +118,9 @@
     --popover: #1d2230;
     --popover-foreground: #e5e8f0;
     --header: #1a1f2c;
-    --group-ok: #20263a;
-    --group-update: #222c44;
-    --group-critical: #2f2027;
+    --group-ok: #232838;
+    --group-update: #22304f;
+    --group-critical: #3a2330;
     --primary: #9ab3dd;
     --primary-foreground: #141a26;
     --secondary: #232a3b;
