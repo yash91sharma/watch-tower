@@ -1,9 +1,10 @@
-// Vitest setup: DOM matchers, MSW server, fake EventSource, and cleanup (DOM, handlers, localStorage) after each test.
+// Vitest setup: DOM matchers, MSW server, fake EventSource, a small screen (matchMedia), and cleanup (DOM, handlers, localStorage) after each test.
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
 
 import { FakeEventSource } from "@/test/eventSource";
+import { setDesktop } from "@/test/media";
 import { server } from "@/test/server";
 
 // A request with no handler fails the test.
@@ -13,6 +14,7 @@ beforeAll(() => {
 beforeEach(() => {
   FakeEventSource.instances = [];
   vi.stubGlobal("EventSource", FakeEventSource);
+  setDesktop(false);
 });
 afterEach(() => {
   cleanup();

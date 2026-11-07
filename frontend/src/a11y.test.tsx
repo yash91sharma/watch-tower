@@ -5,6 +5,7 @@ import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
 import { container, containerDetail } from "@/test/fixtures";
+import { setDesktop } from "@/test/media";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 
@@ -51,6 +52,19 @@ test.each([
   server.use(http.get("*/api/auth/state", () => HttpResponse.json(state)));
   renderRoute(path);
   await screen.findByRole("heading", { level: 1, name: heading });
+
+  expectNamedControls();
+});
+
+test("all controls in the open sidebar have a name", async () => {
+  setDesktop(true);
+  server.use(
+    http.get("*/api/containers", () =>
+      HttpResponse.json([{ project: null, label: "Other", update: "none", containers: [container()] }]),
+    ),
+  );
+  renderRoute("/containers/web/logs");
+  await screen.findByRole("link", { name: "Details" });
 
   expectNamedControls();
 });

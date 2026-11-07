@@ -46,7 +46,7 @@ test.describe("logged in", () => {
 
   test("a container page shows its parts", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: "wt_test_e2e_old_a" }).click();
+    await page.getByRole("main").getByRole("link", { name: "wt_test_e2e_old_a" }).click();
 
     await expect(page.getByRole("heading", { level: 1, name: "wt_test_e2e_old_a" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Release source" })).toBeVisible();
@@ -56,10 +56,21 @@ test.describe("logged in", () => {
 
   test("the logs page shows live lines", async ({ page }) => {
     await page.goto("/containers/wt_test_e2e_json");
-    await page.getByRole("link", { name: "Logs" }).click();
+    await page.getByRole("main").getByRole("link", { name: "Logs" }).click();
 
     await expect(page.getByRole("heading", { level: 1, name: "Logs: wt_test_e2e_json" })).toBeVisible();
     await expect(page.getByRole("log").locator("[data-index]").first()).toBeVisible();
+  });
+
+  test("the sidebar marks the open page and opens another container", async ({ page }) => {
+    await page.goto("/containers/wt_test_e2e_json/logs");
+    // On a small screen the sidebar is closed until the admin opens it.
+    if ((page.viewportSize()?.width ?? 0) < 768) await page.getByRole("button", { name: "Sidebar" }).click();
+    const sidebar = page.getByRole("navigation", { name: "Container list" });
+
+    await expect(sidebar.getByRole("link", { name: "Logs" })).toHaveAttribute("aria-current", "page");
+    await sidebar.getByRole("link", { name: "wt_test_e2e_healthy" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "wt_test_e2e_healthy" })).toBeVisible();
   });
 
   test("the latest tag shows 'no check'", async ({ page }) => {
@@ -72,7 +83,7 @@ test.describe("logged in", () => {
   test("the excluded container is not in the list", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("link", { name: "wt_test_e2e_healthy" })).toBeVisible();
+    await expect(page.getByRole("main").getByRole("link", { name: "wt_test_e2e_healthy" })).toBeVisible();
     await expect(page.getByRole("link", { name: "wt_test_e2e_excluded" })).toHaveCount(0);
   });
 

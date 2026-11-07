@@ -1,16 +1,20 @@
-// Page frame for the logged-in app: top nav and the page below it.
+// Page frame for the logged-in app: top nav, the sidebar and the page.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { PanelLeft } from "lucide-react";
+import { useId, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router";
 
 import { authStateQuery } from "@/api/queries";
 import { api, unwrap } from "@/api/client";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
+import { Sidebar, useSidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 
 export function Layout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const sidebar = useSidebar();
+  const sidebarId = useId();
   const logout = useMutation({
     mutationFn: async () => {
       unwrap(await api.POST("/api/auth/logout"));
@@ -26,11 +30,23 @@ export function Layout() {
   return (
     <div className="flex min-h-svh flex-col">
       <header className="border-b bg-header">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
-          <Link to="/" className="flex items-center gap-2 rounded-md font-semibold">
-            <img src="/icon.svg" alt="" className="size-6" />
-            WT
-          </Link>
+        <div className="flex items-center justify-between gap-2 px-4 py-3">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Sidebar"
+              aria-expanded={sidebar.open}
+              aria-controls={sidebar.open ? sidebarId : undefined}
+              onClick={sidebar.toggle}
+            >
+              <PanelLeft aria-hidden />
+            </Button>
+            <Link to="/" className="flex items-center gap-2 rounded-md px-1 font-semibold">
+              <img src="/icon.svg" alt="" className="size-6" />
+              WT
+            </Link>
+          </div>
           <nav aria-label="Main" className="flex items-center gap-1">
             <NavItem to="/">Containers</NavItem>
             <NavItem to="/settings">Settings</NavItem>
@@ -47,11 +63,14 @@ export function Layout() {
           </nav>
         </div>
       </header>
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
-        <ConnectionBanner />
-        <main className="flex-1 px-4 py-6">
-          <Outlet />
-        </main>
+      <div className="flex flex-1 flex-col md:flex-row">
+        {sidebar.open && <Sidebar id={sidebarId} onNavigate={sidebar.closeOnSmallScreen} />}
+        <div className="mx-auto flex w-full max-w-5xl min-w-0 flex-1 flex-col">
+          <ConnectionBanner />
+          <main className="flex-1 px-4 py-6">
+            <Outlet />
+          </main>
+        </div>
       </div>
     </div>
   );
