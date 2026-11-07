@@ -7,6 +7,7 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router";
 import { authStateQuery } from "@/api/queries";
 import { api, unwrap } from "@/api/client";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
+import { Logo } from "@/components/Logo";
 import { Sidebar, useSidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 
@@ -43,7 +44,7 @@ export function Layout() {
               <PanelLeft aria-hidden />
             </Button>
             <Link to="/" className="flex items-center gap-2 rounded-md px-1 font-semibold">
-              <img src="/icon.svg" alt="" className="size-6" />
+              <Logo className="size-7" />
               WT
             </Link>
           </div>

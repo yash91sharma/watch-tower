@@ -172,3 +172,31 @@
     @apply font-sans;
     }
 }
+/* The header logo (components/Logo.tsx): 8 frames of 0.5 s. Each frame shows in its own
+   1/8 of the 4 s loop. The still picture shows when motion is reduced or the animation stops. */
+.wt-logo-frame {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wt-logo-still {
+    animation: wt-logo-hide 4s infinite;
+  }
+  .wt-logo-frame {
+    animation: wt-logo-show 4s step-end infinite;
+  }
+}
+@keyframes wt-logo-hide {
+  0%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes wt-logo-show {
+  0% {
+    opacity: 1;
+  }
+  12.5%,
+  100% {
+    opacity: 0;
+  }
+}
