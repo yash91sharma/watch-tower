@@ -1,7 +1,7 @@
 # Release (task 17.1): a v* tag builds the WT image for linux/arm64 on a native ARM runner
 # and pushes docker.io/yash91sharma/watch-tower:<version> and :latest. The version is the
-# tag without "v". Set the repo secret DOCKERHUB_TOKEN (a Docker Hub access token with
-# read and write access) before the first tag.
+# tag without "v". Then it publishes a GitHub release for the tag. Set the repo secret
+# DOCKERHUB_TOKEN (a Docker Hub access token with read and write access) before the first tag.
 name: Release
 
 on:
@@ -45,3 +45,18 @@ jobs:
           push: true
           cache-from: type=gha,scope=release
           cache-to: type=gha,mode=max,scope=release
+
+  # After the image push, publish a GitHub release for the tag. The title is the tag, and
+  # GitHub makes the notes. Only this job can write to the repo.
+  github-release:
+    needs: release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag
