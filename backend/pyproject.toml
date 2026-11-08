@@ -1,6 +1,6 @@
 [project]
 name = "wt"
-version = "0.4.1"
+version = "0.4.2"
 description = "Watch Tower backend"
 requires-python = ">=3.15"
 dependencies = [
