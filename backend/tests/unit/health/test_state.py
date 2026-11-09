@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime, timedelta
 
+from tests.factories import make_info
 from wt.db.models import EventKind
 from wt.docker.client import ContainerInfo, DockerEvent
 from wt.health.state import HealthState, RestartWindow
@@ -115,7 +116,7 @@ def test_another_action_gives_no_change() -> None:
 
 
 def info(health: str, docker_id: str = "id-1", name: str = "web") -> ContainerInfo:
-    return ContainerInfo(docker_id, name, "nginx:1", {}, "running", health, False)
+    return make_info(name, docker_id=docker_id, health=health)
 
 
 def test_baseline_unhealthy_gives_no_change_then_recovered_health() -> None:

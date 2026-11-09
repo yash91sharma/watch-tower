@@ -8,7 +8,8 @@ import pytest
 
 from tests.docker.env import PROXY_URL
 from wt import clock
-from wt.docker.client import DockerClient, LogLine
+from wt.docker.client import DockerClient
+from wt.docker.logs import LogLine
 
 pytestmark = [pytest.mark.docker, pytest.mark.anyio]
 

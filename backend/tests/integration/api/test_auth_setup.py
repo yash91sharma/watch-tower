@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from sqlalchemy import Engine
 from sqlmodel import Session, select
 
+from wt.clock import FakeClock
 from wt.context import AppContext
 from wt.db.models import Admin
 
@@ -79,19 +80,19 @@ async def test_full_flow(app: FastAPI, client: httpx.AsyncClient) -> None:
 
 @pytest.mark.anyio
 async def test_setup_saves_the_admin_with_the_matched_step(
-    app: FastAPI, client: httpx.AsyncClient
+    app: FastAPI, client: httpx.AsyncClient, clock: FakeClock
 ) -> None:
     token = token_of(app)
     secret = (await begin(client, token)).json()["totp_secret"]
-    totp = pyotp.TOTP(secret)
-    await finish(client, token, totp.now())
+    # The fake clock does not move, so the code stays in one TOTP step.
+    await finish(client, token, pyotp.TOTP(secret).at(clock.now()))
 
     with Session(ctx_of(app).engine) as session:
         admin = session.exec(select(Admin)).one()
     assert admin.totp_secret == secret
     assert admin.password_hash.startswith("$argon2id$")
     assert PASSWORD not in admin.password_hash
-    assert totp.at(admin.last_totp_step * 30) == totp.now()
+    assert admin.last_totp_step == int(clock.now().timestamp()) // 30
 
 
 @pytest.mark.anyio

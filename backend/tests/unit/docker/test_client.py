@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.fake_docker import FakeDocker
 from wt.docker import client
 from wt.docker.client import (
     ContainerInfo,
@@ -18,7 +19,6 @@ from wt.docker.client import (
     container_info,
     docker_event,
 )
-from wt.docker.fake import FakeDocker
 
 INSPECT = {
     "Id": "abc123",

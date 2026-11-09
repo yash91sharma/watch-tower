@@ -5,6 +5,7 @@ import pytest
 from fastapi import FastAPI
 from sqlmodel import Session, select
 
+from tests.factories import make_info
 from wt.context import AppContext
 from wt.db.models import Container
 from wt.docker.client import ContainerInfo
@@ -15,7 +16,7 @@ LABEL = {"org.opencontainers.image.source": "https://github.com/label/source"}
 
 
 def web(labels: dict[str, str] = LABEL) -> ContainerInfo:
-    return ContainerInfo("id-1", "web", "app:1.0", labels, "running", "none", False)
+    return make_info(image="app:1.0", docker_id="id-1", labels=labels)
 
 
 def saved(ctx: AppContext) -> tuple[str | None, bool]:
@@ -100,15 +101,7 @@ async def test_excluded_container_gives_404(
     ctx: AppContext, user_client: httpx.AsyncClient
 ) -> None:
     await ctx.inventory.update(
-        ContainerInfo(
-            "id-2",
-            "secret",
-            "app:1.0",
-            {"wt.enable": "false"},
-            "running",
-            "none",
-            False,
-        )
+        make_info("secret", "app:1.0", docker_id="id-2", excluded=True)
     )
 
     response = await put(

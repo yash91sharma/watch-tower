@@ -9,6 +9,7 @@ from wt.docker.parse import (
     InvalidImageRefError,
     compose_project,
     container_name,
+    group_label,
     is_excluded,
     parse_image,
     release_source,
@@ -109,3 +110,8 @@ def test_any_text_gives_a_result_or_a_typed_error(text: str) -> None:
         assert isinstance(parse_image(text), ImageRef)
     except InvalidImageRefError:
         pass
+
+
+def test_group_label() -> None:
+    assert group_label("site") == "site"
+    assert group_label(None) == "Other"

@@ -17,13 +17,13 @@ import pytest
 import schemathesis
 from hypothesis import settings
 
+from tests.factories import make_info
+from tests.fake_docker import FakeDocker
 from wt.auth import sessions
 from wt.config import Env
 from wt.context import AppContext
 from wt.db import open_db
-from wt.docker.client import ContainerInfo
 from wt.docker.connection import keep_connected
-from wt.docker.fake import FakeDocker
 from wt.main import create_app
 
 EXAMPLES = int(os.environ.get("WT_SCHEMATHESIS_EXAMPLES", "10"))
@@ -33,9 +33,7 @@ DATA_DIR = Path(tempfile.mkdtemp(prefix="wt-contract-"))
 ENGINE = open_db(DATA_DIR)
 
 _docker = FakeDocker()
-_docker.add(
-    ContainerInfo("id-web", "web", "nginx:1.27", {}, "running", "healthy", False)
-)
+_docker.add(make_info(image="nginx:1.27", health="healthy"))
 
 
 async def fake_docker_worker(ctx: AppContext) -> None:

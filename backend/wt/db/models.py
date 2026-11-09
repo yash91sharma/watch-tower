@@ -4,7 +4,7 @@ Host data links to a `host` row, so that more hosts can come later. The containe
 is (host_id, name): Compose makes a new Docker id on each recreate, but the name stays.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Any
 
@@ -135,8 +135,12 @@ class Update(SQLModel, table=True):
     notified_at: datetime | None = _time(nullable=True)
 
 
+# WT keeps the health events this long (the cleanup worker deletes older ones).
+EVENT_MAX_AGE = timedelta(days=7)
+
+
 class Event(SQLModel, table=True):
-    """A health state change. Kept 7 days."""
+    """A health state change. Kept for EVENT_MAX_AGE."""
 
     id: int | None = Field(default=None, primary_key=True)
     container_id: int = Field(

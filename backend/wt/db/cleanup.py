@@ -1,15 +1,13 @@
 """Cleanup worker: each hour, delete expired sessions and old health events."""
 
 import asyncio
-from datetime import timedelta
 
 from sqlalchemy import Engine
 from sqlmodel import Session, col, delete
 
 from wt import clock
-from wt.db.models import AuthSession, Event
+from wt.db.models import EVENT_MAX_AGE, AuthSession, Event
 
-EVENT_MAX_AGE = timedelta(days=7)
 INTERVAL_SECONDS = 3600
 
 

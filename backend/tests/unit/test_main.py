@@ -8,13 +8,13 @@ import pytest
 from fastapi import FastAPI, Request
 from sqlmodel import Session
 
+from tests.factories import make_info
+from tests.fake_docker import FakeDocker
 from wt import clock, main
 from wt.bus import Topic
 from wt.config import Env
 from wt.context import AppContext, Worker
 from wt.db.models import Host
-from wt.docker.client import ContainerInfo
-from wt.docker.fake import FakeDocker
 from wt.main import create_app
 
 
@@ -121,7 +121,7 @@ async def test_docker_worker_connects_and_fills_the_inventory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     fake = FakeDocker()
-    fake.add(ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False))
+    fake.add(make_info(docker_id="id-1", health="healthy"))
 
     def make_client(docker_host: str | None) -> FakeDocker:
         return fake

@@ -7,9 +7,9 @@ import pytest
 import respx
 from fastapi import FastAPI
 
+from tests.factories import make_info
 from wt.bus import Topic
 from wt.context import AppContext
-from wt.docker.client import ContainerInfo
 
 pytestmark = pytest.mark.anyio
 
@@ -20,7 +20,7 @@ LATEST = "https://api.github.com/repos/o/web/releases/latest"
 async def add_web(ctx: AppContext) -> None:
     labels = {SOURCE: "https://github.com/o/web"}
     await ctx.inventory.update(
-        ContainerInfo("id-1", "web", "app:1.0", labels, "running", "none", False)
+        make_info(image="app:1.0", docker_id="id-1", labels=labels)
     )
 
 
@@ -79,7 +79,7 @@ async def test_start_for_one_app_checks_only_its_containers(
     await add_web(ctx)
     project = {"com.docker.compose.project": "shop"}
     await ctx.inventory.update(
-        ContainerInfo("id-2", "api", "api:1.0", project, "running", "none", False)
+        make_info("api", "api:1.0", docker_id="id-2", labels=project)
     )
 
     with respx.mock:
@@ -115,5 +115,16 @@ async def test_start_for_an_unknown_group_is_404(
     user_client: httpx.AsyncClient,
 ) -> None:
     response = await user_client.post("/api/checks", params={"group": "nope"})
+
+    assert response.status_code == 404
+
+
+async def test_start_for_a_group_of_only_excluded_containers_is_404(
+    app: FastAPI, user_client: httpx.AsyncClient
+) -> None:
+    ctx: AppContext = app.state.ctx
+    await ctx.inventory.update(make_info("secret", project="hidden", excluded=True))
+
+    response = await user_client.post("/api/checks", params={"group": "hidden"})
 
     assert response.status_code == 404

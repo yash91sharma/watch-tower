@@ -9,12 +9,13 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
+from tests.factories import make_info
+from tests.fake_docker import FakeDocker
 from tests.integration.api.asgi_stream import open_stream
 from wt.auth import sessions
 from wt.clock import FakeClock
 from wt.context import AppContext
-from wt.docker.client import ContainerInfo, LogLine, Stream
-from wt.docker.fake import FakeDocker
+from wt.docker.logs import LogLine, Stream
 
 pytestmark = pytest.mark.anyio
 
@@ -28,20 +29,12 @@ def line(second: int, stream: Stream = "stdout") -> LogLine:
 async def fake(app: FastAPI) -> FakeDocker:
     ctx: AppContext = app.state.ctx
     docker = FakeDocker()
-    docker.add(ContainerInfo("id-web", "web", "nginx:1", {}, "running", "none", False))
+    docker.add(make_info())
     docker.log_lines["web"] = [line(0), line(1, "stderr"), line(2), line(3)]
     app.state.ctx = replace(ctx, docker_factory=lambda: docker)
     await ctx.inventory.update(docker.containers["id-web"])
     await ctx.inventory.update(
-        ContainerInfo(
-            "id-x",
-            "secret",
-            "app:1",
-            {"wt.enable": "false"},
-            "running",
-            "none",
-            False,
-        )
+        make_info("secret", "app:1", docker_id="id-x", excluded=True)
     )
     return docker
 

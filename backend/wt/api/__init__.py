@@ -6,7 +6,7 @@ router, which needs a session.
 
 from fastapi import APIRouter, Depends
 
-from wt.api import auth, checks, config_file, containers, health, settings, stream
+from wt.api import auth, checks, config_file, containers, health, logs, settings, stream
 from wt.api.deps import require_session
 from wt.api.errors import ErrorBody
 
@@ -25,6 +25,7 @@ protected.include_router(settings.router)
 protected.include_router(config_file.router)
 protected.include_router(checks.router)
 protected.include_router(containers.router)
+protected.include_router(logs.router)
 protected.include_router(stream.router)
 
 router.include_router(protected)

@@ -6,16 +6,17 @@ from datetime import timedelta
 import pytest
 from sqlalchemy import Engine
 
+from tests.factories import make_info
+from tests.fake_docker import FakeDocker
 from wt.bus import Bus, Subscription, Topic
 from wt.clock import FakeClock
 from wt.docker.client import ContainerInfo, DockerEvent
 from wt.docker.connection import DockerState, keep_connected
-from wt.docker.fake import FakeDocker
 from wt.docker.inventory import Inventory
 
 pytestmark = pytest.mark.anyio
 
-WEB = ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False)
+WEB = make_info(docker_id="id-1", health="healthy")
 
 
 async def next_docker_state(subscription: Subscription) -> bool:

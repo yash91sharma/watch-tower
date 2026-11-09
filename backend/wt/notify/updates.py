@@ -17,7 +17,7 @@ from wt.db import LOCAL_HOST_ID
 from wt.db.models import Container, Update
 from wt.notify.messages import UpdateInfo, digest_message, update_message
 from wt.notify.ntfy import send
-from wt.versions.check import current_update
+from wt.versions.updates import current_update
 
 
 @dataclass(frozen=True)

@@ -7,10 +7,9 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session
 
-from wt.api.containers import OTHER_LABEL
 from wt.api.deps import Ctx
 from wt.context import AppContext
-from wt.db import find_container
+from wt.docker.parse import group_label
 from wt.versions.check import load_check_status
 
 router = APIRouter(prefix="/checks", tags=["checks"])
@@ -53,17 +52,12 @@ def check_status(ctx: Ctx) -> CheckStatusOut:
 
 def _group_names(ctx: AppContext, label: str) -> list[str]:
     """The live, not excluded containers with this group label (as in the list)."""
-    names: list[str] = []
     with Session(ctx.engine) as session:
-        for name in ctx.inventory.names():
-            row = find_container(session, name)
-            if (
-                row is not None
-                and row.enabled
-                and (row.compose_project or OTHER_LABEL) == label
-            ):
-                names.append(name)
-    return names
+        return [
+            row.name
+            for row, _ in ctx.inventory.live_rows(session)
+            if group_label(row.compose_project) == label
+        ]
 
 
 def _status_out(ctx: AppContext, running: bool) -> CheckStatusOut:

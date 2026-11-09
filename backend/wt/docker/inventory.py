@@ -48,6 +48,17 @@ class Inventory:
     def names(self) -> list[str]:
         return sorted(self._live)
 
+    def live_rows(self, session: Session) -> list[tuple[Container, LiveContainer]]:
+        """The DB row and the live state of each container that exists now and is not
+        excluded. Sorted by name.
+        """
+        pairs: list[tuple[Container, LiveContainer]] = []
+        for name, live in sorted(self._live.items()):
+            row = find_container(session, name)
+            if row is not None and row.enabled:
+                pairs.append((row, live))
+        return pairs
+
     async def sync_all(self, docker: DockerApi) -> list[ContainerInfo]:
         """List and inspect all containers. Replace the live state. Give the infos."""
         infos: list[ContainerInfo] = []

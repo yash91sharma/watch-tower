@@ -6,16 +6,17 @@ from datetime import UTC, datetime
 import pytest
 from sqlalchemy import Engine
 
+from tests.factories import make_info
+from tests.fake_docker import FakeDocker
 from wt.bus import Bus, Message, Topic
 from wt.docker.client import ContainerInfo, DockerEvent
 from wt.docker.events import follow_events, handle_event
-from wt.docker.fake import FakeDocker
 from wt.docker.inventory import Inventory
 
 pytestmark = pytest.mark.anyio
 
 T0 = datetime(2026, 1, 1, tzinfo=UTC)
-WEB = ContainerInfo("id-1", "web", "nginx:1", {}, "running", "healthy", False)
+WEB = make_info(docker_id="id-1", health="healthy")
 
 
 def event(

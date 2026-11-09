@@ -2,15 +2,13 @@
 
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
-from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, col, update
 
-from wt.api.deps import Ctx, SessionCookie
+from wt.api.deps import Ctx, SessionCookie, clear_cookie, set_cookie
 from wt.auth import sessions, totp
+from wt.auth.admin import create_admin, load_admin, use_totp_step
 from wt.auth.password import MIN_LENGTH, hash_password, verify_password
 from wt.context import AppContext
 from wt.db import has_admin
-from wt.db.models import ADMIN_ID, Admin
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -88,21 +86,11 @@ def setup_finish(body: SetupFinishIn, ctx: Ctx, response: Response) -> AuthState
         ctx.login_limit.failure()
         raise HTTPException(400, "The TOTP code is not correct")
 
-    admin = Admin(
-        id=ADMIN_ID,
-        password_hash=hash_password(body.password),
-        totp_secret=secret,
-        last_totp_step=step,
-    )
-    try:
-        with Session(ctx.engine) as session:
-            session.add(admin)
-            session.commit()
-    except IntegrityError:
-        raise HTTPException(409, "The admin is already set up") from None
+    if not create_admin(ctx.engine, hash_password(body.password), secret, step):
+        raise HTTPException(409, "The admin is already set up")
     ctx.setup_token.use()
     ctx.login_limit.success()
-    sessions.set_cookie(response, sessions.create_session(ctx.engine))
+    set_cookie(response, sessions.create_session(ctx.engine))
     return AuthState(setup_required=False, logged_in=True)
 
 
@@ -118,34 +106,20 @@ LOGIN_FAILED = "The password or the TOTP code is not correct"
 def login(body: LoginIn, ctx: Ctx, response: Response) -> AuthState:
     """Log in with the password and a TOTP code. All failures give the same message."""
     check_limit(ctx)
-    with Session(ctx.engine) as session:
-        admin = session.get(Admin, ADMIN_ID)
+    admin = load_admin(ctx.engine)
     if admin is None:
         raise HTTPException(409, "Set up the admin first")
 
     # Check both, so that the time does not show which one failed.
     password_ok = verify_password(admin.password_hash, body.password)
     step = totp.verify(admin.totp_secret, body.totp_code, admin.last_totp_step)
-    if not password_ok or step is None or not _use_step(ctx, step):
+    if not password_ok or step is None or not use_totp_step(ctx.engine, step):
         ctx.login_limit.failure()
         raise HTTPException(401, LOGIN_FAILED)
 
     ctx.login_limit.success()
-    sessions.set_cookie(response, sessions.create_session(ctx.engine))
+    set_cookie(response, sessions.create_session(ctx.engine))
     return AuthState(setup_required=False, logged_in=True)
-
-
-def _use_step(ctx: AppContext, step: int) -> bool:
-    """Save the TOTP step. False if a parallel login used this step or a newer one."""
-    statement = (
-        update(Admin)
-        .where(col(Admin.id) == ADMIN_ID, col(Admin.last_totp_step) < step)
-        .values(last_totp_step=step)
-    )
-    with Session(ctx.engine) as session:
-        result = session.exec(statement)
-        session.commit()
-    return result.rowcount == 1
 
 
 @router.post("/logout", status_code=204)
@@ -153,4 +127,4 @@ def logout(ctx: Ctx, response: Response, wt_session: SessionCookie = None) -> No
     """Delete the session and the cookie."""
     if wt_session is not None:
         sessions.delete_session(ctx.engine, wt_session)
-    sessions.clear_cookie(response)
+    clear_cookie(response)

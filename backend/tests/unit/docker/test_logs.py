@@ -1,12 +1,12 @@
-"""Tests for the Docker log decoder in wt.docker.client, and FakeDocker logs."""
+"""Tests for the Docker log decoder in wt.docker.logs, and FakeDocker logs."""
 
 import struct
 from datetime import UTC, datetime
 
 import pytest
 
-from wt.docker.client import LogDecoder, LogLine, parse_log_line
-from wt.docker.fake import FakeDocker
+from tests.fake_docker import FakeDocker
+from wt.docker.logs import LogDecoder, LogLine, parse_log_line
 
 T1 = "2026-01-01T00:00:01.123456789Z"
 TIME1 = datetime(2026, 1, 1, 0, 0, 1, 123456, tzinfo=UTC)
@@ -19,6 +19,12 @@ def frame(stream: int, payload: bytes) -> bytes:
 def test_parse_log_line_with_a_timestamp() -> None:
     assert parse_log_line(f"{T1} hello world", "stdout") == LogLine(
         TIME1, "stdout", "hello world"
+    )
+
+
+def test_parse_log_line_with_whole_seconds() -> None:
+    assert parse_log_line("2026-01-01T00:00:01Z hi", "stdout") == LogLine(
+        datetime(2026, 1, 1, 0, 0, 1, tzinfo=UTC), "stdout", "hi"
     )
 
 

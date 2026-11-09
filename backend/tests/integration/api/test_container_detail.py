@@ -7,10 +7,10 @@ import pytest
 from fastapi import FastAPI
 from sqlmodel import Session, select
 
+from tests.factories import make_info
 from wt.clock import FakeClock
 from wt.context import AppContext
 from wt.db.models import Container, Event, EventKind, RepoCache, Severity, Update
-from wt.docker.client import ContainerInfo
 
 pytestmark = pytest.mark.anyio
 
@@ -18,9 +18,7 @@ SOURCE = "org.opencontainers.image.source"
 
 
 async def add(ctx: AppContext, name: str, image: str, **labels: str) -> int:
-    await ctx.inventory.update(
-        ContainerInfo(f"id-{name}", name, image, labels, "running", "healthy", False)
-    )
+    await ctx.inventory.update(make_info(name, image, labels=labels, health="healthy"))
     with Session(ctx.engine) as session:
         row = session.exec(select(Container).where(Container.name == name)).one()
     assert row.id is not None

@@ -2,37 +2,12 @@
 
 from datetime import timedelta
 
-from fastapi import Response
 from sqlalchemy import Engine, text
 from sqlmodel import Session, select
 
 from wt.auth import sessions
 from wt.clock import FakeClock
 from wt.db.models import AuthSession
-
-
-def test_cookie_flags() -> None:
-    response = Response()
-
-    sessions.set_cookie(response, "tok")
-
-    cookie = response.headers["set-cookie"]
-    assert cookie.startswith("wt_session=tok;")
-    assert "HttpOnly" in cookie
-    assert "Secure" in cookie
-    assert "SameSite=strict" in cookie
-    assert "Path=/" in cookie
-    assert "Max-Age=2592000" in cookie
-
-
-def test_clear_cookie() -> None:
-    response = Response()
-
-    sessions.clear_cookie(response)
-
-    cookie = response.headers["set-cookie"]
-    assert cookie.startswith('wt_session="";')
-    assert "Max-Age=0" in cookie
 
 
 def test_token_is_random_and_32_bytes(db_engine: Engine, clock: FakeClock) -> None:

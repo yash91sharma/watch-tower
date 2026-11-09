@@ -24,7 +24,10 @@ RESPONSE_FORMAT = {
         "schema": {
             "type": "object",
             "properties": {
-                "severity": {"type": "string", "enum": ["critical", "normal"]},
+                "severity": {
+                    "type": "string",
+                    "enum": [item.value for item in Severity],
+                },
                 "summary": {"type": "string"},
             },
             "required": ["severity", "summary"],

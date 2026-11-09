@@ -7,12 +7,13 @@ import pytest
 from sqlalchemy import Engine
 from sqlmodel import Session, col, select
 
+from tests.factories import make_info
 from wt.bus import Bus, Topic
 from wt.clock import FakeClock
 from wt.config import Settings, save_settings
 from wt.db import LOCAL_HOST_ID
 from wt.db.models import Container, Event, EventKind
-from wt.docker.client import ContainerInfo, DockerEvent
+from wt.docker.client import DockerEvent
 from wt.health.monitor import TICK_SECONDS, HealthMonitor, run_health
 
 pytestmark = pytest.mark.anyio
@@ -83,16 +84,8 @@ async def test_on_sync_sets_the_baseline_and_skips_excluded(
 
     monitor.on_sync(
         [
-            ContainerInfo("id-1", "web", "x", {}, "running", "unhealthy", False),
-            ContainerInfo(
-                "id-2",
-                "secret",
-                "x",
-                {"wt.enable": "false"},
-                "running",
-                "unhealthy",
-                False,
-            ),
+            make_info(docker_id="id-1", health="unhealthy"),
+            make_info("secret", docker_id="id-2", excluded=True, health="unhealthy"),
         ]
     )
     await monitor.on_event(

@@ -6,9 +6,10 @@ import pytest
 from sqlalchemy import Engine
 from sqlmodel import Session, select
 
+from tests.factories import make_info
+from tests.fake_docker import FakeDocker
 from wt.db.models import Container
 from wt.docker.client import ContainerInfo, ContainerNotFoundError
-from wt.docker.fake import FakeDocker
 from wt.docker.inventory import Inventory, LiveContainer
 
 pytestmark = pytest.mark.anyio
@@ -17,14 +18,8 @@ SOURCE = "org.opencontainers.image.source"
 
 
 def info(name: str, docker_id: str | None = None, **changes: object) -> ContainerInfo:
-    base = ContainerInfo(
-        id=docker_id or f"id-{name}",
-        name=name,
-        image="nginx:1.27",
-        labels={"com.docker.compose.project": "site"},
-        state="running",
-        health="healthy",
-        tty=False,
+    base = make_info(
+        name, "nginx:1.27", docker_id=docker_id, project="site", health="healthy"
     )
     return replace(base, **changes)  # type: ignore[arg-type]
 
@@ -206,3 +201,30 @@ async def test_sync_all_skips_a_container_removed_after_the_list(
 
     assert [item.name for item in infos] == ["web"]
     assert inventory.names() == ["web"]
+
+
+async def test_live_rows_gives_live_enabled_containers_by_name(
+    db_engine: Engine,
+) -> None:
+    inventory = Inventory(db_engine)
+    for item in [
+        info("web"),
+        info("db"),
+        info("secret", labels={"wt.enable": "false"}),
+    ]:
+        await inventory.update(item)
+    await inventory.update(info("gone"))
+    inventory.remove("gone", "id-gone")
+    await inventory.update(info("no-row"))
+    with Session(db_engine) as session:
+        row = session.exec(select(Container).where(Container.name == "no-row")).one()
+        session.delete(row)
+        session.commit()
+
+    with Session(db_engine) as session:
+        live = inventory.live_rows(session)
+
+    assert [(row.name, item.docker_id) for row, item in live] == [
+        ("db", "id-db"),
+        ("web", "id-web"),
+    ]

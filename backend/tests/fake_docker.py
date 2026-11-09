@@ -9,8 +9,8 @@ from wt.docker.client import (
     ContainerNotFoundError,
     DockerEvent,
     DockerUnavailableError,
-    LogLine,
 )
+from wt.docker.logs import LogLine
 
 
 class FakeDocker:

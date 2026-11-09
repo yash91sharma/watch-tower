@@ -10,19 +10,18 @@ import respx
 from sqlalchemy import Engine
 from sqlmodel import Session
 
+from tests.factories import make_info
 from wt.bus import Bus
 from wt.clock import FakeClock
 from wt.config import Env
 from wt.db import LOCAL_HOST_ID
 from wt.db.models import Container, Setting
-from wt.docker.client import ContainerInfo
 from wt.docker.inventory import Inventory
 from wt.versions.check import CheckRunner, load_check_status
 
 pytestmark = pytest.mark.anyio
 
 API = "http://github.test"
-SOURCE = "org.opencontainers.image.source"
 
 
 def latest(tag: str) -> httpx.Response:
@@ -34,11 +33,7 @@ def latest(tag: str) -> httpx.Response:
 async def add(
     inventory: Inventory, name: str, image: str, source: str | None, **labels: str
 ) -> None:
-    all_labels = {SOURCE: f"https://github.com/{source}"} if source else {}
-    all_labels.update(labels)
-    await inventory.update(
-        ContainerInfo(f"id-{name}", name, image, all_labels, "running", "none", False)
-    )
+    await inventory.update(make_info(name, image, labels=labels, source=source))
 
 
 @pytest.fixture

@@ -8,7 +8,6 @@ import hashlib
 import secrets
 from datetime import timedelta
 
-from fastapi import Response
 from sqlalchemy import Engine
 from sqlmodel import Session
 
@@ -60,22 +59,3 @@ def delete_session(engine: Engine, token: str) -> None:
         if row is not None:
             session.delete(row)
             session.commit()
-
-
-def set_cookie(response: Response, token: str) -> None:
-    """Set the session cookie. Set it again on each use, so that it lives as long as the session."""
-    response.set_cookie(
-        COOKIE,
-        token,
-        max_age=int(MAX_IDLE.total_seconds()),
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        path="/",
-    )
-
-
-def clear_cookie(response: Response) -> None:
-    response.delete_cookie(
-        COOKIE, httponly=True, secure=True, samesite="strict", path="/"
-    )

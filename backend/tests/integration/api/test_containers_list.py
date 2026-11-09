@@ -7,6 +7,7 @@ import pytest
 from fastapi import FastAPI
 from sqlmodel import Session, select
 
+from tests.factories import make_info
 from wt.clock import FakeClock
 from wt.context import AppContext
 from wt.db.models import Container, RepoCache, Severity, Update
@@ -24,12 +25,7 @@ def info(
     health: str = "none",
     **labels: str,
 ) -> ContainerInfo:
-    all_labels = dict(labels)
-    if project:
-        all_labels["com.docker.compose.project"] = project
-    return ContainerInfo(
-        f"id-{name}", name, image, all_labels, "running", health, False
-    )
+    return make_info(name, image, labels=labels, project=project, health=health)
 
 
 @pytest.fixture
@@ -204,3 +200,14 @@ async def test_no_latest_url_without_a_latest_version(
 
     assert items["api"]["latest_url"] is None
     assert items["tool"]["latest_url"] is None
+
+
+async def test_an_unknown_docker_health_shows_as_none(
+    ctx: AppContext, user_client: httpx.AsyncClient
+) -> None:
+    await ctx.inventory.update(info("odd", "busybox:latest", health="weird"))
+
+    groups = await get_groups(user_client)
+
+    items = {item["name"]: item for group in groups for item in group["containers"]}
+    assert items["odd"]["health"] == "none"

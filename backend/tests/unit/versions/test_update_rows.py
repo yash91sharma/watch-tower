@@ -10,28 +10,21 @@ import respx
 from sqlalchemy import Engine
 from sqlmodel import Session, select
 
+from tests.factories import make_info
 from wt.bus import Bus
 from wt.clock import FakeClock
 from wt.config import Env, Settings, save_settings
 from wt.db.models import Container, Severity, Update
-from wt.docker.client import ContainerInfo
 from wt.docker.inventory import Inventory
-from wt.versions.check import CheckRunner, current_update
+from wt.versions.check import CheckRunner
+from wt.versions.updates import current_update
 
 pytestmark = pytest.mark.anyio
 
 API = "http://github.test"
 LLM = "http://llm.test"
 SOURCE = "org.opencontainers.image.source"
-WEB = ContainerInfo(
-    "id-1",
-    "web",
-    "nginx:1.0",
-    {SOURCE: "https://github.com/o/web"},
-    "running",
-    "none",
-    False,
-)
+WEB = make_info(image="nginx:1.0", docker_id="id-1", source="https://github.com/o/web")
 
 
 def release(tag: str) -> dict[str, object]:

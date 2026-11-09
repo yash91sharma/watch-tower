@@ -10,6 +10,8 @@ from urllib.parse import urlsplit
 PROJECT_LABEL = "com.docker.compose.project"
 ENABLE_LABEL = "wt.enable"
 SOURCE_LABEL = "org.opencontainers.image.source"
+# The group of the containers with no Compose project.
+OTHER_GROUP = "Other"
 
 # "owner/repo" on GitHub. Owners have letters, digits and "-". Repos also "." and "_".
 REPO_PATTERN = r"^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$"
@@ -38,6 +40,11 @@ def container_name(raw: str) -> str:
 
 def compose_project(labels: Mapping[str, str]) -> str | None:
     return labels.get(PROJECT_LABEL) or None
+
+
+def group_label(project: str | None) -> str:
+    """The group of a container in the list: its Compose project, or "Other"."""
+    return project or OTHER_GROUP
 
 
 def is_excluded(labels: Mapping[str, str]) -> bool:

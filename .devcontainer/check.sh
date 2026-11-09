@@ -13,11 +13,10 @@ echo "== backend"
   uv run pyright
   # Coverage gate: see [tool.coverage] in pyproject.toml.
   uv run pytest -q --cov --cov-report=term
-  # Rule modules: 100% of lines and branches.
-  for module in health versions notify; do
-    echo "-- 100% gate: wt/$module"
-    uv run coverage report --include="wt/$module/*" --fail-under=100
-  done
+  # All modules: 100% of lines and branches. Not the real Docker client: the Docker
+  # tests (-m docker) test it.
+  echo "-- 100% gate: wt/ (not wt/docker/client.py)"
+  uv run coverage report --omit="wt/docker/client.py" --fail-under=100
 )
 
 echo "== API types"
