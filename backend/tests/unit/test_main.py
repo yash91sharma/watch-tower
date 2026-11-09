@@ -16,6 +16,7 @@ from wt.config import Env
 from wt.context import AppContext, Worker
 from wt.db.models import Host
 from wt.main import create_app
+from wt.versions.check import CheckRunner
 
 
 def make_env(tmp_path: Path) -> Env:
@@ -83,6 +84,30 @@ async def test_lifespan_opens_the_db(tmp_path: Path) -> None:
             assert session.get(Host, 1) is not None
 
     assert (tmp_path / "wt.db").exists()
+
+
+@pytest.mark.anyio
+async def test_lifespan_stops_an_active_check_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A run must not use the DB after the shutdown closes it.
+    started = asyncio.Event()
+
+    async def hang(self: CheckRunner, names: object) -> None:
+        started.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(CheckRunner, "_run", hang)
+    app = create_app(make_env(tmp_path), workers=[])
+    tasks_before = asyncio.all_tasks()
+
+    async with app.router.lifespan_context(app):
+        ctx: AppContext = app.state.ctx
+        ctx.checker.start(None)
+        await asyncio.wait_for(started.wait(), timeout=5)
+
+    assert not ctx.checker.running
+    assert asyncio.all_tasks() == tasks_before
 
 
 def add_client_route(app: FastAPI) -> None:

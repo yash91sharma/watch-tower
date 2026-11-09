@@ -2,7 +2,7 @@
 
 One process runs the API and the workers (Uvicorn with 1 worker), because the workers
 keep state in memory. The lifespan opens the DB, starts the workers at start and stops
-them at shutdown.
+them and the active check runs at shutdown.
 """
 
 import asyncio
@@ -103,6 +103,7 @@ def create_app(
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
+            await ctx.checker.stop()
             engine.dispose()
 
     # No docs and no schema URL: they have no auth, and Swagger UI loads scripts from a CDN.

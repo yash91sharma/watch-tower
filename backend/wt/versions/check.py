@@ -67,6 +67,9 @@ class CheckRunner:
         # Called after each run (the update notifications, 10.4).
         self._after_run = after_run
         self._lock = asyncio.Lock()
+        # The background runs (start). Keep a reference, so that they are not garbage
+        # collected.
+        self._tasks: set[asyncio.Task[bool]] = set()
 
     @property
     def running(self) -> bool:
@@ -87,6 +90,18 @@ class CheckRunner:
             finally:
                 self._bus.publish(Topic.CHECK, {"running": False})
         return True
+
+    def start(self, names: Collection[str] | None = None) -> None:
+        """Start a run in the background ("Check now"). The lifespan stops it (stop)."""
+        task = asyncio.create_task(self.run(names))
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+
+    async def stop(self) -> None:
+        """Cancel the background runs. Call it at shutdown, before the DB closes."""
+        for task in self._tasks:
+            task.cancel()
+        await asyncio.gather(*self._tasks, return_exceptions=True)
 
     async def _run(self, names: Collection[str] | None) -> None:
         live = await asyncio.to_thread(_live_rows, self._engine, self._inventory)

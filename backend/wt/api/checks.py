@@ -14,9 +14,6 @@ from wt.versions.check import load_check_status
 
 router = APIRouter(prefix="/checks", tags=["checks"])
 
-# Keep a reference to each background run, so that it is not garbage collected.
-_runs: set[asyncio.Task[bool]] = set()
-
 
 class CheckStatusOut(BaseModel):
     running: bool
@@ -39,9 +36,7 @@ async def start_check(ctx: Ctx, group: str | None = None) -> CheckStatusOut:
             raise HTTPException(404, f"No group {group!r}")
     if ctx.checker.running:
         raise HTTPException(409, "A check is running")
-    task = asyncio.create_task(ctx.checker.run(names))
-    _runs.add(task)
-    task.add_done_callback(_runs.discard)
+    ctx.checker.start(names)
     return await asyncio.to_thread(_status_out, ctx, True)
 
 
