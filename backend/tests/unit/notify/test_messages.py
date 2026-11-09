@@ -8,6 +8,7 @@ from wt.notify.messages import (
     UpdateInfo,
     digest_message,
     health_message,
+    ntfy_test_message,
     update_message,
 )
 
@@ -86,3 +87,13 @@ def test_title_and_click_are_ascii_and_body_is_short() -> None:
     assert message.click == "https://wt.example.com/containers/w%C3%A9b"
     assert len(message.body) <= 500
     assert message.body.endswith("...")
+
+
+def test_the_test_message() -> None:
+    assert ntfy_test_message(URL) == Message(
+        title="WT test notification",
+        body="ntfy works. WT can send notifications.",
+        tags=("white_check_mark",),
+        click="https://wt.example.com/settings",
+    )
+    assert ntfy_test_message(None).click is None

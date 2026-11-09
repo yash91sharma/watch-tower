@@ -97,6 +97,8 @@ Each secret can also come from a file: set `WT_<NAME>_FILE` (for example, `WT_NT
 
 All other settings (check interval, restart loop rule, ntfy, LLM, WT URL) are on the Settings page.
 
+To test ntfy, click **Send test notification** on the Settings page. WT sends a test message with the values in the form and `WT_NTFY_TOKEN`. It does not save the values. Thus you can test before and after you save.
+
 Container labels:
 
  - `wt.enable=false`: WT does not show or watch this container.

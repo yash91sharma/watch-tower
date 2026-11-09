@@ -439,6 +439,69 @@
         }
       }
     },
+    "/api/settings/ntfy-test": {
+      "post": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Ntfy Test",
+        "description": "Send a test message with the form values (saved or not) and the ntfy token.",
+        "operationId": "ntfy_test_api_settings_ntfy_test_post",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Settings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/config/export": {
       "get": {
         "tags": [

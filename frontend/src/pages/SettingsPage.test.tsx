@@ -87,6 +87,53 @@ test("save shows the backend field errors", async () => {
   expect(screen.queryByText("Saved.")).not.toBeInTheDocument();
 });
 
+test("send test sends the form values (not saved) and says so", async () => {
+  let body: unknown;
+  let saved = false;
+  server.use(
+    http.post("*/api/settings/ntfy-test", async ({ request }) => {
+      body = await request.json();
+      return new HttpResponse(null, { status: 204 });
+    }),
+    http.put("*/api/settings", () => {
+      saved = true;
+      return HttpResponse.json(settingsOut());
+    }),
+  );
+  const user = userEvent.setup();
+  renderRoute("/settings");
+  const topic = await screen.findByLabelText("ntfy topic");
+
+  await user.clear(topic);
+  await user.type(topic, "alerts");
+  await user.click(screen.getByRole("button", { name: "Send test notification" }));
+
+  expect(await screen.findByText("Sent. Look for it in ntfy.")).toBeInTheDocument();
+  expect(body).toMatchObject({ ntfy_url: "https://ntfy.example.com/", ntfy_topic: "alerts" });
+  expect(saved).toBe(false);
+});
+
+test("send test shows the backend error", async () => {
+  server.use(
+    http.post("*/api/settings/ntfy-test", () =>
+      HttpResponse.json(
+        {
+          error: "Bad Gateway",
+          detail: "ntfy did not accept the message. Check the URL, the topic and the token.",
+        },
+        { status: 502 },
+      ),
+    ),
+  );
+  const user = userEvent.setup();
+  renderRoute("/settings");
+
+  await user.click(await screen.findByRole("button", { name: "Send test notification" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("ntfy did not accept the message.");
+  expect(screen.queryByText("Sent. Look for it in ntfy.")).not.toBeInTheDocument();
+});
+
 test("a settings load error shows the API error", async () => {
   server.use(
     http.get("*/api/settings", () =>

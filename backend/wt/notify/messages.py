@@ -74,6 +74,16 @@ def health_message(name: str, kind: EventKind, public_url: str | None) -> Messag
     )
 
 
+def ntfy_test_message(public_url: str | None) -> Message:
+    """The message of the "Send test" button on the Settings page."""
+    return Message(
+        title="WT test notification",
+        body="ntfy works. WT can send notifications.",
+        tags=("white_check_mark",),
+        click=_click(public_url, "/settings"),
+    )
+
+
 def _updates_message(
     updates: list[UpdateInfo], title: str, body: str, click: str | None
 ) -> Message:

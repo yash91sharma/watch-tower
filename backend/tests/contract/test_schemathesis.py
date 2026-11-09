@@ -56,7 +56,8 @@ def close_engine() -> Iterator[None]:
     ENGINE.dispose()
 
 
-@schema.exclude(path="/api/stream").parametrize()
+# ntfy-test sends to the URL in the request: no test may call a random host.
+@schema.exclude(path=["/api/stream", "/api/settings/ntfy-test"]).parametrize()
 @settings(max_examples=EXAMPLES, deadline=None)
 def test_no_server_errors(case: schemathesis.Case[Any]) -> None:
     response = case.call(cookies={sessions.COOKIE: sessions.create_session(ENGINE)})

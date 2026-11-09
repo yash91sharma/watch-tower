@@ -1,4 +1,4 @@
-// Settings: the UI settings form, the secret state (env vars set the secrets), export and import.
+// Settings: the UI settings form, a test ntfy message, the secret state (env vars set the secrets), export and import.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type SubmitEvent } from "react";
 
@@ -63,6 +63,12 @@ function SettingsForm({ values }: { values: Settings }) {
       queryClient.setQueryData(settingsQuery.queryKey, result);
     },
   });
+  // Sends a test message with the form values. It does not save them.
+  const sendTest = useMutation({
+    mutationFn: async () => {
+      unwrap(await api.POST("/api/settings/ntfy-test", { body: form as unknown as Settings }));
+    },
+  });
 
   function onSubmit(event: SubmitEvent) {
     event.preventDefault();
@@ -80,17 +86,34 @@ function SettingsForm({ values }: { values: Settings }) {
           onChange={(event) => {
             setForm({ ...form, [key]: event.target.value });
             save.reset();
+            sendTest.reset();
           }}
         />
       ))}
       <FormError error={save.error} />
-      <div className="flex items-center gap-3">
+      <FormError error={sendTest.error} />
+      <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={save.isPending}>
           Save
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={sendTest.isPending}
+          onClick={() => {
+            sendTest.mutate();
+          }}
+        >
+          Send test notification
         </Button>
         {save.isSuccess && (
           <span role="status" className="text-sm text-muted-foreground">
             Saved.
+          </span>
+        )}
+        {sendTest.isSuccess && (
+          <span role="status" className="text-sm text-muted-foreground">
+            Sent. Look for it in ntfy.
           </span>
         )}
       </div>
