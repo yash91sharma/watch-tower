@@ -6,14 +6,13 @@ import { useId, useState } from "react";
 import { Link } from "react-router";
 
 import { containersQuery } from "@/api/queries";
-import type { components } from "@/api/schema";
+import type { Group } from "@/api/types";
 import { HealthBadge, SeverityBadge, StatusBadge } from "@/components/badges";
 import { CheckNow } from "@/components/CheckNow";
 import { QueryPending } from "@/components/QueryPending";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn, plural } from "@/lib/utils";
 
-type Group = components["schemas"]["GroupOut"];
 
 const collapsedKey = "wt.collapsedGroups";
 
@@ -111,7 +110,7 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
                 </TableCell>
                 <TableCell>{item.state}</TableCell>
                 <TableCell>
-                  <HealthBadge health={item.health} />
+                  <HealthBadge health={item.health} label={item.health_label} />
                 </TableCell>
                 <TableCell>{item.tag ?? "-"}</TableCell>
                 <TableCell>
@@ -130,7 +129,7 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
                   )}
                 </TableCell>
                 <TableCell>
-                  <StatusBadge status={item.status} />
+                  <StatusBadge status={item.status} label={item.status_label} />
                 </TableCell>
                 <TableCell>
                   <SeverityBadge severity={item.severity} />

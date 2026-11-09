@@ -111,3 +111,21 @@ test("every second line has a stripe color", () => {
   expect(screen.getByText("line 1")).toHaveClass("bg-muted/60");
   expect(screen.getByText("line 2")).not.toHaveClass("bg-muted/60");
 });
+
+test("the query is marked in the lines, and the current match line has a color", () => {
+  render(<LogView lines={lines(3)} query="line 1" currentId={1} />);
+
+  const mark = screen.getByText("line 1", { selector: "mark" });
+  expect(mark.parentElement).toHaveClass("bg-accent");
+  expect(screen.getByText("line 0")).not.toHaveClass("bg-accent");
+});
+
+test("pretty shows JSON object lines formatted", () => {
+  const json: LogLine = { id: 0, time: null, stream: "stdout", text: '{"level":"info"}' };
+
+  const { rerender } = render(<LogView lines={[json]} />);
+  expect(screen.getByRole("log")).toHaveTextContent('{"level":"info"}');
+
+  rerender(<LogView lines={[json]} pretty />);
+  expect(screen.getByRole("log").textContent).toContain('{\n  "level": "info"\n}');
+});

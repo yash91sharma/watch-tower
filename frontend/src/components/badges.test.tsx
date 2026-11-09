@@ -8,10 +8,10 @@ test.each([
   ["unhealthy", "unhealthy", "destructive"],
   ["starting", "starting", "warning"],
   ["none", "no healthcheck", "outline"],
-] as const)("health %s shows %s with the %s color", (health, text, variant) => {
-  render(<HealthBadge health={health} />);
+] as const)("health %s shows the label %s with the %s color", (health, label, variant) => {
+  render(<HealthBadge health={health} label={label} />);
 
-  expect(screen.getByText(text)).toHaveAttribute("data-variant", variant);
+  expect(screen.getByText(label)).toHaveAttribute("data-variant", variant);
 });
 
 test.each([
@@ -36,8 +36,20 @@ test.each([
   ["no check", "no check", "outline"],
   ["no source", "no source", "outline"],
   ["not checked", "not checked", "outline"],
-] as const)("status %s shows %s with the %s color", (status, text, variant) => {
-  render(<StatusBadge status={status} />);
+] as const)("status %s shows the label %s with the %s color", (status, label, variant) => {
+  render(<StatusBadge status={status} label={label} />);
 
-  expect(screen.getByText(text)).toHaveAttribute("data-variant", variant);
+  expect(screen.getByText(label)).toHaveAttribute("data-variant", variant);
+});
+
+test("the badges show the label text from the API", () => {
+  render(
+    <>
+      <HealthBadge health="none" label="API health text" />
+      <StatusBadge status="update" label="API status text" />
+    </>,
+  );
+
+  expect(screen.getByText("API health text")).toHaveAttribute("data-variant", "outline");
+  expect(screen.getByText("API status text")).toHaveAttribute("data-variant", "info");
 });

@@ -111,9 +111,11 @@ async def test_fields_per_status(
         "name": "web",
         "state": "running",
         "health": "healthy",
+        "health_label": "healthy",
         "image": "nginx",
         "tag": "1.26",
         "status": "update",
+        "status_label": "update available",
         "latest_version": "1.27",
         "latest_url": "https://github.com/nginx/nginx/releases/tag/1.27",
         "severity": "critical",
@@ -135,6 +137,10 @@ async def test_fields_per_status(
         "unhealthy",
     )
     assert (items["tool"]["status"], items["tool"]["health"]) == ("no check", "none")
+    assert (items["tool"]["status_label"], items["tool"]["health_label"]) == (
+        "no check",
+        "no healthcheck",
+    )
 
 
 async def test_gone_container_is_absent(

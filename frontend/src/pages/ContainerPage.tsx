@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 
 import { containerQuery } from "@/api/queries";
-import type { components } from "@/api/schema";
+import type { ContainerDetail } from "@/api/types";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { HealthBadge } from "@/components/badges";
 import { QueryPending } from "@/components/QueryPending";
@@ -12,16 +12,6 @@ import { Section } from "@/components/Section";
 import { UpdateBlock } from "@/components/UpdateBlock";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/time";
-
-type ContainerDetail = components["schemas"]["ContainerDetail"];
-type EventKind = components["schemas"]["EventKind"];
-
-const eventText: Record<EventKind, string> = {
-  became_unhealthy: "Unhealthy",
-  recovered_health: "Healthy again",
-  restart_loop: "Restart loop",
-  recovered_loop: "Restart loop stopped",
-};
 
 export function ContainerPage() {
   const { name = "" } = useParams();
@@ -49,7 +39,7 @@ function Details({ container }: { container: ContainerDetail }) {
         <dd>{container.state}</dd>
         <dt className="text-muted-foreground">Health</dt>
         <dd>
-          <HealthBadge health={container.health} />
+          <HealthBadge health={container.health} label={container.health_label} />
         </dd>
         <dt className="text-muted-foreground">Image</dt>
         <dd className="break-all">{container.image ?? "-"}</dd>
@@ -65,7 +55,7 @@ function Details({ container }: { container: ContainerDetail }) {
           <ul className="space-y-1 text-sm">
             {container.events.map((event) => (
               <li key={`${event.time}-${event.kind}`}>
-                {formatTime(event.time)}: {eventText[event.kind]}
+                {formatTime(event.time)}: {event.label}
               </li>
             ))}
           </ul>

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type ChangeEvent } from "react";
 
 import { api, ApiError, unwrap } from "@/api/client";
-import { settingsQuery } from "@/api/queries";
+import { containersQuery, settingsQuery } from "@/api/queries";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Section } from "@/components/Section";
@@ -27,7 +27,7 @@ export function ConfigFile() {
       done();
       // The settings form shows the new values after a new load.
       await queryClient.resetQueries({ queryKey: settingsQuery.queryKey });
-      await queryClient.invalidateQueries({ queryKey: ["containers"] });
+      await queryClient.invalidateQueries({ queryKey: containersQuery.queryKey });
     },
   });
 

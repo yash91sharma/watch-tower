@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from sqlmodel import Session, select
 
 from tests.factories import make_info
+from wt.api.containers import EVENT_LABELS
 from wt.clock import FakeClock
 from wt.context import AppContext
 from wt.db.models import Container, Event, EventKind, RepoCache, Severity, Update
@@ -78,9 +79,9 @@ async def test_container_with_an_update(
         "summary": "The update adds HTTP/3.",
         "release_notes": "## 1.27\n\nHTTP/3",
     }
-    assert [event["kind"] for event in body["events"]] == [
-        "recovered_health",
-        "became_unhealthy",
+    assert [(event["kind"], event["label"]) for event in body["events"]] == [
+        ("recovered_health", "Healthy again"),
+        ("became_unhealthy", "Unhealthy"),
     ]
     assert body["events"][0]["time"] == (
         clock.now() - timedelta(days=1)
@@ -108,3 +109,7 @@ async def test_gone_container_gives_404(
     ctx.inventory.remove("db", "id-db")
 
     assert (await user_client.get("/api/containers/db")).status_code == 404
+
+
+def test_each_event_kind_has_a_label() -> None:
+    assert set(EVENT_LABELS) == set(EventKind)

@@ -4,16 +4,13 @@ import { useState, type SubmitEvent } from "react";
 
 import { api, unwrap } from "@/api/client";
 import { settingsQuery } from "@/api/queries";
-import type { components } from "@/api/schema";
+import type { SecretState, Settings } from "@/api/types";
 import { ConfigFile } from "@/components/ConfigFile";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { QueryPending } from "@/components/QueryPending";
 import { Section } from "@/components/Section";
 import { Button } from "@/components/ui/button";
-
-type Settings = components["schemas"]["Settings"];
-type SecretState = components["schemas"]["SecretState"];
 
 const FIELDS: { key: keyof Settings; label: string; numeric?: boolean }[] = [
   { key: "check_interval_hours", label: "Check interval (hours)", numeric: true },

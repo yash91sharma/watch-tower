@@ -1,8 +1,5 @@
 // Test data in the API shapes.
-import type { components } from "@/api/schema";
-
-type ContainerOut = components["schemas"]["ContainerOut"];
-type ContainerDetail = components["schemas"]["ContainerDetail"];
+import type { ContainerDetail, ContainerOut, SettingsOut } from "@/api/types";
 
 /** A running, healthy container with no update. */
 export function container(fields: Partial<ContainerOut> = {}): ContainerOut {
@@ -10,9 +7,11 @@ export function container(fields: Partial<ContainerOut> = {}): ContainerOut {
     name: "web",
     state: "running",
     health: "healthy",
+    health_label: "healthy",
     image: "nginx",
     tag: "1.27.0",
     status: "up to date",
+    status_label: "up to date",
     latest_version: "1.27.0",
     latest_url: "https://github.com/nginx/nginx/releases/tag/1.27.0",
     severity: null,
@@ -26,8 +25,6 @@ export function container(fields: Partial<ContainerOut> = {}): ContainerOut {
 export function containerDetail(fields: Partial<ContainerDetail> = {}): ContainerDetail {
   return { ...container(), update: null, events: [], ...fields };
 }
-
-type SettingsOut = components["schemas"]["SettingsOut"];
 
 /** The settings: defaults, ntfy set up, only the ntfy token set. */
 export function settingsOut(): SettingsOut {

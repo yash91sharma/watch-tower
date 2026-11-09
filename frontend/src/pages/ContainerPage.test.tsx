@@ -2,18 +2,18 @@ import { screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
-import type { components } from "@/api/schema";
+import type { ContainerDetail } from "@/api/types";
 import { formatTime } from "@/lib/time";
 import { containerDetail } from "@/test/fixtures";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 
-function answer(detail: components["schemas"]["ContainerDetail"]) {
+function answer(detail: ContainerDetail) {
   server.use(http.get("*/api/containers/:name", () => HttpResponse.json(detail)));
 }
 
 test("the page shows the state, the health and the link to the logs", async () => {
-  answer(containerDetail({ name: "web", state: "restarting", health: "unhealthy" }));
+  answer(containerDetail({ name: "web", state: "restarting", health: "unhealthy", health_label: "unhealthy" }));
   renderRoute("/containers/web");
 
   expect(await screen.findByRole("heading", { level: 1, name: "web" })).toBeInTheDocument();
@@ -28,8 +28,8 @@ test("the page shows the events of the last 7 days, newest first", async () => {
   answer(
     containerDetail({
       events: [
-        { kind: "recovered_health", time: recovered },
-        { kind: "became_unhealthy", time: unhealthy },
+        { kind: "recovered_health", label: "Healthy again", time: recovered },
+        { kind: "became_unhealthy", label: "Unhealthy", time: unhealthy },
       ],
     }),
   );

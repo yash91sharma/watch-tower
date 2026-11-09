@@ -2,12 +2,12 @@ import { screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
-import type { components } from "@/api/schema";
+import type { ContainerDetail } from "@/api/types";
 import { containerDetail } from "@/test/fixtures";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 
-function answer(detail: components["schemas"]["ContainerDetail"]) {
+function answer(detail: ContainerDetail) {
   server.use(http.get("*/api/containers/:name", () => HttpResponse.json(detail)));
 }
 

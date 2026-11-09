@@ -1338,6 +1338,10 @@
             ],
             "title": "Health"
           },
+          "health_label": {
+            "type": "string",
+            "title": "Health Label"
+          },
           "image": {
             "anyOf": [
               {
@@ -1362,6 +1366,10 @@
           },
           "status": {
             "$ref": "#/components/schemas/Status"
+          },
+          "status_label": {
+            "type": "string",
+            "title": "Status Label"
           },
           "latest_version": {
             "anyOf": [
@@ -1433,9 +1441,11 @@
           "name",
           "state",
           "health",
+          "health_label",
           "image",
           "tag",
           "status",
+          "status_label",
           "latest_version",
           "latest_url",
           "severity",
@@ -1466,6 +1476,10 @@
             ],
             "title": "Health"
           },
+          "health_label": {
+            "type": "string",
+            "title": "Health Label"
+          },
           "image": {
             "anyOf": [
               {
@@ -1490,6 +1504,10 @@
           },
           "status": {
             "$ref": "#/components/schemas/Status"
+          },
+          "status_label": {
+            "type": "string",
+            "title": "Status Label"
           },
           "latest_version": {
             "anyOf": [
@@ -1544,9 +1562,11 @@
           "name",
           "state",
           "health",
+          "health_label",
           "image",
           "tag",
           "status",
+          "status_label",
           "latest_version",
           "latest_url",
           "severity",
@@ -1599,6 +1619,10 @@
           "kind": {
             "$ref": "#/components/schemas/EventKind"
           },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
           "time": {
             "type": "string",
             "format": "date-time",
@@ -1608,6 +1632,7 @@
         "type": "object",
         "required": [
           "kind",
+          "label",
           "time"
         ],
         "title": "EventOut"

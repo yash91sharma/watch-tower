@@ -1,9 +1,9 @@
 // Live updates from GET /api/stream. The events only name what changed, so the hook
 // refetches the matching queries. It also gives the WT and Docker connection state.
-import { useQueryClient } from "@tanstack/react-query";
+import { type QueryKey, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import { authStateQuery } from "@/api/queries";
+import { authStateQuery, checkStatusQuery, containersQuery } from "@/api/queries";
 
 const RETRY_MS = 3000;
 
@@ -16,7 +16,7 @@ export function useEventStream(): { wt: boolean; docker: boolean } {
     let source: EventSource;
     let retry: ReturnType<typeof setTimeout> | undefined;
     let lost = false;
-    const refetch = (key: string) => void queryClient.invalidateQueries({ queryKey: [key] });
+    const refetch = (queryKey: QueryKey) => void queryClient.invalidateQueries({ queryKey });
 
     function connect() {
       source = new EventSource("/api/stream");
@@ -38,16 +38,16 @@ export function useEventStream(): { wt: boolean; docker: boolean } {
         retry = setTimeout(connect, RETRY_MS);
       });
       source.addEventListener("container", () => {
-        refetch("containers");
+        refetch(containersQuery.queryKey);
       });
       source.addEventListener("check", () => {
-        refetch("checks");
-        refetch("containers");
+        refetch(checkStatusQuery.queryKey);
+        refetch(containersQuery.queryKey);
       });
       source.addEventListener("docker", (event: MessageEvent<string>) => {
         const { connected } = JSON.parse(event.data) as { connected: boolean };
         setDocker(connected);
-        if (connected) refetch("containers");
+        if (connected) refetch(containersQuery.queryKey);
       });
     }
 

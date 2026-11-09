@@ -13,7 +13,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** The hook with 3 queries that count their fetches. */
+/** The hook with 3 queries (the app keys) that count their fetches. */
 async function renderStream() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const fetches = { containers: 0, checks: 0, settings: 0 };
@@ -23,7 +23,7 @@ async function renderStream() {
   const hook = renderHook(
     () => {
       useQuery({ queryKey: ["containers"], queryFn: () => ++fetches.containers });
-      useQuery({ queryKey: ["checks"], queryFn: () => ++fetches.checks });
+      useQuery({ queryKey: ["checks", "status"], queryFn: () => ++fetches.checks });
       useQuery({ queryKey: ["settings"], queryFn: () => ++fetches.settings });
       return useEventStream();
     },

@@ -1,11 +1,8 @@
 // The current update of a container. Summary and release notes show as plain text only
 // (React escapes them; never use them as HTML).
-import type { components } from "@/api/schema";
+import type { Status, Update } from "@/api/types";
 import { SeverityBadge } from "@/components/badges";
 import { Section } from "@/components/Section";
-
-type Update = components["schemas"]["UpdateOut"];
-type Status = components["schemas"]["Status"];
 
 export function UpdateBlock({ update, status }: { update: Update | null; status: Status }) {
   return (

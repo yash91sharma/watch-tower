@@ -419,11 +419,15 @@ export interface components {
              * @enum {string}
              */
             health: "healthy" | "unhealthy" | "starting" | "none";
+            /** Health Label */
+            health_label: string;
             /** Image */
             image: string | null;
             /** Tag */
             tag: string | null;
             status: components["schemas"]["Status"];
+            /** Status Label */
+            status_label: string;
             /** Latest Version */
             latest_version: string | null;
             /** Latest Url */
@@ -448,11 +452,15 @@ export interface components {
              * @enum {string}
              */
             health: "healthy" | "unhealthy" | "starting" | "none";
+            /** Health Label */
+            health_label: string;
             /** Image */
             image: string | null;
             /** Tag */
             tag: string | null;
             status: components["schemas"]["Status"];
+            /** Status Label */
+            status_label: string;
             /** Latest Version */
             latest_version: string | null;
             /** Latest Url */
@@ -479,6 +487,8 @@ export interface components {
         /** EventOut */
         EventOut: {
             kind: components["schemas"]["EventKind"];
+            /** Label */
+            label: string;
             /**
              * Time
              * Format: date-time

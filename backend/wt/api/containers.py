@@ -63,9 +63,13 @@ class ContainerOut(BaseModel):
     # Docker state: created, running, paused, restarting, removing, exited or dead.
     state: str
     health: Health
+    # The health text for the UI.
+    health_label: str
     image: str | None
     tag: str | None
     status: Status
+    # The status text for the UI.
+    status_label: str
     latest_version: str | None
     # The GitHub release page of the latest version. None with no latest version.
     latest_url: str | None
@@ -109,9 +113,11 @@ def container_out(
         name=row.name,
         state=live.state,
         health=cast(Health, health),
+        health_label="no healthcheck" if health == "none" else health,
         image=row.image,
         tag=row.tag,
         status=status,
+        status_label="update available" if status is Status.UPDATE else status.value,
         latest_version=latest,
         latest_url=(
             f"https://github.com/{row.release_source}/releases/tag/{quote(latest)}"
@@ -159,8 +165,18 @@ class UpdateOut(BaseModel):
     release_notes: str
 
 
+# The event text for the UI.
+EVENT_LABELS = {
+    EventKind.BECAME_UNHEALTHY: "Unhealthy",
+    EventKind.RECOVERED_HEALTH: "Healthy again",
+    EventKind.RESTART_LOOP: "Restart loop",
+    EventKind.RECOVERED_LOOP: "Restart loop stopped",
+}
+
+
 class EventOut(BaseModel):
     kind: EventKind
+    label: str
     time: datetime
 
 
@@ -187,5 +203,10 @@ def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
             update=UpdateOut.model_validate(update, from_attributes=True)
             if update
             else None,
-            events=[EventOut(kind=event.kind, time=event.time) for event in events],
+            events=[
+                EventOut(
+                    kind=event.kind, label=EVENT_LABELS[event.kind], time=event.time
+                )
+                for event in events
+            ],
         )

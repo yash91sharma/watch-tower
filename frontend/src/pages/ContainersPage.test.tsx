@@ -3,12 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { delay, http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
-import type { components } from "@/api/schema";
+import type { Group } from "@/api/types";
 import { container } from "@/test/fixtures";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 
-function answer(groups: components["schemas"]["GroupOut"][]) {
+function answer(groups: Group[]) {
   server.use(http.get("*/api/containers", () => HttpResponse.json(groups)));
 }
 
@@ -75,9 +75,11 @@ test("a row shows the container fields", async () => {
           name: "app",
           state: "running",
           health: "unhealthy",
+          health_label: "unhealthy",
           tag: "2.1.0",
           latest_version: "2.3.0",
           status: "update",
+          status_label: "update available",
           severity: "critical",
         }),
       ],
@@ -92,13 +94,23 @@ test("a row shows the container fields", async () => {
   expect(within(row).getByText("update available")).toHaveAttribute("data-variant", "info");
 });
 
-test("health none shows no healthcheck, and empty values show a dash", async () => {
+test("the row shows the labels from the API, and empty values show a dash", async () => {
   answer([
     {
       project: null,
       label: "Other",
       update: "none",
-      containers: [container({ name: "db", health: "none", tag: null, latest_version: null, latest_url: null, status: "no check" })],
+      containers: [container({
+          name: "db",
+          health: "none",
+          health_label: "no healthcheck",
+          tag: null,
+          latest_version: null,
+          latest_url: null,
+          status: "no check",
+          status_label: "no check",
+        }),
+      ],
     },
   ]);
   renderRoute("/");

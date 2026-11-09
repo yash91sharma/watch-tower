@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type SubmitEvent } from "react";
 
 import { api, unwrap } from "@/api/client";
+import { containersQuery } from "@/api/queries";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Section } from "@/components/Section";
@@ -21,7 +22,7 @@ export function ReleaseSource({ name, source, confirmed }: { name: string; sourc
     onSuccess: async () => {
       setEditing(false);
       // The status and the latest version can change too.
-      await queryClient.invalidateQueries({ queryKey: ["containers"] });
+      await queryClient.invalidateQueries({ queryKey: containersQuery.queryKey });
     },
   });
 
