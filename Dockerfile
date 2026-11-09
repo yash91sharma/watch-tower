@@ -31,9 +31,14 @@ ARG REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/yash91sharma/watch-tower" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
+# Install the Debian security fixes that the base image does not have yet (for example,
+# zlib1g CVE-2026-76844 and CVE-2026-85091).
 # WT does not need pip or the ensurepip wheel at run time. Their vendored packages
 # (urllib3, msgpack) had CVEs.
-RUN python -m pip uninstall --yes --quiet pip \
+RUN apt-get update \
+    && apt-get upgrade --yes --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && python -m pip uninstall --yes --quiet pip \
     && rm -rf /usr/local/lib/python3.15/ensurepip \
     && useradd --system --user-group --uid 10001 --no-create-home --home-dir /nonexistent wt \
     && install -d -o wt -g wt -m 700 /data
