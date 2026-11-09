@@ -44,6 +44,10 @@
         "vitest.explorer"
       ],
       "settings": {
+        // Do not add the VS Code Docker credential helper. It works only while VS Code is
+        // connected, so Docker builds from `docker exec` (tests, Claude) failed. WT tests
+        // pull only public images.
+        "dev.containers.dockerCredentialHelper": false,
         "python.defaultInterpreterPath": "/workspace/backend/.venv/bin/python",
         "python.testing.pytestEnabled": true,
         "python.testing.cwd": "/workspace/backend"
