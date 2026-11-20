@@ -83,7 +83,7 @@ Size: about 2,900 rows per container (about 30 MB for 100 containers).
 |---|---|---|
 | `GET /overview` | VM current values with labels, counts, groups in the order of `/api/containers` with sums and container current values, the ranges list | `metrics` current |
 | `GET /sparklines` | Last 60 min of 1m CPU and memory for each group and container. Null for a gap. | `metrics` history |
-| `GET /vm/history?range=` | Times, and a series list (key, label, unit, values) | `metrics` history |
+| `GET /vm/history?range=` | Slot times, and a chart list (key, title, unit, y max, series with key, label and values) | `metrics` history |
 | `GET /containers/{name}/history?range=` | Same as the VM. 404 if the container is not in Docker now. | `metrics` history |
 
 The backend gives the labels of the current values (for example `9% (1.0 core)`, `3.1 / 8.0 GiB`). The frontend formats only the chart axis ticks, from the `unit` of the series.

@@ -35,7 +35,7 @@ Rules:
   - **Test:** the apps count with projects and with containers that have no project. An excluded container is not counted. The group sums. Before the first poll, all values are null.
 - [x] **2.3** `GET /api/metrics/sparklines`: the last 60 min of `1m` CPU and memory for each group (sum) and each container, on 60 fixed minute slots. Null for a gap.
   - **Test:** a gap gives null. A group value is the sum of its containers in that slot.
-- [ ] **2.4** `GET /api/metrics/vm/history?range=` and `GET /api/metrics/containers/{name}/history?range=`. Range to tier: 1h, 6h, 24h use `1m`; 7d uses `15m`; 30d uses `1h`. The response has the times and a series list (key, label, unit, values), and the cores and memory total or limit.
+- [x] **2.4** `GET /api/metrics/vm/history?range=` and `GET /api/metrics/containers/{name}/history?range=`. Range to tier: 1h, 6h, 24h use `1m`; 7d uses `15m`; 30d uses `1h`. The response has the slot times and a chart list. Each chart has a key, a title, a unit, a y max (100 for a percent, the memory total or limit) and its series (key, label, values).
   - **Test:** each range reads its tier and time window. Bad range: 422. Unknown container: 404. The container history stays after a recreate (same name).
 - [ ] **2.5** SSE: add `Topic.METRICS` to the `/api/stream` topics. Run `pnpm gen:api`.
   - **Test:** a client gets `event: metrics` with `kind`. The OpenAPI and Schemathesis contract tests pass.

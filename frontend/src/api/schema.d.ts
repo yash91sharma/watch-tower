@@ -390,6 +390,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/metrics/vm/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Vm History
+         * @description The VM charts of a range: CPU, memory, disk I/O, network and load.
+         */
+        get: operations["get_vm_history_api_metrics_vm_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/metrics/containers/{name}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Container History
+         * @description The container charts of a range: CPU, memory, network and disk I/O. 404 if the
+         *     container is not in Docker now. The history stays after a recreate (same name).
+         */
+        get: operations["get_container_history_api_metrics_containers__name__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stream": {
         parameters: {
             query?: never;
@@ -417,6 +458,22 @@ export interface components {
             setup_required: boolean;
             /** Logged In */
             logged_in: boolean;
+        };
+        /** ChartOut */
+        ChartOut: {
+            /** Key */
+            key: string;
+            /** Title */
+            title: string;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "percent" | "bytes" | "bytes_per_second" | "load";
+            /** Max */
+            max: number | null;
+            /** Series */
+            series: components["schemas"]["SeriesOut"][];
         };
         /** CheckStatusOut */
         CheckStatusOut: {
@@ -624,6 +681,20 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** HistoryOut */
+        HistoryOut: {
+            /**
+             * Range
+             * @enum {string}
+             */
+            range: "1h" | "6h" | "24h" | "7d" | "30d";
+            /** Step Seconds */
+            step_seconds: number;
+            /** Times */
+            times: number[];
+            /** Charts */
+            charts: components["schemas"]["ChartOut"][];
+        };
         /** ImportResult */
         ImportResult: {
             /** Dry Run */
@@ -703,6 +774,15 @@ export interface components {
              * @enum {string}
              */
             llm_api_key: "set" | "not set";
+        };
+        /** SeriesOut */
+        SeriesOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Values */
+            values: (number | null)[];
         };
         /**
          * Settings
@@ -1670,6 +1750,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SparklinesOut"];
+                };
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_vm_history_api_metrics_vm_history_get: {
+        parameters: {
+            query: {
+                range: "1h" | "6h" | "24h" | "7d" | "30d";
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                wt_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryOut"];
+                };
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_container_history_api_metrics_containers__name__history_get: {
+        parameters: {
+            query: {
+                range: "1h" | "6h" | "24h" | "7d" | "30d";
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: {
+                wt_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryOut"];
                 };
             };
             /** @description Validation error */

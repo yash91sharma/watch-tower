@@ -5,17 +5,20 @@ memory). The UI fetches them again on each `metrics {kind: current}` message, an
 history (sparklines, charts) on each `metrics {kind: history}` message.
 """
 
+from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
+from typing import Annotated, Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from pydantic import BaseModel
 from sqlmodel import Session, col, select
 
 from wt import clock
 from wt.api.containers import compose_groups
-from wt.api.deps import Ctx
+from wt.api.deps import Ctx, get_live
 from wt.config import load_settings
-from wt.db.models import ContainerSample, MetricTier
+from wt.db import LOCAL_HOST_ID
+from wt.db.models import ContainerSample, MetricTier, VmSample
 from wt.docker.parse import group_label
 from wt.metrics.calc import ContainerValues, cores_used
 from wt.metrics.labels import (
@@ -309,4 +312,228 @@ def get_sparklines(ctx: Ctx) -> SparklinesOut:
             for project, pairs in groups
         },
         containers=lines,
+    )
+
+
+RangeKey = Literal["1h", "6h", "24h", "7d", "30d"]
+# Each range: its length and the tier that it reads (see the tiers in METRIC_MAX_AGE).
+RANGE_TIERS: dict[RangeKey, tuple[timedelta, MetricTier]] = {
+    "1h": (timedelta(hours=1), MetricTier.MINUTE),
+    "6h": (timedelta(hours=6), MetricTier.MINUTE),
+    "24h": (timedelta(hours=24), MetricTier.MINUTE),
+    "7d": (timedelta(days=7), MetricTier.QUARTER),
+    "30d": (timedelta(days=30), MetricTier.HOUR),
+}
+# The query `?range=`. The name in Python is range_key, because `range` is a built-in.
+RangeQuery = Annotated[RangeKey, Query(alias="range")]
+TIER_STEPS = {
+    MetricTier.MINUTE: timedelta(minutes=1),
+    MetricTier.QUARTER: timedelta(minutes=15),
+    MetricTier.HOUR: timedelta(hours=1),
+}
+# The UI formats the axis ticks from the unit.
+Unit = Literal["percent", "bytes", "bytes_per_second", "load"]
+
+
+class SeriesOut(BaseModel):
+    key: str
+    label: str
+    # One value per time slot. Null: no value in the slot.
+    values: list[float | None]
+
+
+class ChartOut(BaseModel):
+    key: str
+    title: str
+    unit: Unit
+    # The top of the y axis (100 for a percent, the memory total or limit). Null: auto.
+    max: float | None
+    series: list[SeriesOut]
+
+
+class HistoryOut(BaseModel):
+    range: RangeKey
+    step_seconds: int
+    # The start of each slot (Unix seconds), oldest first.
+    times: list[int]
+    charts: list[ChartOut]
+
+
+class _Slots:
+    """The time slots of a range. The current step is not in it (it is not saved yet)."""
+
+    def __init__(self, range_key: RangeKey) -> None:
+        length, self.tier = RANGE_TIERS[range_key]
+        self.step = TIER_STEPS[self.tier]
+        now = clock.now()
+        # The start of the current step: the minute, the quarter or the hour. Each step
+        # divides a day, so the rest of the time since year 1 gives it.
+        end = now - (now - datetime.min.replace(tzinfo=now.tzinfo)) % self.step
+        self.start = end - length
+        self.end = end
+        self.count = int(length / self.step)
+
+    def times(self) -> list[int]:
+        return [
+            int((self.start + i * self.step).timestamp()) for i in range(self.count)
+        ]
+
+    def index(self, time: datetime) -> int:
+        return int((time - self.start) / self.step)
+
+
+def _series[T: (VmSample, ContainerSample)](
+    slots: _Slots,
+    rows: Sequence[T],
+    key: str,
+    label: str,
+    value: Callable[[T], float | None],
+) -> SeriesOut:
+    values: list[float | None] = [None] * slots.count
+    for row in rows:
+        values[slots.index(row.time)] = value(row)
+    return SeriesOut(key=key, label=label, values=values)
+
+
+@router.get("/vm/history")
+def get_vm_history(range_key: RangeQuery, ctx: Ctx) -> HistoryOut:
+    """The VM charts of a range: CPU, memory, disk I/O, network and load."""
+    slots = _Slots(range_key)
+    with Session(ctx.engine) as session:
+        rows = session.exec(
+            select(VmSample)
+            .where(
+                VmSample.host_id == LOCAL_HOST_ID,
+                VmSample.tier == slots.tier,
+                col(VmSample.time) >= slots.start,
+                col(VmSample.time) < slots.end,
+            )
+            .order_by(col(VmSample.time))
+        ).all()
+
+    def series(
+        key: str, label: str, value: Callable[[VmSample], float | None]
+    ) -> SeriesOut:
+        return _series(slots, rows, key, label, value)
+
+    charts = [
+        ChartOut(
+            key="cpu",
+            title="CPU",
+            unit="percent",
+            max=100,
+            series=[series("cpu", "CPU", lambda r: r.cpu_percent)],
+        ),
+        ChartOut(
+            key="memory",
+            title="Memory",
+            unit="bytes",
+            max=rows[-1].mem_total if rows else None,
+            series=[series("used", "Used", lambda r: r.mem_used)],
+        ),
+        ChartOut(
+            key="disk_io",
+            title="Disk I/O",
+            unit="bytes_per_second",
+            max=None,
+            series=[
+                series("read", "Read", lambda r: r.disk_read_bps),
+                series("write", "Write", lambda r: r.disk_write_bps),
+            ],
+        ),
+        ChartOut(
+            key="network",
+            title="Network",
+            unit="bytes_per_second",
+            max=None,
+            series=[
+                series("rx", "In", lambda r: r.net_rx_bps),
+                series("tx", "Out", lambda r: r.net_tx_bps),
+            ],
+        ),
+        ChartOut(
+            key="load",
+            title="Load",
+            unit="load",
+            max=None,
+            series=[
+                series("load_1", "1 min", lambda r: r.load_1),
+                series("load_5", "5 min", lambda r: r.load_5),
+                series("load_15", "15 min", lambda r: r.load_15),
+            ],
+        ),
+    ]
+    return HistoryOut(
+        range=range_key,
+        step_seconds=int(slots.step.total_seconds()),
+        times=slots.times(),
+        charts=charts,
+    )
+
+
+@router.get("/containers/{name}/history")
+def get_container_history(name: str, range_key: RangeQuery, ctx: Ctx) -> HistoryOut:
+    """The container charts of a range: CPU, memory, network and disk I/O. 404 if the
+    container is not in Docker now. The history stays after a recreate (same name).
+    """
+    slots = _Slots(range_key)
+    with Session(ctx.engine) as session:
+        row, _ = get_live(session, ctx.inventory, name)
+        rows = session.exec(
+            select(ContainerSample)
+            .where(
+                ContainerSample.container_id == row.id,
+                ContainerSample.tier == slots.tier,
+                col(ContainerSample.time) >= slots.start,
+                col(ContainerSample.time) < slots.end,
+            )
+            .order_by(col(ContainerSample.time))
+        ).all()
+
+    def series(
+        key: str, label: str, value: Callable[[ContainerSample], float | None]
+    ) -> SeriesOut:
+        return _series(slots, rows, key, label, value)
+
+    charts = [
+        ChartOut(
+            key="cpu",
+            title="CPU",
+            unit="percent",
+            max=100,
+            series=[series("cpu", "CPU", lambda r: r.cpu_percent)],
+        ),
+        ChartOut(
+            key="memory",
+            title="Memory",
+            unit="bytes",
+            max=rows[-1].mem_limit if rows else None,
+            series=[series("used", "Used", lambda r: r.mem_used)],
+        ),
+        ChartOut(
+            key="network",
+            title="Network",
+            unit="bytes_per_second",
+            max=None,
+            series=[
+                series("rx", "In", lambda r: r.net_rx_bps),
+                series("tx", "Out", lambda r: r.net_tx_bps),
+            ],
+        ),
+        ChartOut(
+            key="disk_io",
+            title="Disk I/O",
+            unit="bytes_per_second",
+            max=None,
+            series=[
+                series("read", "Read", lambda r: r.disk_read_bps),
+                series("write", "Write", lambda r: r.disk_write_bps),
+            ],
+        ),
+    ]
+    return HistoryOut(
+        range=range_key,
+        step_seconds=int(slots.step.total_seconds()),
+        times=slots.times(),
+        charts=charts,
     )

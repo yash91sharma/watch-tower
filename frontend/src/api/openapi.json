@@ -1272,6 +1272,167 @@
         }
       }
     },
+    "/api/metrics/vm/history": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Get Vm History",
+        "description": "The VM charts of a range: CPU, memory, disk I/O, network and load.",
+        "operationId": "get_vm_history_api_metrics_vm_history_get",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "1h",
+                "6h",
+                "24h",
+                "7d",
+                "30d"
+              ],
+              "type": "string",
+              "title": "Range"
+            }
+          },
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics/containers/{name}/history": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Get Container History",
+        "description": "The container charts of a range: CPU, memory, network and disk I/O. 404 if the\ncontainer is not in Docker now. The history stays after a recreate (same name).",
+        "operationId": "get_container_history_api_metrics_containers__name__history_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "1h",
+                "6h",
+                "24h",
+                "7d",
+                "30d"
+              ],
+              "type": "string",
+              "title": "Range"
+            }
+          },
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/stream": {
       "get": {
         "tags": [
@@ -1344,6 +1505,55 @@
           "logged_in"
         ],
         "title": "AuthState"
+      },
+      "ChartOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "percent",
+              "bytes",
+              "bytes_per_second",
+              "load"
+            ],
+            "title": "Unit"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesOut"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "title",
+          "unit",
+          "max",
+          "series"
+        ],
+        "title": "ChartOut"
       },
       "CheckStatusOut": {
         "properties": {
@@ -2017,6 +2227,47 @@
         ],
         "title": "Health"
       },
+      "HistoryOut": {
+        "properties": {
+          "range": {
+            "type": "string",
+            "enum": [
+              "1h",
+              "6h",
+              "24h",
+              "7d",
+              "30d"
+            ],
+            "title": "Range"
+          },
+          "step_seconds": {
+            "type": "integer",
+            "title": "Step Seconds"
+          },
+          "times": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Times"
+          },
+          "charts": {
+            "items": {
+              "$ref": "#/components/schemas/ChartOut"
+            },
+            "type": "array",
+            "title": "Charts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "range",
+          "step_seconds",
+          "times",
+          "charts"
+        ],
+        "title": "HistoryOut"
+      },
       "ImportResult": {
         "properties": {
           "dry_run": {
@@ -2245,6 +2496,39 @@
         ],
         "title": "SecretState",
         "description": "Env vars set the secrets. The UI shows only if each one is set."
+      },
+      "SeriesOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "values": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "values"
+        ],
+        "title": "SeriesOut"
       },
       "Settings": {
         "properties": {
