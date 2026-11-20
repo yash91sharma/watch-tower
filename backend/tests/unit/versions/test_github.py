@@ -1,6 +1,7 @@
 """Tests for wt.versions.github (respx)."""
 
 from collections.abc import AsyncIterator
+from importlib.metadata import version
 
 import httpx
 import pytest
@@ -44,7 +45,8 @@ async def test_latest_200_gives_the_release_and_etag(github: GitHub) -> None:
     headers = route.calls.last.request.headers
     assert headers["Accept"] == "application/vnd.github+json"
     assert headers["X-GitHub-Api-Version"] == "2022-11-28"
-    assert headers["User-Agent"].startswith("watch-tower")
+    # The version of the installed WT package, so that it changes with each release.
+    assert headers["User-Agent"] == f"watch-tower/{version('wt')}"
     assert "Authorization" not in headers
     assert "If-None-Match" not in headers
 

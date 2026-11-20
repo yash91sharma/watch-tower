@@ -4,6 +4,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from importlib.metadata import version
 
 import httpx
 from pydantic import BaseModel, SecretStr, TypeAdapter, ValidationError
@@ -14,7 +15,8 @@ from wt.versions.rules import Release
 TIMEOUT_SECONDS = 30
 # A run waits for the rate limit this many times, then fails.
 MAX_RATE_LIMIT_WAITS = 3
-USER_AGENT = "watch-tower/0.0.0"
+# The version of the installed WT package (pyproject.toml).
+USER_AGENT = f"watch-tower/{version('wt')}"
 
 log = logging.getLogger(__name__)
 
