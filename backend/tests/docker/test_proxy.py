@@ -15,6 +15,16 @@ def test_the_proxy_allows_reads(docker_env: dict[str, str]) -> None:
     assert response.status_code == 200
 
 
+def test_the_proxy_allows_the_container_stats(docker_env: dict[str, str]) -> None:
+    # The metrics worker (one-shot stats). CONTAINERS=1 allows all GET /containers/*.
+    assert docker_env
+    url = f"{PROXY_URL}/containers/wt_test_healthy/stats"
+    response = httpx.get(url, params={"stream": "false", "one-shot": "true"})
+
+    assert response.status_code == 200
+    assert response.json()["cpu_stats"]["cpu_usage"]["total_usage"] > 0
+
+
 @pytest.mark.parametrize(
     ("method", "path"),
     [
