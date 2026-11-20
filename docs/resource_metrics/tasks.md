@@ -33,7 +33,7 @@ Rules:
   - **Test:** sample values, units at each boundary.
 - [x] **2.2** `GET /api/metrics/overview` in `wt/api/metrics.py`: VM current values with labels, counts (apps rule and running of all), the groups in the order of `/api/containers` with sums and container current values, the ranges list (key and label), the interval. A stopped container has null values and `-` labels.
   - **Test:** the apps count with projects and with containers that have no project. An excluded container is not counted. The group sums. Before the first poll, all values are null.
-- [ ] **2.3** `GET /api/metrics/sparklines`: the last 60 min of `1m` CPU and memory for each group (sum) and each container, on 60 fixed minute slots. Null for a gap.
+- [x] **2.3** `GET /api/metrics/sparklines`: the last 60 min of `1m` CPU and memory for each group (sum) and each container, on 60 fixed minute slots. Null for a gap.
   - **Test:** a gap gives null. A group value is the sum of its containers in that slot.
 - [ ] **2.4** `GET /api/metrics/vm/history?range=` and `GET /api/metrics/containers/{name}/history?range=`. Range to tier: 1h, 6h, 24h use `1m`; 7d uses `15m`; 30d uses `1h`. The response has the times and a series list (key, label, unit, values), and the cores and memory total or limit.
   - **Test:** each range reads its tier and time window. Bad range: 422. Unknown container: 404. The container history stays after a recreate (same name).

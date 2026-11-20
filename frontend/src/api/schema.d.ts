@@ -369,6 +369,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/metrics/sparklines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Sparklines
+         * @description CPU and memory of the last 60 full minutes (the `1m` rows) for each group and
+         *     container. The current minute is not in it: WT saves it at the next minute.
+         */
+        get: operations["get_sparklines_api_metrics_sparklines_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stream": {
         parameters: {
             query?: never;
@@ -753,6 +774,32 @@ export interface components {
          * @enum {string}
          */
         Severity: "critical" | "normal";
+        /**
+         * Sparkline
+         * @description One value per minute slot, oldest first. Null: no value in that minute.
+         */
+        Sparkline: {
+            /** Cpu */
+            cpu: (number | null)[];
+            /** Mem */
+            mem: (number | null)[];
+        };
+        /** SparklinesOut */
+        SparklinesOut: {
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
+            /** Groups */
+            groups: {
+                [key: string]: components["schemas"]["Sparkline"];
+            };
+            /** Containers */
+            containers: {
+                [key: string]: components["schemas"]["Sparkline"];
+            };
+        };
         /**
          * Status
          * @enum {string}
@@ -1583,6 +1630,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OverviewOut"];
+                };
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_sparklines_api_metrics_sparklines_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                wt_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SparklinesOut"];
                 };
             };
             /** @description Validation error */

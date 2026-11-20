@@ -1212,6 +1212,66 @@
         }
       }
     },
+    "/api/metrics/sparklines": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Get Sparklines",
+        "description": "CPU and memory of the last 60 full minutes (the `1m` rows) for each group and\ncontainer. The current minute is not in it: WT saves it at the next minute.",
+        "operationId": "get_sparklines_api_metrics_sparklines_get",
+        "parameters": [
+          {
+            "name": "wt_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wt Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SparklinesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/stream": {
       "get": {
         "tags": [
@@ -2371,6 +2431,75 @@
           "normal"
         ],
         "title": "Severity"
+      },
+      "Sparkline": {
+        "properties": {
+          "cpu": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Cpu"
+          },
+          "mem": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Mem"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cpu",
+          "mem"
+        ],
+        "title": "Sparkline",
+        "description": "One value per minute slot, oldest first. Null: no value in that minute."
+      },
+      "SparklinesOut": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start"
+          },
+          "groups": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Sparkline"
+            },
+            "type": "object",
+            "title": "Groups"
+          },
+          "containers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Sparkline"
+            },
+            "type": "object",
+            "title": "Containers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "groups",
+          "containers"
+        ],
+        "title": "SparklinesOut"
       },
       "Status": {
         "type": "string",

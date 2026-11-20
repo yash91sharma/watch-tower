@@ -1,18 +1,21 @@
-"""Metrics API: the current values of the VM, the apps and the containers.
+"""Metrics API: the current values and the history of the VM, the apps and the containers.
 
 The backend makes all values and labels. The current values come from the sampler (in
-memory). The UI fetches them again on each `metrics {kind: current}` message.
+memory). The UI fetches them again on each `metrics {kind: current}` message, and the
+history (sparklines, charts) on each `metrics {kind: history}` message.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlmodel import Session
+from sqlmodel import Session, col, select
 
+from wt import clock
 from wt.api.containers import compose_groups
 from wt.api.deps import Ctx
 from wt.config import load_settings
+from wt.db.models import ContainerSample, MetricTier
 from wt.docker.parse import group_label
 from wt.metrics.calc import ContainerValues, cores_used
 from wt.metrics.labels import (
@@ -236,4 +239,74 @@ def get_overview(ctx: Ctx) -> OverviewOut:
         ),
         groups=group_usages,
         ranges=RANGES,
+    )
+
+
+# The sparklines show the last hour, one slot per minute.
+SPARKLINE_SLOTS = 60
+
+
+class Sparkline(BaseModel):
+    """One value per minute slot, oldest first. Null: no value in that minute."""
+
+    cpu: list[float | None]
+    mem: list[int | None]
+
+
+class SparklinesOut(BaseModel):
+    # The start of the first slot. Slot i starts i minutes later.
+    start: datetime
+    # By group label.
+    groups: dict[str, Sparkline]
+    # By container name: all shown containers, also the stopped ones.
+    containers: dict[str, Sparkline]
+
+
+def _slot_sum(lines: list[Sparkline]) -> Sparkline:
+    """The sum of the lines in each slot. Null if no line has a value in the slot."""
+    return Sparkline(
+        cpu=[_sum([line.cpu[i] for line in lines]) for i in range(SPARKLINE_SLOTS)],
+        mem=[
+            None
+            if all(line.mem[i] is None for line in lines)
+            else sum(line.mem[i] or 0 for line in lines)
+            for i in range(SPARKLINE_SLOTS)
+        ],
+    )
+
+
+@router.get("/sparklines")
+def get_sparklines(ctx: Ctx) -> SparklinesOut:
+    """CPU and memory of the last 60 full minutes (the `1m` rows) for each group and
+    container. The current minute is not in it: WT saves it at the next minute.
+    """
+    end = clock.now().replace(second=0, microsecond=0)
+    start = end - timedelta(minutes=SPARKLINE_SLOTS)
+    with Session(ctx.engine) as session:
+        groups = compose_groups(ctx.inventory.live_rows(session))
+        names = {row.id: row.name for _, pairs in groups for row, _ in pairs}
+        rows = session.exec(
+            select(ContainerSample).where(
+                ContainerSample.tier == MetricTier.MINUTE,
+                col(ContainerSample.time) >= start,
+                col(ContainerSample.time) < end,
+                col(ContainerSample.container_id).in_(names),
+            )
+        ).all()
+    lines = {
+        name: Sparkline(cpu=[None] * SPARKLINE_SLOTS, mem=[None] * SPARKLINE_SLOTS)
+        for name in names.values()
+    }
+    for row in rows:
+        slot = int((row.time - start) / timedelta(minutes=1))
+        line = lines[names[row.container_id]]
+        line.cpu[slot] = row.cpu_percent
+        line.mem[slot] = row.mem_used
+    return SparklinesOut(
+        start=start,
+        groups={
+            group_label(project): _slot_sum([lines[row.name] for row, _ in pairs])
+            for project, pairs in groups
+        },
+        containers=lines,
     )
