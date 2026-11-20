@@ -1,11 +1,13 @@
 // Overview (the home page): the resources of the Docker VM, the counts and the app list.
 // The backend gives all values and labels. The VM charts use the shared range.
+// The (i) button next to the title explains each metric.
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 import { overviewQuery, vmHistoryQuery } from "@/api/queries";
 import type { Overview, VmOut } from "@/api/types";
 import { MetricChart } from "@/components/MetricChart";
+import { MetricsHelp } from "@/components/MetricsHelp";
 import { QueryPending } from "@/components/QueryPending";
 import { Section } from "@/components/Section";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,7 +18,10 @@ export function OverviewPage() {
   const { data, error } = useQuery(overviewQuery);
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Overview</h1>
+      <div className="flex items-center gap-1">
+        <h1 className="text-xl font-semibold">Overview</h1>
+        <MetricsHelp />
+      </div>
       {data === undefined ? <QueryPending error={error} /> : <OverviewBody overview={data} />}
     </div>
   );

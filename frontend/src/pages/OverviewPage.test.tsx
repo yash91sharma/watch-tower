@@ -98,3 +98,31 @@ test("the page shows the error of the API", async () => {
 
   expect(await screen.findByRole("alert")).toHaveTextContent("An error occurred. See the WT log.");
 });
+
+test("the (i) button opens the help that explains each metric, and Close closes it", async () => {
+  const user = userEvent.setup();
+  renderRoute("/");
+
+  await user.click(await screen.findByRole("button", { name: "What the metrics mean" }));
+
+  const help = screen.getByRole("dialog", { name: "How to read the metrics" });
+  const titles = within(help)
+    .getAllByRole("heading", { level: 3 })
+    .map((heading) => heading.textContent);
+  expect(titles).toEqual([
+    "CPU",
+    "Memory",
+    "Swap",
+    "Disk",
+    "Disk I/O",
+    "Network",
+    "Load",
+    "Uptime",
+    "Apps and containers",
+    "Graphs and sparklines",
+  ]);
+  expect(within(help).getAllByText("How to read it")).toHaveLength(titles.length);
+
+  await user.click(within(help).getByRole("button", { name: "Close" }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
