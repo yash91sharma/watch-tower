@@ -63,7 +63,7 @@ Rules:
 
 - [x] **4.1** E2E flows: the Overview shows the VM values and the counts. A range change on one chart changes all charts, also on the container page. App details shows CPU in the rows. The container page shows the Resources charts. A change of the interval saves. Update the a11y spec and the visual snapshots (Overview, App details, container).
 - [x] **4.2** Socket proxy test: `GET /containers/{id}/stats` is allowed (`tests/docker/test_proxy.py`).
-- [ ] **4.3** Footprint test by hand: with 50 more containers and a 10 s interval, idle RAM stays below 200 MB.
+- [x] **4.3** Footprint test by hand: with 50 more containers and a 10 s interval, idle RAM stays below 200 MB.
 - [ ] **4.4** On the OrbStack server: check the 3 items in "To verify" of `design.md`.
 
 ## 5. Docs and release
