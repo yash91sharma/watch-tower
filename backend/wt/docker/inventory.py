@@ -94,27 +94,29 @@ class Inventory:
         return [LiveGroup(project, groups[project]) for project in ordered]
 
     async def sync_all(self, docker: DockerApi) -> list[ContainerInfo]:
-        """List and inspect all containers. Replace the live state. Give the infos."""
+        """List and inspect all containers. Save them in one transaction, then replace
+        the live state at once, so that a reader never sees a part of it. Give the infos.
+        """
         infos: list[ContainerInfo] = []
         for container_id in await docker.container_ids():
             try:
                 infos.append(await docker.inspect(container_id))
             except ContainerNotFoundError:
                 continue  # Removed after the list.
-        self._live = {}
-        for info in infos:
-            await self.update(info)
+        await asyncio.to_thread(_save, self._engine, infos)
+        self._live = {
+            info.name: _live(info) for info in infos if not is_excluded(info.labels)
+        }
         self.synced.set()
         return infos
 
     async def update(self, info: ContainerInfo) -> LiveContainer | None:
         """Save the container and its live state. None for an excluded container."""
-        await asyncio.to_thread(_upsert, self._engine, info)
+        await asyncio.to_thread(_save, self._engine, [info])
         if is_excluded(info.labels):
             self._live.pop(info.name, None)
             return None
-        live = LiveContainer(info.id, info.name, info.state, info.health)
-        self._live[info.name] = live
+        live = self._live[info.name] = _live(info)
         return live
 
     def remove(self, name: str, docker_id: str) -> bool:
@@ -130,7 +132,19 @@ class Inventory:
         return True
 
 
-def _upsert(engine: Engine, info: ContainerInfo) -> None:
+def _live(info: ContainerInfo) -> LiveContainer:
+    return LiveContainer(info.id, info.name, info.state, info.health)
+
+
+def _save(engine: Engine, infos: list[ContainerInfo]) -> None:
+    """Add or change the rows of the containers, in one transaction."""
+    with Session(engine) as session:
+        for info in infos:
+            _upsert(session, info)
+        session.commit()
+
+
+def _upsert(session: Session, info: ContainerInfo) -> None:
     try:
         image = parse_image(info.image)
         repo, tag = image.repo or None, image.tag
@@ -139,15 +153,13 @@ def _upsert(engine: Engine, info: ContainerInfo) -> None:
             "Container %s has an image reference that WT cannot read", info.name
         )
         repo, tag = None, None
-    with Session(engine) as session:
-        row = find_container(session, info.name) or Container(
-            host_id=LOCAL_HOST_ID, name=info.name
-        )
-        row.docker_id = info.id
-        row.compose_project = compose_project(info.labels)
-        row.image, row.tag = repo, tag
-        row.enabled = not is_excluded(info.labels)
-        if not row.source_confirmed:
-            row.release_source = release_source(info.labels.get(SOURCE_LABEL))
-        session.add(row)
-        session.commit()
+    row = find_container(session, info.name) or Container(
+        host_id=LOCAL_HOST_ID, name=info.name
+    )
+    row.docker_id = info.id
+    row.compose_project = compose_project(info.labels)
+    row.image, row.tag = repo, tag
+    row.enabled = not is_excluded(info.labels)
+    if not row.source_confirmed:
+        row.release_source = release_source(info.labels.get(SOURCE_LABEL))
+    session.add(row)

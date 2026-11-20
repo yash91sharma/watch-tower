@@ -1,5 +1,6 @@
 """Tests for wt.docker.inventory with FakeDocker."""
 
+import asyncio
 from dataclasses import replace
 
 import pytest
@@ -8,6 +9,7 @@ from sqlmodel import Session, select
 
 from tests.factories import make_info
 from tests.fake_docker import FakeDocker
+from wt import clock
 from wt.db.models import Container
 from wt.docker.client import ContainerInfo, ContainerNotFoundError
 from wt.docker.inventory import Inventory, LiveContainer
@@ -158,6 +160,27 @@ async def test_a_container_that_is_gone_leaves_the_live_state_and_keeps_its_row(
 
     assert inventory.get("web") is None
     assert "web" in rows(db_engine)
+
+
+async def test_a_resync_keeps_the_old_live_state_until_it_ends(
+    db_engine: Engine,
+) -> None:
+    # The API and the sampler read the inventory during a sync. They never see a
+    # part of the containers.
+    docker = FakeDocker()
+    for name in ("a", "b", "c"):
+        docker.add(info(name))
+    inventory = Inventory(db_engine)
+    await inventory.sync_all(docker)
+
+    sync = asyncio.create_task(inventory.sync_all(docker))
+    seen: set[int] = set()
+    while not sync.done():
+        seen.add(len(inventory.running_names()))
+        await clock.sleep(0)
+    await sync
+
+    assert seen == {3}
 
 
 async def test_update_and_remove_one_container(db_engine: Engine) -> None:
