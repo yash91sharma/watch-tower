@@ -5,6 +5,7 @@ first sample with no earlier sample, gives no value (None), not a wrong value.
 """
 
 from dataclasses import dataclass
+from statistics import fmean
 
 from wt.docker.client import ContainerStats
 
@@ -75,3 +76,14 @@ def container_values(
         disk_read_bps=rate(before.disk_read, after.disk_read, seconds),
         disk_write_bps=rate(before.disk_write, after.disk_write, seconds),
     )
+
+
+def mean(values: list[float | None]) -> float | None:
+    """The average of the values that are not None. None if there are none."""
+    known = [value for value in values if value is not None]
+    return fmean(known) if known else None
+
+
+def mean_int(values: list[int]) -> int:
+    """The rounded average (for byte counts)."""
+    return round(fmean(values))

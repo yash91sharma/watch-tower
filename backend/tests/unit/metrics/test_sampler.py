@@ -261,3 +261,25 @@ async def test_a_container_with_no_row_is_not_saved(
 
     with Session(db_engine) as session:
         assert len(session.exec(select(ContainerSample)).all()) == 1
+
+
+async def test_the_save_at_a_quarter_boundary_also_saves_the_quarter(
+    db_engine: Engine,
+    docker: FakeDocker,
+    vm_root: Path,
+    tmp_path: Path,
+    clock: FakeClock,
+) -> None:
+    sampler, _, _ = await make_sampler(db_engine, docker, vm_root, tmp_path)
+    clock.advance(14 * 60 + 30)  # 00:14:30
+    set_counters(docker, clock, vm_root, 1)
+    await sampler.poll(docker)
+
+    clock.advance(30)  # 00:15:00
+    await sampler.poll(docker)
+
+    with Session(db_engine) as session:
+        tiers = [
+            row.tier for row in session.exec(select(VmSample).order_by(VmSample.tier))
+        ]
+    assert sorted(tiers) == sorted([MetricTier.MINUTE, MetricTier.QUARTER])

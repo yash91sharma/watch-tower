@@ -2,7 +2,8 @@
 
 In memory: the last counters (for the next delta) and the current values, which the API
 shows. Each poll also adds its values to the current minute. At the first poll of a new
-minute, WT saves the average of the last minute as `1m` rows. After each poll WT
+minute, WT saves the average of the last minute as `1m` rows and does the rollup that is due
+(wt.metrics.store). After each poll WT
 publishes `metrics {kind: current}`, after each save `metrics {kind: history}`.
 """
 
@@ -27,7 +28,8 @@ from wt.docker.client import (
     DockerUnavailableError,
 )
 from wt.docker.inventory import Inventory
-from wt.metrics.calc import ContainerValues, container_values
+from wt.metrics.calc import ContainerValues, container_values, mean, mean_int
+from wt.metrics.store import roll_up
 from wt.metrics.vm import VmCounters, VmReadError, VmValues, read_vm, vm_values
 
 log = logging.getLogger(__name__)
@@ -89,7 +91,7 @@ class Sampler:
         now = clock.now()
         start = now.replace(second=0, microsecond=0)
         if self._minute is not None and self._minute.start != start:
-            await asyncio.to_thread(_save, self._engine, self._minute)
+            await asyncio.to_thread(_save, self._engine, self._minute, start)
             self._bus.publish(Topic.METRICS, {"kind": "history"})
             self._minute = None
         minute = self._minute = self._minute or _Minute(start)
@@ -153,18 +155,10 @@ class Sampler:
         self._last_vm = counters
 
 
-def _mean(values: list[float | None]) -> float | None:
-    """The average of the values that are not None. None if there are none."""
-    known = [value for value in values if value is not None]
-    return fmean(known) if known else None
-
-
-def _mean_int(values: list[int]) -> int:
-    return round(fmean(values))
-
-
-def _save(engine: Engine, minute: _Minute) -> None:
-    """Save the averages of the minute as `1m` rows, in one transaction."""
+def _save(engine: Engine, minute: _Minute, now: datetime) -> None:
+    """Save the averages of the minute as `1m` rows, in one transaction. Then save the
+    rollup rows that are due at `now` (the start of the new minute).
+    """
     with Session(engine) as session:
         if minute.vm:
             vm = minute.vm
@@ -173,20 +167,20 @@ def _save(engine: Engine, minute: _Minute) -> None:
                     host_id=LOCAL_HOST_ID,
                     tier=MetricTier.MINUTE,
                     time=minute.start,
-                    cpu_percent=_mean([v.cpu_percent for v in vm]),
-                    mem_used=_mean_int([v.mem_used for v in vm]),
+                    cpu_percent=mean([v.cpu_percent for v in vm]),
+                    mem_used=mean_int([v.mem_used for v in vm]),
                     mem_total=vm[-1].mem_total,
-                    swap_used=_mean_int([v.swap_used for v in vm]),
+                    swap_used=mean_int([v.swap_used for v in vm]),
                     swap_total=vm[-1].swap_total,
                     load_1=fmean(v.load_1 for v in vm),
                     load_5=fmean(v.load_5 for v in vm),
                     load_15=fmean(v.load_15 for v in vm),
                     disk_used=vm[-1].disk_used,
                     disk_total=vm[-1].disk_total,
-                    disk_read_bps=_mean([v.disk_read_bps for v in vm]),
-                    disk_write_bps=_mean([v.disk_write_bps for v in vm]),
-                    net_rx_bps=_mean([rx for rx, _ in minute.net]),
-                    net_tx_bps=_mean([tx for _, tx in minute.net]),
+                    disk_read_bps=mean([v.disk_read_bps for v in vm]),
+                    disk_write_bps=mean([v.disk_write_bps for v in vm]),
+                    net_rx_bps=mean([rx for rx, _ in minute.net]),
+                    net_tx_bps=mean([tx for _, tx in minute.net]),
                 )
             )
         for name, polls in minute.containers.items():
@@ -198,13 +192,14 @@ def _save(engine: Engine, minute: _Minute) -> None:
                     container_id=row.id,
                     tier=MetricTier.MINUTE,
                     time=minute.start,
-                    cpu_percent=_mean([p.cpu_percent for p in polls]),
-                    mem_used=_mean_int([p.mem_used for p in polls]),
+                    cpu_percent=mean([p.cpu_percent for p in polls]),
+                    mem_used=mean_int([p.mem_used for p in polls]),
                     mem_limit=polls[-1].mem_limit,
-                    net_rx_bps=_mean([p.net_rx_bps for p in polls]),
-                    net_tx_bps=_mean([p.net_tx_bps for p in polls]),
-                    disk_read_bps=_mean([p.disk_read_bps for p in polls]),
-                    disk_write_bps=_mean([p.disk_write_bps for p in polls]),
+                    net_rx_bps=mean([p.net_rx_bps for p in polls]),
+                    net_tx_bps=mean([p.net_tx_bps for p in polls]),
+                    disk_read_bps=mean([p.disk_read_bps for p in polls]),
+                    disk_write_bps=mean([p.disk_write_bps for p in polls]),
                 )
             )
         session.commit()
+    roll_up(engine, now)

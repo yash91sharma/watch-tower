@@ -167,6 +167,14 @@ class MetricTier(StrEnum):
     HOUR = "1h"
 
 
+# WT keeps the rows of each tier this long (the cleanup worker deletes older ones).
+METRIC_MAX_AGE = {
+    MetricTier.MINUTE: timedelta(hours=24),
+    MetricTier.QUARTER: timedelta(days=7),
+    MetricTier.HOUR: timedelta(days=30),
+}
+
+
 class VmSample(SQLModel, table=True):
     """The Docker VM values of one step. None: no value in the step (for example the
     first poll has no CPU %). Bytes are int, rates are bytes per second.
