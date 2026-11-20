@@ -1,18 +1,23 @@
 // Overview (the home page): the resources of the Docker VM, the counts and the app list.
 // The backend gives all values and labels. The VM charts use the shared range.
 // The (i) button next to the title explains each metric.
+// The admin can collapse an app group. The browser keeps the collapsed groups in localStorage.
 import { useQuery } from "@tanstack/react-query";
+import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router";
 
 import { overviewQuery, vmHistoryQuery } from "@/api/queries";
-import type { Overview, VmOut } from "@/api/types";
+import type { GroupUsage, Overview, VmOut } from "@/api/types";
+import { AppGroup } from "@/components/AppGroup";
 import { ChartGrid } from "@/components/MetricChart";
 import { MetricsHelp } from "@/components/MetricsHelp";
 import { NoContainers } from "@/components/NoContainers";
 import { QueryPending } from "@/components/QueryPending";
 import { Section } from "@/components/Section";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { UsageCell, useUsage } from "@/components/Usage";
+import { useCollapsed } from "@/lib/collapsed";
 import { useMetricsRange } from "@/lib/metricsRange";
 
 export function OverviewPage() {
@@ -102,59 +107,78 @@ function VmCharts({ ranges }: { ranges: Overview["ranges"] }) {
 }
 
 function AppList({ overview }: { overview: Overview }) {
-  const usage = useUsage();
+  const groups = useCollapsed("wt.overviewCollapsedGroups");
   return (
     <Section title="Apps">
       {overview.groups.length === 0 ? (
         <NoContainers className="text-sm" />
       ) : (
-        <div className="rounded-xl border bg-card px-2 pb-1 shadow-xs">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>CPU</TableHead>
-                <TableHead>Memory</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {overview.groups.map((group) => [
-                <TableRow key={`group-${group.label}`} className="bg-muted/40">
-                  <TableCell>
-                    <Link className="font-semibold underline underline-offset-4" to={`/apps?group=${encodeURIComponent(group.label)}`}>
-                      {group.label}
-                    </Link>
-                  </TableCell>
-                  <TableCell />
-                  <TableCell>
-                    <UsageCell label={group.cpu_label} values={usage.groupLine(group.label)?.cpu} title={`CPU of ${group.label}, last hour`} />
-                  </TableCell>
-                  <TableCell>
-                    <UsageCell label={group.mem_label} values={usage.groupLine(group.label)?.mem} title={`Memory of ${group.label}, last hour`} />
-                  </TableCell>
-                </TableRow>,
-                ...group.containers.map((item) => (
-                  <TableRow key={item.name}>
-                    <TableCell className="pl-6">
-                      <Link className="underline underline-offset-4" to={`/containers/${item.name}`}>
-                        {item.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{item.state}</TableCell>
-                    <TableCell>
-                      <UsageCell label={item.cpu_label} values={usage.containerLine(item.name)?.cpu} title={`CPU of ${item.name}, last hour`} />
-                    </TableCell>
-                    <TableCell>
-                      <UsageCell label={item.mem_label} values={usage.containerLine(item.name)?.mem} title={`Memory of ${item.name}, last hour`} />
-                    </TableCell>
-                  </TableRow>
-                )),
-              ])}
-            </TableBody>
-          </Table>
+        <div className="space-y-3">
+          {overview.groups.map((group) => (
+            <GroupCard
+              key={group.label}
+              group={group}
+              open={groups.isOpen(group.label)}
+              onToggle={() => {
+                groups.toggle(group.label);
+              }}
+            />
+          ))}
         </div>
       )}
     </Section>
+  );
+}
+
+/** An app group: the shared card with the sums, a link to the group on Apps and one row per container. */
+function GroupCard({ group, open, onToggle }: { group: GroupUsage; open: boolean; onToggle: () => void }) {
+  const usage = useUsage();
+  return (
+    <AppGroup
+      label={group.label}
+      count={group.containers.length}
+      open={open}
+      onToggle={onToggle}
+      sums={group}
+      headingLevel={3}
+      actions={
+        <Button asChild variant="ghost" size="icon-xs">
+          <Link to={`/apps?group=${encodeURIComponent(group.label)}`} aria-label={`Open ${group.label} on the Apps page`} title="Apps page">
+            <ArrowUpRight aria-hidden />
+          </Link>
+        </Button>
+      }
+    >
+      {/* Fixed column widths: the columns of all group cards line up. The minimum width keeps
+          the columns apart on a phone (the table scrolls to the side). */}
+      <Table className="min-w-2xl table-fixed">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[40%]">Name</TableHead>
+            <TableHead className="w-[14%]">State</TableHead>
+            <TableHead className="w-[23%]">CPU</TableHead>
+            <TableHead className="w-[23%]">Memory</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {group.containers.map((item) => (
+            <TableRow key={item.name}>
+              <TableCell className="break-all whitespace-normal">
+                <Link className="underline underline-offset-4" to={`/containers/${item.name}`}>
+                  {item.name}
+                </Link>
+              </TableCell>
+              <TableCell>{item.state}</TableCell>
+              <TableCell>
+                <UsageCell label={item.cpu_label} values={usage.containerLine(item.name)?.cpu} title={`CPU of ${item.name}, last hour`} />
+              </TableCell>
+              <TableCell>
+                <UsageCell label={item.mem_label} values={usage.containerLine(item.name)?.mem} title={`Memory of ${item.name}, last hour`} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </AppGroup>
   );
 }

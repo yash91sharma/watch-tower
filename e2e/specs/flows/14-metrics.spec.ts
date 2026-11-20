@@ -20,7 +20,7 @@ test("the Overview shows the VM values and the counts", async ({ page }) => {
   await expect(main.getByRole("link", { name: /^\d+ apps?$/ })).toBeVisible();
   await expect(main.getByRole("link", { name: /^\d+ running of \d+ containers$/ })).toBeVisible();
   const apps = page.getByRole("region", { name: "Apps" });
-  await expect(apps.getByRole("link", { name: "wt_test_e2e", exact: true })).toHaveAttribute("href", "/apps?group=wt_test_e2e");
+  await expect(apps.getByRole("link", { name: "Open wt_test_e2e on the Apps page" })).toHaveAttribute("href", "/apps?group=wt_test_e2e");
 });
 
 test("App details shows the CPU and memory of a running container", async ({ page }) => {

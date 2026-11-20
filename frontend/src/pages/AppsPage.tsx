@@ -3,12 +3,12 @@
 // The admin can collapse a group. The browser keeps the collapsed groups in localStorage.
 // ?group=<label> (a link from the Overview) opens that group and scrolls to it.
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ExternalLink, ScrollText } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { ExternalLink, ScrollText } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { containersQuery } from "@/api/queries";
 import type { Group } from "@/api/types";
+import { AppGroup } from "@/components/AppGroup";
 import { HealthBadge, SeverityBadge, StatusBadge } from "@/components/badges";
 import { CheckNow } from "@/components/CheckNow";
 import { NoContainers } from "@/components/NoContainers";
@@ -16,28 +16,13 @@ import { QueryPending } from "@/components/QueryPending";
 import { Button } from "@/components/ui/button";
 import { UsageCell, useUsage } from "@/components/Usage";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn, plural } from "@/lib/utils";
-
-const collapsedKey = "wt.collapsedGroups";
-
-// The header tint shows the update level of the group (the API decides the level).
-const headerColor = { none: "bg-group-ok", update: "bg-group-update", critical: "bg-group-critical" } as const;
-
-function readCollapsed() {
-  return JSON.parse(localStorage.getItem(collapsedKey) ?? "[]") as string[];
-}
+import { useCollapsed } from "@/lib/collapsed";
 
 export function AppsPage() {
   const { data, error } = useQuery(containersQuery);
   const focus = useSearchParams()[0].get("group");
   // The group of ?group= is open, also if it was collapsed.
-  const [collapsed, setCollapsed] = useState(() => readCollapsed().filter((label) => label !== focus));
-
-  function toggle(label: string) {
-    const next = collapsed.includes(label) ? collapsed.filter((item) => item !== label) : [...collapsed, label];
-    localStorage.setItem(collapsedKey, JSON.stringify(next));
-    setCollapsed(next);
-  }
+  const groups = useCollapsed("wt.collapsedGroups", focus);
 
   return (
     <div className="space-y-6">
@@ -54,10 +39,10 @@ export function AppsPage() {
           <GroupTable
             key={group.label}
             group={group}
-            open={!collapsed.includes(group.label)}
+            open={groups.isOpen(group.label)}
             focus={group.label === focus}
             onToggle={() => {
-              toggle(group.label);
+              groups.toggle(group.label);
             }}
           />
         ))
@@ -71,117 +56,90 @@ export function AppsPage() {
 const PHONE_HIDDEN = "max-sm:hidden";
 
 function GroupTable({ group, open, focus, onToggle }: { group: Group; open: boolean; focus: boolean; onToggle: () => void }) {
-  const id = useId();
   const usage = useUsage();
-  const sums = usage.group(group.label);
-  const section = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (focus) section.current?.scrollIntoView();
-  }, [focus]);
   return (
-    <section ref={section} aria-labelledby={id} className="overflow-hidden rounded-xl border bg-card shadow-xs">
-      <div className={cn("flex flex-wrap items-center gap-2 px-2 py-1", headerColor[group.update])}>
-        <h2 id={id} className="min-w-0 flex-1 font-medium break-all">
-          <button
-            type="button"
-            aria-expanded={open}
-            aria-controls={`${id}-table`}
-            onClick={onToggle}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-muted"
-          >
-            <ChevronRight
-              aria-hidden
-              className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-90")}
-            />
-            {group.label}
-          </button>
-        </h2>
-        {sums && (
-          // A fixed width: the sums of all groups are in one column, and the layout does not move when a value changes.
-          <span className="hidden w-72 justify-end gap-3 pr-2 text-sm text-muted-foreground sm:flex">
-            <span>CPU {sums.cpu_label}</span>
-            <span>Memory {sums.mem_label}</span>
-          </span>
-        )}
-        <span className="pr-2 text-sm text-muted-foreground">
-          {plural(group.containers.length, "container", "containers")}
-        </span>
-        <CheckNow group={group.label} />
-      </div>
-      <div id={`${id}-table`} hidden={!open} className="border-t px-2 pb-1">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className={PHONE_HIDDEN}>State</TableHead>
-              <TableHead>Health</TableHead>
-              <TableHead className={PHONE_HIDDEN}>CPU</TableHead>
-              <TableHead className={PHONE_HIDDEN}>Memory</TableHead>
-              <TableHead className={PHONE_HIDDEN}>Current version</TableHead>
-              <TableHead className={PHONE_HIDDEN}>Latest version</TableHead>
-              <TableHead>Update</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {group.containers.map((item) => (
-              <TableRow key={item.name} className="even:bg-muted/30">
-                <TableCell className="max-sm:whitespace-normal">
-                  <div className="flex items-center gap-1">
-                    <Link className="font-medium underline underline-offset-4 max-sm:break-all" to={`/containers/${item.name}`}>
-                      {item.name}
+    <AppGroup
+      label={group.label}
+      count={group.containers.length}
+      open={open}
+      onToggle={onToggle}
+      sums={usage.group(group.label)}
+      update={group.update}
+      focus={focus}
+      actions={<CheckNow group={group.label} />}
+    >
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead className={PHONE_HIDDEN}>State</TableHead>
+            <TableHead>Health</TableHead>
+            <TableHead className={PHONE_HIDDEN}>CPU</TableHead>
+            <TableHead className={PHONE_HIDDEN}>Memory</TableHead>
+            <TableHead className={PHONE_HIDDEN}>Current version</TableHead>
+            <TableHead className={PHONE_HIDDEN}>Latest version</TableHead>
+            <TableHead>Update</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {group.containers.map((item) => (
+            <TableRow key={item.name} className="even:bg-muted/30">
+              <TableCell className="max-sm:whitespace-normal">
+                <div className="flex items-center gap-1">
+                  <Link className="font-medium underline underline-offset-4 max-sm:break-all" to={`/containers/${item.name}`}>
+                    {item.name}
+                  </Link>
+                  <Button asChild variant="ghost" size="icon-xs">
+                    <Link to={`/containers/${item.name}/logs`} aria-label={`Logs of ${item.name}`} title="Logs">
+                      <ScrollText aria-hidden />
                     </Link>
-                    <Button asChild variant="ghost" size="icon-xs">
-                      <Link to={`/containers/${item.name}/logs`} aria-label={`Logs of ${item.name}`} title="Logs">
-                        <ScrollText aria-hidden />
-                      </Link>
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell className={PHONE_HIDDEN}>{item.state}</TableCell>
-                <TableCell>
-                  <HealthBadge health={item.health} label={item.health_label} />
-                </TableCell>
-                <TableCell className={PHONE_HIDDEN}>
-                  <UsageCell
-                    label={usage.container(item.name)?.cpu_label}
-                    values={usage.containerLine(item.name)?.cpu}
-                    title={`CPU of ${item.name}, last hour`}
-                  />
-                </TableCell>
-                <TableCell className={PHONE_HIDDEN}>
-                  <UsageCell
-                    label={usage.container(item.name)?.mem_used_label}
-                    values={usage.containerLine(item.name)?.mem}
-                    title={`Memory of ${item.name}, last hour`}
-                  />
-                </TableCell>
-                <TableCell className={PHONE_HIDDEN}>{item.tag ?? "-"}</TableCell>
-                <TableCell className={PHONE_HIDDEN}>
-                  {item.latest_url ? (
-                    <a
-                      className="inline-flex items-center gap-1 underline underline-offset-4"
-                      href={item.latest_url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {item.latest_version}
-                      <ExternalLink aria-hidden className="size-3.5 shrink-0" />
-                    </a>
-                  ) : (
-                    (item.latest_version ?? "-")
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap items-center gap-1">
-                    <StatusBadge status={item.status} label={item.status_label} />
-                    <SeverityBadge severity={item.severity} />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </section>
+                  </Button>
+                </div>
+              </TableCell>
+              <TableCell className={PHONE_HIDDEN}>{item.state}</TableCell>
+              <TableCell>
+                <HealthBadge health={item.health} label={item.health_label} />
+              </TableCell>
+              <TableCell className={PHONE_HIDDEN}>
+                <UsageCell
+                  label={usage.container(item.name)?.cpu_label}
+                  values={usage.containerLine(item.name)?.cpu}
+                  title={`CPU of ${item.name}, last hour`}
+                />
+              </TableCell>
+              <TableCell className={PHONE_HIDDEN}>
+                <UsageCell
+                  label={usage.container(item.name)?.mem_used_label}
+                  values={usage.containerLine(item.name)?.mem}
+                  title={`Memory of ${item.name}, last hour`}
+                />
+              </TableCell>
+              <TableCell className={PHONE_HIDDEN}>{item.tag ?? "-"}</TableCell>
+              <TableCell className={PHONE_HIDDEN}>
+                {item.latest_url ? (
+                  <a
+                    className="inline-flex items-center gap-1 underline underline-offset-4"
+                    href={item.latest_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {item.latest_version}
+                    <ExternalLink aria-hidden className="size-3.5 shrink-0" />
+                  </a>
+                ) : (
+                  (item.latest_version ?? "-")
+                )}
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-wrap items-center gap-1">
+                  <StatusBadge status={item.status} label={item.status_label} />
+                  <SeverityBadge severity={item.severity} />
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </AppGroup>
   );
 }
