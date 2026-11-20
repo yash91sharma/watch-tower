@@ -9,7 +9,7 @@ import "uplot/dist/uPlot.min.css";
 
 import type { Chart, RangeKey } from "@/api/types";
 import { useMetricsRange } from "@/lib/metricsRange";
-import { formatTick } from "@/lib/ticks";
+import { axisSize, formatTick, formatTicks } from "@/lib/ticks";
 
 const HEIGHT = 160;
 // The validated series colors (index.css: --series-1 to --series-3). No chart has more.
@@ -34,7 +34,15 @@ function options(chart: Chart, width: number): uPlot.Options {
         value: (_: uPlot, value: number | null) => (value === null ? "-" : formatTick(value, chart.unit)),
       })),
     ],
-    axes: [axis, { ...axis, size: 64, values: (_: uPlot, ticks: number[]) => ticks.map((tick) => formatTick(tick, chart.unit)) }],
+    axes: [
+      axis,
+      {
+        ...axis,
+        // The tick labels have enough decimals to tell them apart, and the axis fits them.
+        size: (_: uPlot, labels: string[] | undefined) => axisSize(labels),
+        values: (_: uPlot, ticks: number[]) => formatTicks(ticks, chart.unit),
+      },
+    ],
     scales: {
       // From 0. The top is a bit above the largest value, but not above the max of the chart.
       y: {

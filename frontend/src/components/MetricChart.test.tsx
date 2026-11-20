@@ -60,6 +60,10 @@ test("the legend values use the unit of the chart", () => {
   expect(value({} as uPlot, null)).toBe("-");
   const ticks = plots[0]?.options.axes?.[1]?.values as (u: uPlot, t: number[]) => string[];
   expect(ticks({} as uPlot, [0, 50])).toEqual(["0%", "50%"]);
+  // A small CPU value: the ticks keep the digits that make them different.
+  expect(ticks({} as uPlot, [0, 0.002, 0.004])).toEqual(["0.000%", "0.002%", "0.004%"]);
+  const size = plots[0]?.options.axes?.[1]?.size as (u: uPlot, labels: string[]) => number;
+  expect(size({} as uPlot, ["0.000%", "0.002%"])).toBe(58);
 });
 
 test("a new chart replaces the old one", () => {
