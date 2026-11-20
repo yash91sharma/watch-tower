@@ -1,7 +1,7 @@
 """GET /api/stream: one SSE stream with live updates for the UI.
 
 On connect it sends the current Docker connection state first. Then it sends the bus
-messages for `container`, `check` and `docker`. After 15 s with no message it sends a
+messages for `container`, `check`, `docker` and `metrics`. After 15 s with no message it sends a
 keep-alive comment. After a reconnect, the UI gets all data again.
 """
 
@@ -19,7 +19,7 @@ from wt.bus import Message, Subscription, Topic
 router = APIRouter(tags=["stream"])
 
 KEEP_ALIVE_SECONDS = 15
-TOPICS = (Topic.CONTAINER, Topic.CHECK, Topic.DOCKER)
+TOPICS = (Topic.CONTAINER, Topic.CHECK, Topic.DOCKER, Topic.METRICS)
 
 
 def sse(message: Message) -> str:

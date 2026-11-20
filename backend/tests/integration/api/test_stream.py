@@ -44,9 +44,11 @@ async def test_bus_events_arrive(app: FastAPI) -> None:
         ctx.bus.publish(Topic.CONTAINER, {"name": "web"})
         ctx.bus.publish(Topic.SETTINGS)
         ctx.bus.publish(Topic.CHECK, {"running": True})
+        ctx.bus.publish(Topic.METRICS, {"kind": "current"})
 
         assert parse(await stream.next_chunk()) == ("container", {"name": "web"})
         assert parse(await stream.next_chunk()) == ("check", {"running": True})
+        assert parse(await stream.next_chunk()) == ("metrics", {"kind": "current"})
 
 
 async def test_keep_alive_comment(app: FastAPI, clock: FakeClock) -> None:
