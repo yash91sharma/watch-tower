@@ -58,7 +58,29 @@ test("save sends the values and says so", async () => {
     llm_url: "",
     llm_model: "llama3",
     public_url: "",
+    metrics_interval_seconds: "10",
   });
+});
+
+test("the metrics interval is a select with the 5 values, and a save sends the choice", async () => {
+  let body: unknown;
+  server.use(
+    http.put("*/api/settings", async ({ request }) => {
+      body = await request.json();
+      return HttpResponse.json(settingsOut());
+    }),
+  );
+  const user = userEvent.setup();
+  renderRoute("/settings");
+  const select = await screen.findByLabelText("Metrics interval (seconds)");
+
+  expect(within(select).getAllByRole("option").map((option) => option.textContent)).toEqual(["5", "10", "15", "30", "60"]);
+  expect(select).toHaveValue("10");
+  await user.selectOptions(select, "30");
+  await user.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(await screen.findByText("Saved.")).toBeInTheDocument();
+  expect(body).toMatchObject({ metrics_interval_seconds: "30" });
 });
 
 test("save shows the backend field errors", async () => {

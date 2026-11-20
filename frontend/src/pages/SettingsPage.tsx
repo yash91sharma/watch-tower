@@ -1,6 +1,6 @@
 // Settings: the UI settings form, a test ntfy message, the secret state (env vars set the secrets), export and import.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type SubmitEvent } from "react";
+import { useId, useState, type SubmitEvent } from "react";
 
 import { api, unwrap } from "@/api/client";
 import { settingsQuery } from "@/api/queries";
@@ -11,8 +11,10 @@ import { FormError } from "@/components/FormError";
 import { QueryPending } from "@/components/QueryPending";
 import { Section } from "@/components/Section";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
-const FIELDS: { key: keyof Settings; label: string; numeric?: boolean }[] = [
+// A field with `options` is a select. The options are the values that the backend accepts.
+const FIELDS: { key: keyof Settings; label: string; numeric?: boolean; options?: Settings["metrics_interval_seconds"][] }[] = [
   { key: "check_interval_hours", label: "Check interval (hours)", numeric: true },
   { key: "restart_count", label: "Restart loop: restarts", numeric: true },
   { key: "restart_window_minutes", label: "Restart loop: window (minutes)", numeric: true },
@@ -21,6 +23,7 @@ const FIELDS: { key: keyof Settings; label: string; numeric?: boolean }[] = [
   { key: "llm_url", label: "LLM URL" },
   { key: "llm_model", label: "LLM model" },
   { key: "public_url", label: "WT URL (for links in notifications)" },
+  { key: "metrics_interval_seconds", label: "Metrics interval (seconds)", options: [5, 10, 15, 30, 60] },
 ];
 
 const SECRETS: { key: keyof SecretState; label: string }[] = [
@@ -74,19 +77,18 @@ function SettingsForm({ values }: { values: Settings }) {
 
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
-      {FIELDS.map(({ key, label, numeric }) => (
-        <Field
-          key={key}
-          label={label}
-          inputMode={numeric ? "numeric" : undefined}
-          value={form[key]}
-          onChange={(event) => {
-            setForm({ ...form, [key]: event.target.value });
-            save.reset();
-            sendTest.reset();
-          }}
-        />
-      ))}
+      {FIELDS.map(({ key, label, numeric, options }) => {
+        const onChange = (event: { target: { value: string } }) => {
+          setForm({ ...form, [key]: event.target.value });
+          save.reset();
+          sendTest.reset();
+        };
+        return options ? (
+          <SelectField key={key} label={label} value={form[key]} options={options} onChange={onChange} />
+        ) : (
+          <Field key={key} label={label} inputMode={numeric ? "numeric" : undefined} value={form[key]} onChange={onChange} />
+        );
+      })}
       <FormError error={save.error} />
       <FormError error={sendTest.error} />
       <div className="flex flex-wrap items-center gap-3">
@@ -115,6 +117,32 @@ function SettingsForm({ values }: { values: Settings }) {
         )}
       </div>
     </form>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string | undefined;
+  options: number[];
+  onChange: (event: { target: { value: string } }) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <select id={id} value={value} onChange={onChange} className="h-8 rounded-lg border bg-background px-2 text-sm">
+        {options.map((option) => (
+          <option key={option} value={String(option)}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 

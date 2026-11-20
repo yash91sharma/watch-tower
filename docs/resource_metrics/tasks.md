@@ -56,7 +56,7 @@ Rules:
   - **Test:** the tiles and counts from the API. The links. No containers: the text from `ContainersPage`.
 - [x] **3.7** Container page: Resources section with the current values and charts for CPU, memory, network and disk I/O.
   - **Test:** the current labels. A stopped container shows `-` and the charts of its history.
-- [ ] **3.8** Settings page: a select for the poll interval.
+- [x] **3.8** Settings page: a select for the poll interval.
   - **Test:** a save sends the value. The select has the 5 values.
 
 ## 4. E2E and checks by hand
