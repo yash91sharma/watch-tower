@@ -211,3 +211,33 @@ async def test_worker_calls_its_loop(
 
     async with app.router.lifespan_context(app):
         await asyncio.wait_for(called.wait(), timeout=5)
+
+
+@pytest.mark.anyio
+async def test_metrics_worker_starts_after_the_first_docker_sync(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = asyncio.Event()
+    args: list[object] = []
+
+    async def run_metrics(*given: object) -> None:
+        args.extend(given)
+        started.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(main, "run_metrics", run_metrics)
+    app = create_app(make_env(tmp_path), workers=[main.metrics_worker])
+
+    async with app.router.lifespan_context(app):
+        ctx: AppContext = app.state.ctx
+        for _ in range(5):
+            await clock.sleep(0)
+        assert not started.is_set()
+
+        await ctx.inventory.sync_all(FakeDocker())
+        await asyncio.wait_for(started.wait(), timeout=5)
+        assert args == [ctx.sampler.poll, ctx.docker_factory, ctx.engine, ctx.bus]
+
+
+def test_the_metrics_worker_is_one_of_the_workers() -> None:
+    assert main.metrics_worker in main.WORKERS

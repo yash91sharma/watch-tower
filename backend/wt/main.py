@@ -25,6 +25,8 @@ from wt.docker.client import DockerClient
 from wt.docker.connection import keep_connected
 from wt.docker.inventory import Inventory
 from wt.health.monitor import HealthMonitor, run_health
+from wt.metrics.sampler import Sampler
+from wt.metrics.worker import run_metrics
 from wt.notify.health import notify_health
 from wt.notify.updates import notify_updates
 from wt.versions.check import CheckRunner
@@ -57,8 +59,20 @@ async def scheduler_worker(ctx: AppContext) -> None:
     await run_scheduler(ctx.checker, ctx.engine)
 
 
+async def metrics_worker(ctx: AppContext) -> None:
+    # Before the first sync the inventory is empty, so the first polls have no containers.
+    await ctx.inventory.synced.wait()
+    await run_metrics(ctx.sampler.poll, ctx.docker_factory, ctx.engine, ctx.bus)
+
+
 # The workers that WT starts.
-WORKERS: list[Worker] = [cleanup_worker, docker_worker, health_worker, scheduler_worker]
+WORKERS: list[Worker] = [
+    cleanup_worker,
+    docker_worker,
+    health_worker,
+    scheduler_worker,
+    metrics_worker,
+]
 
 
 def create_app(
@@ -87,6 +101,7 @@ def create_app(
                 ),
             ),
             docker_factory=lambda: DockerClient(env.docker_host),
+            sampler=Sampler(engine, inventory, bus, env.data_dir),
             checker=CheckRunner(
                 engine,
                 env,

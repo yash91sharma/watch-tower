@@ -24,7 +24,7 @@ Rules:
   - **Test (fake clock, FakeDocker):** the first poll gives no CPU value, the second does. A minute writes one row per container and one VM row with the averages. A stopped or removed container is dropped from the current values. Docker down: the poll skips the containers, keeps the VM values and does not stop.
 - [x] **1.7** Rollup and retention in `wt/metrics/store.py`: at each 15-min boundary, write `15m` rows from the `1m` rows of that 15 min. At each hour, write `1h` rows from the `15m` rows. `cleanup.delete_old_rows` deletes `1m` rows older than 24 h, `15m` older than 7 d, `1h` older than 30 d.
   - **Test:** averages are correct. A second rollup of the same period changes nothing. The cleanup keeps the rows in the retention and deletes the older ones.
-- [ ] **1.8** `metrics_worker` in `wt/main.py` `WORKERS`. It waits for `inventory.synced`, runs a poll at each interval, makes its own Docker client (`ctx.docker_factory`) and makes a new one after `DockerUnavailableError`. It reads the interval again on the `settings` bus message.
+- [x] **1.8** `metrics_worker` in `wt/main.py` `WORKERS`. It waits for `inventory.synced`, runs a poll at each interval, makes its own Docker client (`ctx.docker_factory`) and makes a new one after `DockerUnavailableError`. It reads the interval again on the `settings` bus message.
   - **Test:** a settings change changes the time between polls. A cancel stops the worker and closes the client.
 
 ## 2. Backend: API

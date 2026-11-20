@@ -14,6 +14,7 @@ from wt.docker.client import DockerApi
 from wt.docker.connection import DockerState
 from wt.docker.inventory import Inventory
 from wt.health.monitor import HealthMonitor
+from wt.metrics.sampler import Sampler
 from wt.versions.check import CheckRunner
 
 
@@ -30,6 +31,8 @@ class AppContext:
     checker: CheckRunner
     # Makes a new Docker client (FakeDocker in tests).
     docker_factory: Callable[[], DockerApi]
+    # The current metric values (the metrics worker polls with it).
+    sampler: Sampler
     docker_state: DockerState = field(default_factory=DockerState)
     login_limit: LoginLimit = field(default_factory=LoginLimit)
 
