@@ -349,6 +349,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/metrics/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Overview
+         * @description The current values, the counts and the groups (in the order of /api/containers).
+         */
+        get: operations["get_overview_api_metrics_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stream": {
         parameters: {
             query?: never;
@@ -471,6 +491,48 @@ export interface components {
             /** Source Confirmed */
             source_confirmed: boolean;
         };
+        /**
+         * ContainerUsage
+         * @description The current values of a container. Null values and "-" labels: the container
+         *     does not run, or WT has no value yet.
+         */
+        ContainerUsage: {
+            /** Name */
+            name: string;
+            /** State */
+            state: string;
+            /** Cpu Percent */
+            cpu_percent: number | null;
+            /** Cpu Label */
+            cpu_label: string;
+            /** Mem Used */
+            mem_used: number | null;
+            /** Mem Percent */
+            mem_percent: number | null;
+            /** Mem Label */
+            mem_label: string;
+            /** Net Rx Label */
+            net_rx_label: string;
+            /** Net Tx Label */
+            net_tx_label: string;
+            /** Disk Read Label */
+            disk_read_label: string;
+            /** Disk Write Label */
+            disk_write_label: string;
+        };
+        /** CountsOut */
+        CountsOut: {
+            /** Apps */
+            apps: number;
+            /** Containers */
+            containers: number;
+            /** Running */
+            running: number;
+            /** Apps Label */
+            apps_label: string;
+            /** Containers Label */
+            containers_label: string;
+        };
         /** ErrorBody */
         ErrorBody: {
             /** Error */
@@ -516,6 +578,26 @@ export interface components {
             /** Containers */
             containers: components["schemas"]["ContainerOut"][];
         };
+        /**
+         * GroupUsage
+         * @description A Compose group with the sums of its containers.
+         */
+        GroupUsage: {
+            /** Project */
+            project: string | null;
+            /** Label */
+            label: string;
+            /** Cpu Percent */
+            cpu_percent: number | null;
+            /** Cpu Label */
+            cpu_label: string;
+            /** Mem Used */
+            mem_used: number | null;
+            /** Mem Label */
+            mem_label: string;
+            /** Containers */
+            containers: components["schemas"]["ContainerUsage"][];
+        };
         /** Health */
         Health: {
             /** Status */
@@ -543,6 +625,26 @@ export interface components {
             password: string;
             /** Totp Code */
             totp_code: string;
+        };
+        /** OverviewOut */
+        OverviewOut: {
+            /** Sampled At */
+            sampled_at: string | null;
+            /** Interval Seconds */
+            interval_seconds: number;
+            vm: components["schemas"]["VmOut"] | null;
+            counts: components["schemas"]["CountsOut"];
+            /** Groups */
+            groups: components["schemas"]["GroupUsage"][];
+            /** Ranges */
+            ranges: components["schemas"]["RangeOut"][];
+        };
+        /** RangeOut */
+        RangeOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
         };
         /** ReleaseSourceIn */
         ReleaseSourceIn: {
@@ -667,6 +769,44 @@ export interface components {
             summary: string;
             /** Release Notes */
             release_notes: string;
+        };
+        /**
+         * VmOut
+         * @description The current values of the Docker VM. The percents are for bars (0-100).
+         */
+        VmOut: {
+            /** Cpu Percent */
+            cpu_percent: number | null;
+            /** Cpu Label */
+            cpu_label: string;
+            /** Cores */
+            cores: number;
+            /** Mem Percent */
+            mem_percent: number;
+            /** Mem Label */
+            mem_label: string;
+            /** Containers Mem Label */
+            containers_mem_label: string;
+            /** Swap Percent */
+            swap_percent: number | null;
+            /** Swap Label */
+            swap_label: string;
+            /** Disk Percent */
+            disk_percent: number;
+            /** Disk Label */
+            disk_label: string;
+            /** Disk Read Label */
+            disk_read_label: string;
+            /** Disk Write Label */
+            disk_write_label: string;
+            /** Net Rx Label */
+            net_rx_label: string;
+            /** Net Tx Label */
+            net_tx_label: string;
+            /** Load Label */
+            load_label: string;
+            /** Uptime Label */
+            uptime_label: string;
         };
     };
     responses: never;
@@ -1404,6 +1544,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_overview_api_metrics_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                wt_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverviewOut"];
+                };
             };
             /** @description Validation error */
             422: {

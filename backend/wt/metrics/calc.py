@@ -16,6 +16,8 @@ class ContainerValues:
 
     # % of all VM cores (0-100).
     cpu_percent: float | None
+    # The number of cores that the container sees (online_cpus).
+    cpus: int
     mem_used: int
     mem_limit: int
     # Bytes per second.
@@ -57,6 +59,7 @@ def container_values(
     if before is None:
         return ContainerValues(
             cpu_percent=None,
+            cpus=after.online_cpus,
             mem_used=memory_used(after),
             mem_limit=after.mem_limit,
             net_rx_bps=None,
@@ -69,6 +72,7 @@ def container_values(
         cpu_percent=share_percent(
             after.cpu_total - before.cpu_total, after.system_cpu - before.system_cpu
         ),
+        cpus=after.online_cpus,
         mem_used=memory_used(after),
         mem_limit=after.mem_limit,
         net_rx_bps=rate(before.net_rx, after.net_rx, seconds),

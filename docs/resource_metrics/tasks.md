@@ -31,7 +31,7 @@ Rules:
 
 - [x] **2.1** `wt/metrics/labels.py`: labels for bytes (`3.1 GiB`), used of total (`3.1 / 8.0 GiB`), rates (`1.2 MB/s`), CPU (`9% (1.0 core)`), load (`0.52 / 0.40 / 0.35`) and uptime (`3 d 4 h`). None gives `-`.
   - **Test:** sample values, units at each boundary.
-- [ ] **2.2** `GET /api/metrics/overview` in `wt/api/metrics.py`: VM current values with labels, counts (apps rule and running of all), the groups in the order of `/api/containers` with sums and container current values, the ranges list (key and label), the interval. A stopped container has null values and `-` labels.
+- [x] **2.2** `GET /api/metrics/overview` in `wt/api/metrics.py`: VM current values with labels, counts (apps rule and running of all), the groups in the order of `/api/containers` with sums and container current values, the ranges list (key and label), the interval. A stopped container has null values and `-` labels.
   - **Test:** the apps count with projects and with containers that have no project. An excluded container is not counted. The group sums. Before the first poll, all values are null.
 - [ ] **2.3** `GET /api/metrics/sparklines`: the last 60 min of `1m` CPU and memory for each group (sum) and each container, on 60 fixed minute slots. Null for a gap.
   - **Test:** a gap gives null. A group value is the sum of its containers in that slot.

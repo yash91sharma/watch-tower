@@ -130,29 +130,40 @@ def container_out(
     )
 
 
+def compose_groups[T](
+    pairs: list[tuple[Container, T]],
+) -> list[tuple[str | None, list[tuple[Container, T]]]]:
+    """The pairs in Compose groups: groups by label, "Other" (no project) last.
+    In a group, the pairs stay in their order (the inventory sorts by name).
+    """
+    groups: dict[str | None, list[tuple[Container, T]]] = {}
+    for row, item in pairs:
+        groups.setdefault(row.compose_project, []).append((row, item))
+    projects = sorted(project for project in groups if project is not None)
+    ordered = [*projects, None] if None in groups else projects
+    return [(project, groups[project]) for project in ordered]
+
+
 @router.get("")
 def list_containers(ctx: Ctx) -> list[GroupOut]:
     """Containers that exist in Docker now and are not excluded, in Compose groups.
 
     Groups are sorted by label; "Other" (no project) is last. Containers by name.
     """
-    groups: dict[str | None, list[ContainerOut]] = {}
     with Session(ctx.engine) as session:
-        for row, live in ctx.inventory.live_rows(session):
-            groups.setdefault(row.compose_project, []).append(
-                container_out(session, row, live)
+        groups = compose_groups(ctx.inventory.live_rows(session))
+        result: list[GroupOut] = []
+        for project, pairs in groups:
+            containers = [container_out(session, row, live) for row, live in pairs]
+            result.append(
+                GroupOut(
+                    project=project,
+                    label=group_label(project),
+                    update=update_level(containers),
+                    containers=containers,
+                )
             )
-    projects = sorted(project for project in groups if project is not None)
-    ordered = [*projects, None] if None in groups else projects
-    return [
-        GroupOut(
-            project=project,
-            label=group_label(project),
-            update=update_level(groups[project]),
-            containers=sorted(groups[project], key=lambda item: item.name),
-        )
-        for project in ordered
-    ]
+        return result
 
 
 class UpdateOut(BaseModel):

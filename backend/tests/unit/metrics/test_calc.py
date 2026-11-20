@@ -80,6 +80,7 @@ def test_rate() -> None:
 def test_container_values_of_two_samples() -> None:
     assert container_values(FIRST, SECOND) == ContainerValues(
         cpu_percent=1.0,
+        cpus=10,
         mem_used=500,
         mem_limit=1000,
         net_rx_bps=1000.0,
@@ -94,6 +95,7 @@ def test_the_first_sample_has_memory_but_no_cpu_and_no_rates() -> None:
 
     assert values == ContainerValues(
         cpu_percent=None,
+        cpus=10,
         mem_used=500,
         mem_limit=1000,
         net_rx_bps=None,
