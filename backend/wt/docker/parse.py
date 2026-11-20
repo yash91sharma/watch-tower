@@ -1,10 +1,11 @@
-"""Parse rules for Docker data (pure functions): name, Compose project, exclude label,
-image reference and release source.
+"""Parse rules for Docker data (pure functions): name, time, Compose project, exclude
+label, image reference and release source.
 """
 
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from urllib.parse import urlsplit
 
 PROJECT_LABEL = "com.docker.compose.project"
@@ -36,6 +37,22 @@ class ImageRef:
 def container_name(raw: str) -> str:
     """Docker names start with "/". WT names do not."""
     return raw.lstrip("/")
+
+
+def docker_time(stamp: str) -> datetime | None:
+    """A Docker time in UTC, for example "2026-11-20T01:42:46.871458168Z". None if it
+    is not a Docker time. Docker gives ns. Python keeps µs, so the rest is cut.
+    """
+    if not stamp.endswith("Z"):
+        return None
+    seconds, _, fraction = stamp[:-1].partition(".")
+    try:
+        time = datetime.fromisoformat(seconds).replace(tzinfo=UTC)
+    except ValueError:
+        return None
+    if fraction.isdigit():
+        time = time.replace(microsecond=int(fraction[:6].ljust(6, "0")))
+    return time
 
 
 def compose_project(labels: Mapping[str, str]) -> str | None:

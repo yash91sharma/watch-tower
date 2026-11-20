@@ -20,7 +20,7 @@ import aiohttp
 from aiohappyeyeballs import AddrInfoType
 
 from wt.docker.logs import LogDecoder, LogLine
-from wt.docker.parse import container_name
+from wt.docker.parse import container_name, docker_time
 
 # The container events that WT uses.
 EventAction = Literal["start", "die", "health_status", "destroy"]
@@ -138,8 +138,11 @@ def container_stats(data: Mapping[str, Any]) -> ContainerStats:
     inactive = memory_detail.get(
         "inactive_file", memory_detail.get("total_inactive_file")
     )
+    time = docker_time(str(data.get("read", "")))
+    if time is None:
+        raise ValueError(f"Not a Docker time: {data.get('read')!r}")
     return ContainerStats(
-        time=_docker_time(str(data.get("read", ""))),
+        time=time,
         cpu_total=int((cpu.get("cpu_usage") or {}).get("total_usage", 0)),
         system_cpu=int(cpu.get("system_cpu_usage", 0)),
         online_cpus=int(cpu.get("online_cpus", 0)),
@@ -159,15 +162,6 @@ def _disk_bytes(items: list[Mapping[str, Any]], op: str) -> int:
         for item in items
         if str(item.get("op", "")).lower() == op
     )
-
-
-def _docker_time(value: str) -> datetime:
-    """A Docker time, for example "2026-11-20T01:42:46.871458168Z". Python reads only
-    6 digits of the fraction, so the rest is cut.
-    """
-    main, _, fraction = value.removesuffix("Z").partition(".")
-    text = f"{main}.{fraction[:6]}" if fraction else main
-    return datetime.fromisoformat(text).replace(tzinfo=UTC)
 
 
 def docker_event(data: Mapping[str, Any]) -> DockerEvent | None:

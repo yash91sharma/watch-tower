@@ -1,5 +1,7 @@
 """Tests for wt.docker.parse (pure rules)."""
 
+from datetime import UTC, datetime
+
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
@@ -9,6 +11,7 @@ from wt.docker.parse import (
     InvalidImageRefError,
     compose_project,
     container_name,
+    docker_time,
     group_label,
     is_excluded,
     parse_image,
@@ -115,3 +118,28 @@ def test_any_text_gives_a_result_or_a_typed_error(text: str) -> None:
 def test_group_label() -> None:
     assert group_label("site") == "site"
     assert group_label(None) == "Other"
+
+
+@pytest.mark.parametrize(
+    ("stamp", "time"),
+    [
+        # Docker gives ns. Python keeps µs, so the rest is cut.
+        (
+            "2026-11-20T01:42:46.871458168Z",
+            datetime(2026, 11, 20, 1, 42, 46, 871458, tzinfo=UTC),
+        ),
+        ("2026-01-01T00:00:01.5Z", datetime(2026, 1, 1, 0, 0, 1, 500000, tzinfo=UTC)),
+        ("2026-01-01T00:00:01Z", datetime(2026, 1, 1, 0, 0, 1, tzinfo=UTC)),
+        # A stopped container.
+        ("0001-01-01T00:00:00Z", datetime(1, 1, 1, tzinfo=UTC)),
+    ],
+)
+def test_docker_time(stamp: str, time: datetime) -> None:
+    assert docker_time(stamp) == time
+
+
+@pytest.mark.parametrize(
+    "stamp", ["", "no time", "2026-01-01T00:00:01", "2026-99-99T00:00:00Z"]
+)
+def test_docker_time_of_a_bad_value_is_none(stamp: str) -> None:
+    assert docker_time(stamp) is None

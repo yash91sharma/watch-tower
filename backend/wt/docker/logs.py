@@ -5,8 +5,10 @@ stream has frames that tell stdout from stderr.
 """
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Literal
+
+from wt.docker.parse import docker_time
 
 Stream = Literal["stdout", "stderr"]
 
@@ -22,24 +24,10 @@ class LogLine:
 def parse_log_line(raw: str, stream: Stream) -> LogLine:
     """Split "<RFC 3339 time with ns> <text>" into time and text."""
     stamp, _, text = raw.partition(" ")
-    time = _parse_time(stamp)
+    time = docker_time(stamp)
     if time is None:
         return LogLine(None, stream, raw)
     return LogLine(time, stream, text)
-
-
-def _parse_time(stamp: str) -> datetime | None:
-    if not stamp.endswith("Z"):
-        return None
-    seconds, _, fraction = stamp[:-1].partition(".")
-    # Python keeps microseconds. Docker gives nanoseconds.
-    try:
-        time = datetime.fromisoformat(seconds).replace(tzinfo=UTC)
-    except ValueError:
-        return None
-    if fraction.isdigit():
-        time = time.replace(microsecond=int(fraction[:6].ljust(6, "0")))
-    return time
 
 
 # The size of a frame header in the log stream.

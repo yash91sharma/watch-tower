@@ -118,6 +118,11 @@ def test_container_stats_from_cgroup_v1() -> None:
     assert (stats.disk_read, stats.disk_write) == (7, 3)
 
 
+def test_container_stats_with_a_bad_time_is_an_error() -> None:
+    with pytest.raises(ValueError, match="Docker time"):
+        container_stats({"read": "bad"})
+
+
 def test_container_stats_of_a_stopped_container() -> None:
     # Docker gives zero values and no system_cpu_usage for a stopped container.
     data = {
