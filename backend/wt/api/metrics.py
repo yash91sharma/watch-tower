@@ -44,14 +44,16 @@ class RangeOut(BaseModel):
     label: str
 
 
-# The chart ranges, in the order of the dropdown.
-RANGES = [
-    RangeOut(key="1h", label="1 hour"),
-    RangeOut(key="6h", label="6 hours"),
-    RangeOut(key="24h", label="24 hours"),
-    RangeOut(key="7d", label="7 days"),
-    RangeOut(key="30d", label="30 days"),
-]
+# The chart ranges, in the order of the dropdown: the label, the length and the tier
+# that the range reads (see the tiers in METRIC_MAX_AGE).
+RANGE_DEFS: dict[RangeKey, tuple[str, timedelta, MetricTier]] = {
+    "1h": ("1 hour", timedelta(hours=1), MetricTier.MINUTE),
+    "6h": ("6 hours", timedelta(hours=6), MetricTier.MINUTE),
+    "24h": ("24 hours", timedelta(hours=24), MetricTier.MINUTE),
+    "7d": ("7 days", timedelta(days=7), MetricTier.QUARTER),
+    "30d": ("30 days", timedelta(days=30), MetricTier.HOUR),
+}
+RANGES = [RangeOut(key=key, label=label) for key, (label, _, _) in RANGE_DEFS.items()]
 
 
 class VmOut(BaseModel):
@@ -292,14 +294,6 @@ def get_sparklines(ctx: Ctx) -> SparklinesOut:
     return SparklinesOut(start=start, containers=lines)
 
 
-# Each range: its length and the tier that it reads (see the tiers in METRIC_MAX_AGE).
-RANGE_TIERS: dict[RangeKey, tuple[timedelta, MetricTier]] = {
-    "1h": (timedelta(hours=1), MetricTier.MINUTE),
-    "6h": (timedelta(hours=6), MetricTier.MINUTE),
-    "24h": (timedelta(hours=24), MetricTier.MINUTE),
-    "7d": (timedelta(days=7), MetricTier.QUARTER),
-    "30d": (timedelta(days=30), MetricTier.HOUR),
-}
 # The query `?range=`. The name in Python is range_key, because `range` is a built-in.
 RangeQuery = Annotated[RangeKey, Query(alias="range")]
 TIER_STEPS = {
@@ -356,7 +350,7 @@ class _Slots:
     """The time slots of a range. The current step is not in it (it is not saved yet)."""
 
     def __init__(self, range_key: RangeKey) -> None:
-        length, self.tier = RANGE_TIERS[range_key]
+        _, length, self.tier = RANGE_DEFS[range_key]
         self.step = TIER_STEPS[self.tier]
         now = clock.now()
         # The start of the current step: the minute, the quarter or the hour. Each step
