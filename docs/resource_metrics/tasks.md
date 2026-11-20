@@ -14,7 +14,7 @@ Rules:
   - **Test:** default, a value not in the list fails validation, the config export and import have it.
 - [x] **1.2** Docker stats in `wt/docker/client.py`: dataclass `ContainerStats` (read time, cpu_total, system_cpu, online_cpus, mem_usage, mem_inactive_file, mem_limit, net_rx, net_tx, disk_read, disk_write), parser `container_stats(data)`, `DockerApi.stats(container_id)` with `stream=false&one-shot=true`. Add `stats` to `FakeDocker` (the test sets the counters).
   - **Test:** the parser with a sample from Docker 29 (cgroup v2), with no `networks` and with no `blkio` values. Docker test (`-m docker`): `stats` of `wt_test_healthy` through the socket proxy gives counters in less than 200 ms.
-- [ ] **1.3** `wt/metrics/calc.py`: pure functions for container CPU % of the VM, cores, memory used, byte rates. A counter that goes down gives None.
+- [x] **1.3** `wt/metrics/calc.py`: pure functions for container CPU % of the VM, cores, memory used, byte rates. A counter that goes down gives None.
   - **Test:** sample values. Hypothesis: CPU % is in 0..100 and cores are in 0..online_cpus for each valid pair of samples.
 - [ ] **1.4** `wt/metrics/vm.py`: read `/proc/stat`, `/proc/meminfo`, `/proc/loadavg`, `/proc/uptime`, `/proc/diskstats`, `/sys/block` and `statvfs(data_dir)`. The root dir is a parameter (tests give a fixture dir). VM CPU % and disk rates come from the delta of two reads (use `calc`).
   - **Test:** fixture files give the expected values. `loop*`, `ram*`, `zram*` and `dm-*` are not counted. A missing file raises a clear error. Docker test: a read in a `wt_test_vm` container gives `MemTotal` equal to `docker info` `MemTotal`.
