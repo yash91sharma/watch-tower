@@ -7,6 +7,7 @@ from datetime import datetime
 from wt.docker.client import (
     ContainerInfo,
     ContainerNotFoundError,
+    ContainerStats,
     DockerEvent,
     DockerUnavailableError,
 )
@@ -22,6 +23,8 @@ class FakeDocker:
         self._events: asyncio.Queue[DockerEvent | None] = asyncio.Queue()
         # Container name -> its log lines.
         self.log_lines: dict[str, list[LogLine]] = {}
+        # Container name -> its stats sample.
+        self.stats_values: dict[str, ContainerStats] = {}
 
     # Test controls.
 
@@ -56,6 +59,10 @@ class FakeDocker:
             if container_id in (info.id, info.name):
                 return info
         raise ContainerNotFoundError(container_id)
+
+    async def stats(self, container_id: str) -> ContainerStats:
+        info = await self.inspect(container_id)
+        return self.stats_values[info.name]
 
     async def events(self) -> AsyncIterator[DockerEvent]:
         self._check()

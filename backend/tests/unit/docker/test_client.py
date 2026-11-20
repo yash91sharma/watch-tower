@@ -14,9 +14,11 @@ from wt.docker import client
 from wt.docker.client import (
     ContainerInfo,
     ContainerNotFoundError,
+    ContainerStats,
     DockerEvent,
     DockerUnavailableError,
     container_info,
+    container_stats,
     docker_event,
 )
 
@@ -30,6 +32,104 @@ INSPECT = {
         "Labels": {"com.docker.compose.project": "site"},
     },
 }
+
+
+# GET /containers/{id}/stats?stream=false&one-shot=true from Docker 29 (cgroup v2), shortened.
+STATS = {
+    "read": "2026-11-20T01:42:46.871458168Z",
+    "cpu_stats": {
+        "cpu_usage": {"total_usage": 2674526453000},
+        "system_cpu_usage": 7255789130000000,
+        "online_cpus": 11,
+    },
+    "memory_stats": {
+        "usage": 847872,
+        "stats": {"inactive_file": 4096, "anon": 262144},
+        "limit": 8321568768,
+    },
+    "networks": {
+        "eth0": {"rx_bytes": 1082, "tx_bytes": 126},
+        "eth1": {"rx_bytes": 18, "tx_bytes": 4},
+    },
+    "blkio_stats": {
+        "io_service_bytes_recursive": [
+            {"major": 254, "minor": 0, "op": "read", "value": 4096},
+            {"major": 254, "minor": 0, "op": "write", "value": 512},
+            {"major": 254, "minor": 16, "op": "read", "value": 100},
+        ]
+    },
+    "precpu_stats": {"cpu_usage": {"total_usage": 0}},
+}
+
+
+def test_container_stats_from_docker() -> None:
+    assert container_stats(STATS) == ContainerStats(
+        time=datetime(2026, 11, 20, 1, 42, 46, 871458, tzinfo=UTC),
+        cpu_total=2674526453000,
+        system_cpu=7255789130000000,
+        online_cpus=11,
+        mem_usage=847872,
+        mem_inactive_file=4096,
+        mem_limit=8321568768,
+        net_rx=1100,
+        net_tx=130,
+        disk_read=4196,
+        disk_write=512,
+    )
+
+
+def test_container_stats_with_no_network_and_no_disk_values() -> None:
+    # A container with network_mode none has no networks. cgroup v2 can give null lists.
+    data = {**STATS, "blkio_stats": {"io_service_bytes_recursive": None}}
+    del data["networks"]
+
+    stats = container_stats(data)
+
+    assert (stats.net_rx, stats.net_tx, stats.disk_read, stats.disk_write) == (
+        0,
+        0,
+        0,
+        0,
+    )
+
+
+def test_container_stats_from_cgroup_v1() -> None:
+    # cgroup v1: "total_inactive_file" and the ops "Read" and "Write".
+    data = {
+        **STATS,
+        "memory_stats": {
+            "usage": 900,
+            "stats": {"total_inactive_file": 100},
+            "limit": 1000,
+        },
+        "blkio_stats": {
+            "io_service_bytes_recursive": [
+                {"op": "Read", "value": 7},
+                {"op": "Write", "value": 3},
+                {"op": "Total", "value": 10},
+            ]
+        },
+    }
+
+    stats = container_stats(data)
+
+    assert stats.mem_inactive_file == 100
+    assert (stats.disk_read, stats.disk_write) == (7, 3)
+
+
+def test_container_stats_of_a_stopped_container() -> None:
+    # Docker gives zero values and no system_cpu_usage for a stopped container.
+    data = {
+        "read": "0001-01-01T00:00:00Z",
+        "cpu_stats": {"cpu_usage": {"total_usage": 0}},
+        "memory_stats": {},
+    }
+
+    stats = container_stats(data)
+
+    assert stats.system_cpu == 0
+    assert stats.online_cpus == 0
+    assert (stats.mem_usage, stats.mem_limit) == (0, 0)
 
 
 def test_container_info_from_inspect() -> None:
@@ -119,6 +219,20 @@ async def test_fake_docker_has_the_same_calls() -> None:
 
 
 @pytest.mark.anyio
+async def test_fake_docker_gives_the_stats_that_the_test_sets() -> None:
+    fake = FakeDocker()
+    info = container_info(INSPECT)
+    fake.add(info)
+    stats = container_stats(STATS)
+    fake.stats_values["web"] = stats
+
+    assert await fake.stats("abc123") == stats
+    assert await fake.stats("web") == stats
+    with pytest.raises(ContainerNotFoundError):
+        await fake.stats("nope")
+
+
+@pytest.mark.anyio
 async def test_fake_docker_events_end_when_the_stream_ends() -> None:
     fake = FakeDocker()
     event = DockerEvent("start", "abc", "web", datetime(2026, 1, 1, tzinfo=UTC), None)
@@ -139,6 +253,8 @@ async def test_fake_docker_can_fail(clock: object) -> None:
         await fake.ping()
     with pytest.raises(Exception, match="Docker"):
         await asyncio.wait_for(anext(fake.events()), 1)
+    with pytest.raises(Exception, match="Docker"):
+        await fake.stats("web")
 
 
 def test_ruff_bans_aiodocker_outside_wt_docker() -> None:

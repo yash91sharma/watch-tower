@@ -1,5 +1,7 @@
 """Docker test: the client through the socket proxy (task 6.2)."""
 
+import time
+
 import pytest
 
 from tests.docker.env import PROXY_URL, VERSIONED_SOURCE
@@ -28,3 +30,22 @@ async def test_ping_list_and_inspect_through_the_proxy(
     assert healthy.labels["com.docker.compose.project"] == "wt_test"
     assert versioned.labels["org.opencontainers.image.source"] == VERSIONED_SOURCE
     assert versioned.image == "wt_test/versioned:1.0.0"
+
+
+async def test_stats_through_the_proxy_are_fast(docker_env: dict[str, str]) -> None:
+    assert docker_env
+    client = DockerClient(PROXY_URL.replace("http://", "tcp://"))
+    try:
+        await client.stats("wt_test_healthy")  # The first call opens the connection.
+        start = time.perf_counter()
+        stats = await client.stats("wt_test_healthy")
+        seconds = time.perf_counter() - start
+    finally:
+        await client.close()
+
+    # one-shot: Docker does not wait 1 s for a second sample.
+    assert seconds < 0.2
+    assert stats.cpu_total > 0
+    assert stats.system_cpu > 0
+    assert stats.online_cpus > 0
+    assert 0 < stats.mem_usage <= stats.mem_limit

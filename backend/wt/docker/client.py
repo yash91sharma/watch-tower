@@ -60,6 +60,30 @@ class DockerEvent:
     health: str | None
 
 
+@dataclass(frozen=True)
+class ContainerStats:
+    """The resource counters of a container at one time. All counters only go up
+    (until the container restarts). A rate is the change between two samples.
+    """
+
+    # The time of the sample (Docker "read").
+    time: datetime
+    # CPU time of the container (ns), and of all CPUs of the host (ns).
+    cpu_total: int
+    system_cpu: int
+    online_cpus: int
+    # Memory (bytes). Used = usage - inactive_file (the same as `docker stats`).
+    mem_usage: int
+    mem_inactive_file: int
+    # The memory limit of the container, or the host memory if it has no limit.
+    mem_limit: int
+    # Sums of all networks and all block devices (bytes).
+    net_rx: int
+    net_tx: int
+    disk_read: int
+    disk_write: int
+
+
 class DockerApi(Protocol):
     async def ping(self) -> None: ...
 
@@ -68,6 +92,10 @@ class DockerApi(Protocol):
         ...
 
     async def inspect(self, container_id: str) -> ContainerInfo: ...
+
+    async def stats(self, container_id: str) -> ContainerStats:
+        """One sample of the resource counters (one-shot: Docker does not wait 1 s)."""
+        ...
 
     def events(self) -> AsyncIterator[DockerEvent]:
         """Container events. The iteration ends when the stream stops."""
@@ -96,6 +124,50 @@ def container_info(data: Mapping[str, Any]) -> ContainerInfo:
         health=str(health.get("Status", "none")),
         tty=bool(config.get("Tty", False)),
     )
+
+
+def container_stats(data: Mapping[str, Any]) -> ContainerStats:
+    """From GET /containers/{id}/stats. A missing value is 0."""
+    cpu: Mapping[str, Any] = data.get("cpu_stats") or {}
+    memory: Mapping[str, Any] = data.get("memory_stats") or {}
+    memory_detail: Mapping[str, Any] = memory.get("stats") or {}
+    networks: Mapping[str, Mapping[str, Any]] = data.get("networks") or {}
+    blkio: Mapping[str, Any] = data.get("blkio_stats") or {}
+    disk: list[Mapping[str, Any]] = blkio.get("io_service_bytes_recursive") or []
+    # cgroup v2 has "inactive_file", cgroup v1 has "total_inactive_file".
+    inactive = memory_detail.get(
+        "inactive_file", memory_detail.get("total_inactive_file")
+    )
+    return ContainerStats(
+        time=_docker_time(str(data.get("read", ""))),
+        cpu_total=int((cpu.get("cpu_usage") or {}).get("total_usage", 0)),
+        system_cpu=int(cpu.get("system_cpu_usage", 0)),
+        online_cpus=int(cpu.get("online_cpus", 0)),
+        mem_usage=int(memory.get("usage", 0)),
+        mem_inactive_file=int(inactive or 0),
+        mem_limit=int(memory.get("limit", 0)),
+        net_rx=sum(int(item.get("rx_bytes", 0)) for item in networks.values()),
+        net_tx=sum(int(item.get("tx_bytes", 0)) for item in networks.values()),
+        disk_read=_disk_bytes(disk, "read"),
+        disk_write=_disk_bytes(disk, "write"),
+    )
+
+
+def _disk_bytes(items: list[Mapping[str, Any]], op: str) -> int:
+    return sum(
+        int(item.get("value", 0))
+        for item in items
+        if str(item.get("op", "")).lower() == op
+    )
+
+
+def _docker_time(value: str) -> datetime:
+    """A Docker time, for example "2026-11-20T01:42:46.871458168Z". Python reads only
+    6 digits of the fraction, so the rest is cut.
+    """
+    main, _, fraction = value.removesuffix("Z").partition(".")
+    text = f"{main}.{fraction[:6]}" if fraction else main
+    return datetime.fromisoformat(text).replace(tzinfo=UTC)
 
 
 def docker_event(data: Mapping[str, Any]) -> DockerEvent | None:
@@ -152,6 +224,15 @@ class DockerClient:
         with _errors():
             data = await self._docker.containers.container(container_id).show()
         return container_info(data)
+
+    async def stats(self, container_id: str) -> ContainerStats:
+        # aiodocker has no one-shot option, so WT reads the response itself.
+        params = {"stream": "false", "one-shot": "true"}
+        with _errors():
+            data = await self._docker._query_json(  # pyright: ignore[reportPrivateUsage]
+                f"containers/{container_id}/stats", params=params
+            )
+        return container_stats(data)
 
     async def events(self) -> AsyncIterator[DockerEvent]:
         filters = json.dumps({"type": ["container"], "event": list(EVENT_ACTIONS)})

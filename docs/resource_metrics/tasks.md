@@ -12,7 +12,7 @@ Rules:
 
 - [x] **1.1** Setting `metrics_interval_seconds` in `Settings` (`wt/config.py`): `Literal[5, 10, 15, 30, 60]`, default 10.
   - **Test:** default, a value not in the list fails validation, the config export and import have it.
-- [ ] **1.2** Docker stats in `wt/docker/client.py`: dataclass `ContainerStats` (read time, cpu_total, system_cpu, online_cpus, mem_usage, mem_inactive_file, mem_limit, net_rx, net_tx, disk_read, disk_write), parser `container_stats(data)`, `DockerApi.stats(container_id)` with `stream=false&one-shot=true`. Add `stats` to `FakeDocker` (the test sets the counters).
+- [x] **1.2** Docker stats in `wt/docker/client.py`: dataclass `ContainerStats` (read time, cpu_total, system_cpu, online_cpus, mem_usage, mem_inactive_file, mem_limit, net_rx, net_tx, disk_read, disk_write), parser `container_stats(data)`, `DockerApi.stats(container_id)` with `stream=false&one-shot=true`. Add `stats` to `FakeDocker` (the test sets the counters).
   - **Test:** the parser with a sample from Docker 29 (cgroup v2), with no `networks` and with no `blkio` values. Docker test (`-m docker`): `stats` of `wt_test_healthy` through the socket proxy gives counters in less than 200 ms.
 - [ ] **1.3** `wt/metrics/calc.py`: pure functions for container CPU % of the VM, cores, memory used, byte rates. A counter that goes down gives None.
   - **Test:** sample values. Hypothesis: CPU % is in 0..100 and cores are in 0..online_cpus for each valid pair of samples.
