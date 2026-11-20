@@ -1,5 +1,6 @@
 """Containers API: the list, the detail and the release source."""
 
+from collections.abc import Mapping
 from datetime import datetime
 from typing import Literal, cast, get_args
 from urllib.parse import quote
@@ -110,9 +111,13 @@ def update_level(containers: list[ContainerOut]) -> UpdateLevel:
 
 
 def container_out(
-    row: Container, live: LiveContainer, cache: RepoCache | None, update: Update | None
+    row: Container,
+    live: LiveContainer,
+    caches: Mapping[str, RepoCache],
+    update: Update | None,
 ) -> ContainerOut:
-    """One container. `cache`: its repo cache. `update`: its current update."""
+    """One container. `caches`: the repo caches by repo. `update`: its current update."""
+    cache = caches.get(row.release_source or "")
     status = container_status(row.tag, row.release_source, cache)
     known = status in (Status.UPDATE, Status.UP_TO_DATE)
     # Docker keeps the last health of a stopped container, so only a running one has one.
@@ -161,12 +166,7 @@ def list_containers(ctx: Ctx) -> list[GroupOut]:
         result: list[GroupOut] = []
         for group in groups:
             containers = [
-                container_out(
-                    row,
-                    live,
-                    caches.get(row.release_source or ""),
-                    updates.get(row.name),
-                )
+                container_out(row, live, caches, updates.get(row.name))
                 for row, live in group.members
             ]
             result.append(
@@ -225,9 +225,7 @@ def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
             .order_by(col(Event.time).desc())
         )
         return ContainerDetail(
-            **container_out(
-                row, live, caches.get(row.release_source or ""), update
-            ).model_dump(),
+            **container_out(row, live, caches, update).model_dump(),
             update=UpdateOut.model_validate(update, from_attributes=True)
             if update
             else None,
