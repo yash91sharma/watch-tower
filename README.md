@@ -1,6 +1,6 @@
 # Watch Tower
 
-Watch Tower (WT) watches the Docker containers of a home-lab server. It shows the state and the health of each container. It finds new versions on GitHub and tells you which updates are important. It sends notifications to ntfy. It shows the live logs.
+Watch Tower (WT) watches the Docker containers of a home-lab server. It shows the state and the health of each container. It finds new versions on GitHub and tells you which updates are important. It sends notifications to ntfy. It shows the live logs. It shows the CPU, memory, disk and network use of the Docker VM and of each container.
 
 WT is for 1 admin and some tens of containers on one Docker host.
 
@@ -78,6 +78,18 @@ The reset deletes the password, the TOTP key and all sessions. After the restart
 Do not copy `wt.db` while WT runs. The copy can lose data that is still in the WAL file.
 
 To move only the settings and the release sources, use Export and Import on the Settings page. The export has no secrets.
+
+## Resource metrics
+
+The Overview page (`/`) shows the resources of the Docker VM (on OrbStack, the Linux VM of OrbStack), the number of apps and containers, and the CPU and memory of each app and container. App details (`/apps`) and the container page show the values of each container.
+
+ - WT gets the values at the metrics interval on the Settings page (5 to 60 s, default 10 s). It saves the average of each minute in the DB.
+ - The graphs show 1 hour to 30 days. A change of the range in one graph changes all graphs. WT keeps the 1-minute values for 24 h, the 15-minute values for 7 days and the 1-hour values for 30 days. For 100 containers, this is about 30 MB.
+ - CPU % is the part of all cores of the VM (100% = all cores are busy). The label also gives the number of cores.
+ - Memory is the memory of the container minus its inactive file cache, the same as `docker stats`. On OrbStack, the total memory of the VM is the memory limit in the OrbStack settings.
+ - WT has its own network, so the VM network is the sum of the networks of the containers.
+ - WT reads the VM values from `/proc` in its container, and the disk size of its data volume. The socket proxy already allows `GET /containers/{id}/stats`, so WT needs no more access.
+ - WT does not get the values of the containers with `wt.enable=false` and does not count them. The VM values include them.
 
 ## Env vars
 

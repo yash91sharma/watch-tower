@@ -68,5 +68,5 @@ Rules:
 
 ## 5. Docs and release
 
-- [ ] **5.1** README: the Overview page, the meaning of the numbers (CPU % of the VM, memory, OrbStack memory limit, VM network = sum of containers), the interval setting, the DB size.
+- [x] **5.1** README: the Overview page, the meaning of the numbers (CPU % of the VM, memory, OrbStack memory limit, VM network = sum of containers), the interval setting, the DB size.
 - [ ] **5.2** At the release: add the DB dump of the new version in `backend/tests/fixtures/db/` (the release adds migration `0002`).

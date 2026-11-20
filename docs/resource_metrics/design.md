@@ -6,7 +6,7 @@ WT shows the resource use of the Docker VM (the OrbStack Linux VM) and of each a
 
 ### Scope
  - New home page **Overview** (`/`): VM values and graphs, app and container counts, the app list with CPU and memory.
- - **App details** (`/apps`): the current container list, plus CPU and memory in each row and a **Logs** button.
+ - **App details** (`/apps`): the current container list, plus CPU and memory in each row and a **Logs** link.
  - Container page: a **Resources** section.
  - Setting: poll interval.
 
@@ -50,7 +50,7 @@ The worker makes its own Docker client (`ctx.docker_factory`). It polls with at 
 | Value | Rule |
 |---|---|
 | Container CPU % | `Δcpu_usage.total / Δsystem_cpu_usage × 100` (% of all VM cores). Cores = same ratio × `online_cpus`. |
-| Container memory | `usage - inactive_file`. Limit: the container limit, or the VM total when there is no limit. |
+| Container memory | `usage - inactive_file`. Limit: the container limit, or the VM total when there is no limit. A label gives each unit when they are different (`18.4 MiB / 7.8 GiB`). |
 | Rates (net, disk I/O) | Δbytes / Δtime of the Docker `read` time. A counter that goes down (restart) gives no value. |
 | First poll of a container | No CPU or rate value ("-"). |
 | VM CPU % | `/proc/stat` line `cpu`: 1 - Δ(idle + iowait) / Δtotal. Cores: the number of `cpuN` lines. |
@@ -94,7 +94,7 @@ Refinement of D7: the sparklines have their own route. They change once a minute
 
  - Top nav: Overview, Apps, Settings. The sidebar does not change.
  - **Overview**: VM tiles (CPU, memory, swap, disk, disk I/O, network, load, uptime), VM charts (CPU, memory, disk I/O, network, load) each with the shared range dropdown, counts (link to `/apps`), the app list (group header with sums and sparkline, container rows with CPU, memory and sparkline). A container opens its page. A group opens `/apps?group=<label>`.
- - **App details**: the current page, plus CPU and Memory columns (label and sparkline) and a Logs button in each row. `?group=` opens that group and scrolls to it.
+ - **App details**: the current page, plus CPU and Memory columns (label and sparkline; only the used memory, so the table stays narrow) and a Logs icon link next to each name. `?group=` opens that group and scrolls to it.
  - **Container page**: a Resources section with the current values and charts for CPU, memory, network and disk I/O.
  - **Settings**: poll interval select.
  - All charts use one shared range. Each chart has the range dropdown. A change in one dropdown changes all charts on all pages. The browser keeps the range in localStorage (`wt.metricsRange`, default 1h).
