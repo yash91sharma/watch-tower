@@ -1,9 +1,11 @@
 import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { FakeEventSource } from "@/test/eventSource";
 import { renderRoute } from "@/test/render";
+import { server } from "@/test/server";
 
 const logStream = () => FakeEventSource.instances.filter((source) => source.url.includes("/logs?")).at(-1);
 
@@ -52,6 +54,25 @@ test("the page shows a stream error", async () => {
   });
 
   expect(screen.getByRole("alert")).toHaveTextContent("Docker is not connected");
+});
+
+test("an unknown container shows the API error, not the stream error", async () => {
+  server.use(
+    http.get("*/api/containers/:name", () =>
+      HttpResponse.json({ error: "Not Found", detail: "No container 'web'" }, { status: 404 }),
+    ),
+  );
+  renderRoute("/containers/web/logs");
+  await screen.findByRole("heading", { level: 1, name: "Logs: web" });
+
+  act(() => {
+    logStream()?.fail();
+  });
+
+  await waitFor(() => {
+    expect(screen.getByRole("alert")).toHaveTextContent("No container 'web'");
+  });
+  expect(screen.getAllByRole("alert")).toHaveLength(1);
 });
 
 test("search highlights the matches and gives the count, not case-sensitive", async () => {

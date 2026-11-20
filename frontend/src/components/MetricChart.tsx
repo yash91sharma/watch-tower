@@ -9,7 +9,7 @@ import "uplot/dist/uPlot.min.css";
 
 import type { Chart, RangeKey } from "@/api/types";
 import { useMetricsRange } from "@/lib/metricsRange";
-import { axisSize, formatTick, formatTicks } from "@/lib/ticks";
+import { axisSize, BYTE_STEPS, formatTick, formatTicks } from "@/lib/ticks";
 
 const HEIGHT = 160;
 // The validated series colors (index.css: --series-1 to --series-3). No chart has more.
@@ -41,6 +41,7 @@ function options(chart: Chart, width: number): uPlot.Options {
         // The tick labels have enough decimals to tell them apart, and the axis fits them.
         size: (_: uPlot, labels: string[] | undefined) => axisSize(labels),
         values: (_: uPlot, ticks: number[]) => formatTicks(ticks, chart.unit),
+        ...(chart.unit === "bytes" || chart.unit === "bytes_per_second" ? { incrs: BYTE_STEPS } : {}),
       },
     ],
     scales: {
@@ -59,10 +60,13 @@ export function MetricChart({
   chart,
   times,
   ranges,
+  emptyLabel = null,
 }: {
   chart: Chart;
   times: number[];
   ranges: { key: RangeKey; label: string }[];
+  /** The text of the API for a range with no values. It shows on the chart. */
+  emptyLabel?: string | null;
 }) {
   const [range, setRange] = useMetricsRange(ranges);
   const box = useRef<HTMLDivElement>(null);
@@ -104,7 +108,14 @@ export function MetricChart({
           ))}
         </select>
       </div>
-      <div ref={box} role="img" aria-label={`${chart.title} chart`} className="text-xs" />
+      <div className="relative">
+        <div ref={box} role="img" aria-label={`${chart.title} chart`} className="text-xs" />
+        {emptyLabel && (
+          <p className="pointer-events-none absolute inset-x-6 top-12 text-center text-sm text-muted-foreground">
+            {emptyLabel}
+          </p>
+        )}
+      </div>
     </section>
   );
 }

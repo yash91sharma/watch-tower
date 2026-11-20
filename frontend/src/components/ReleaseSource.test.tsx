@@ -117,6 +117,8 @@ test("with no source, the page says so and edit starts with an empty value", asy
   const form = await section();
 
   expect(form.getByText("No release source")).toBeInTheDocument();
+  // Nothing to confirm.
+  expect(form.queryByText("not confirmed")).not.toBeInTheDocument();
   expect(form.queryByRole("button", { name: "Confirm" })).not.toBeInTheDocument();
   await user.click(form.getByRole("button", { name: "Edit" }));
 

@@ -62,11 +62,35 @@ def field_errors(errors: Sequence[Any]) -> list[FieldError]:
     return [_field_error(error) for error in errors]
 
 
+# Short texts for the number errors of Pydantic. {limit} is the limit in the error context.
+_NUMBER_TEXTS = {
+    "greater_than_equal": ("ge", "Give a number of {limit} or more"),
+    "less_than_equal": ("le", "Give a number of {limit} or less"),
+    "greater_than": ("gt", "Give a number more than {limit}"),
+    "less_than": ("lt", "Give a number less than {limit}"),
+}
+_WHOLE_NUMBER_TYPES = {"int_parsing", "int_from_float", "int_type"}
+# Pydantic puts this before the text of a ValueError in a validator.
+_VALUE_ERROR_PREFIX = "Value error, "
+
+
 def _field_error(error: Any) -> FieldError:
     location = [str(part) for part in error.get("loc", ())]
     if location and location[0] in _SOURCES:
         location = location[1:]
-    return FieldError(field=".".join(location), message=str(error.get("msg", "")))
+    return FieldError(field=".".join(location), message=_message(error))
+
+
+def _message(error: Any) -> str:
+    """The text of one error: short for numbers, the validator text for a ValueError."""
+    kind = error.get("type")
+    message = str(error.get("msg", ""))
+    if kind in _NUMBER_TEXTS:
+        key, text = _NUMBER_TEXTS[kind]
+        return text.format(limit=error["ctx"][key])
+    if kind in _WHOLE_NUMBER_TYPES:
+        return "Give a whole number"
+    return message.removeprefix(_VALUE_ERROR_PREFIX)
 
 
 def install(app: FastAPI) -> None:

@@ -2262,6 +2262,17 @@
             },
             "type": "array",
             "title": "Charts"
+          },
+          "empty_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empty Label"
           }
         },
         "type": "object",
@@ -2269,7 +2280,8 @@
           "range",
           "step_seconds",
           "times",
-          "charts"
+          "charts",
+          "empty_label"
         ],
         "title": "HistoryOut"
       },

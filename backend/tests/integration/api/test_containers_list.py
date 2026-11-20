@@ -217,3 +217,20 @@ async def test_an_unknown_docker_health_shows_as_none(
 
     items = {item["name"]: item for group in groups for item in group["containers"]}
     assert items["odd"]["health"] == "none"
+
+
+async def test_a_container_that_does_not_run_has_no_health(
+    ctx: AppContext, user_client: httpx.AsyncClient
+) -> None:
+    # Docker keeps the last health of a stopped container ("unhealthy" after a stop).
+    await ctx.inventory.update(
+        make_info("stopped", "busybox:1", state="exited", health="unhealthy")
+    )
+
+    groups = await get_groups(user_client)
+
+    items = {item["name"]: item for group in groups for item in group["containers"]}
+    assert (items["stopped"]["health"], items["stopped"]["health_label"]) == (
+        "none",
+        "not running",
+    )

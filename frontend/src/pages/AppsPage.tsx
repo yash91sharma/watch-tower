@@ -69,6 +69,10 @@ export function AppsPage() {
   );
 }
 
+// A column that a phone does not show (the container page has its value), so that the
+// name, the health and the update fit with no side scroll.
+const PHONE_HIDDEN = "max-sm:hidden";
+
 function GroupTable({ group, open, focus, onToggle }: { group: Group; open: boolean; focus: boolean; onToggle: () => void }) {
   const id = useId();
   const usage = useUsage();
@@ -79,8 +83,8 @@ function GroupTable({ group, open, focus, onToggle }: { group: Group; open: bool
   }, [focus]);
   return (
     <section ref={section} aria-labelledby={id} className="overflow-hidden rounded-xl border bg-card shadow-xs">
-      <div className={cn("flex items-center gap-2 px-2 py-1", headerColor[group.update])}>
-        <h2 id={id} className="flex-1 font-medium">
+      <div className={cn("flex flex-wrap items-center gap-2 px-2 py-1", headerColor[group.update])}>
+        <h2 id={id} className="min-w-0 flex-1 font-medium break-all">
           <button
             type="button"
             aria-expanded={open}
@@ -112,22 +116,21 @@ function GroupTable({ group, open, focus, onToggle }: { group: Group; open: bool
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>State</TableHead>
+              <TableHead className={PHONE_HIDDEN}>State</TableHead>
               <TableHead>Health</TableHead>
-              <TableHead>CPU</TableHead>
-              <TableHead>Memory</TableHead>
-              <TableHead>Current version</TableHead>
-              <TableHead>Latest version</TableHead>
-              <TableHead>Version status</TableHead>
-              <TableHead>Update severity</TableHead>
+              <TableHead className={PHONE_HIDDEN}>CPU</TableHead>
+              <TableHead className={PHONE_HIDDEN}>Memory</TableHead>
+              <TableHead className={PHONE_HIDDEN}>Current version</TableHead>
+              <TableHead className={PHONE_HIDDEN}>Latest version</TableHead>
+              <TableHead>Update</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {group.containers.map((item) => (
               <TableRow key={item.name} className="even:bg-muted/30">
-                <TableCell>
+                <TableCell className="max-sm:whitespace-normal">
                   <div className="flex items-center gap-1">
-                    <Link className="font-medium underline underline-offset-4" to={`/containers/${item.name}`}>
+                    <Link className="font-medium underline underline-offset-4 max-sm:break-all" to={`/containers/${item.name}`}>
                       {item.name}
                     </Link>
                     <Button asChild variant="ghost" size="icon-xs">
@@ -137,26 +140,26 @@ function GroupTable({ group, open, focus, onToggle }: { group: Group; open: bool
                     </Button>
                   </div>
                 </TableCell>
-                <TableCell>{item.state}</TableCell>
+                <TableCell className={PHONE_HIDDEN}>{item.state}</TableCell>
                 <TableCell>
                   <HealthBadge health={item.health} label={item.health_label} />
                 </TableCell>
-                <TableCell>
+                <TableCell className={PHONE_HIDDEN}>
                   <UsageCell
                     label={usage.container(item.name)?.cpu_label}
                     values={usage.containerLine(item.name)?.cpu}
                     title={`CPU of ${item.name}, last hour`}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className={PHONE_HIDDEN}>
                   <UsageCell
                     label={usage.container(item.name)?.mem_used_label}
                     values={usage.containerLine(item.name)?.mem}
                     title={`Memory of ${item.name}, last hour`}
                   />
                 </TableCell>
-                <TableCell>{item.tag ?? "-"}</TableCell>
-                <TableCell>
+                <TableCell className={PHONE_HIDDEN}>{item.tag ?? "-"}</TableCell>
+                <TableCell className={PHONE_HIDDEN}>
                   {item.latest_url ? (
                     <a
                       className="inline-flex items-center gap-1 underline underline-offset-4"
@@ -172,12 +175,11 @@ function GroupTable({ group, open, focus, onToggle }: { group: Group; open: bool
                   )}
                 </TableCell>
                 <TableCell>
-                  <StatusBadge status={item.status} label={item.status_label} />
+                  <div className="flex flex-wrap items-center gap-1">
+                    <StatusBadge status={item.status} label={item.status_label} />
+                    <SeverityBadge severity={item.severity} />
+                  </div>
                 </TableCell>
-                <TableCell>
-                  <SeverityBadge severity={item.severity} />
-                </TableCell>
-
               </TableRow>
             ))}
           </TableBody>

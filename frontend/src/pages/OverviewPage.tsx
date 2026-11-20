@@ -100,7 +100,7 @@ function VmCharts({ ranges }: { ranges: Overview["ranges"] }) {
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       {data.charts.map((chart) => (
-        <MetricChart key={chart.key} chart={chart} times={data.times} ranges={ranges} />
+        <MetricChart key={chart.key} chart={chart} times={data.times} ranges={ranges} emptyLabel={data.empty_label} />
       ))}
     </div>
   );

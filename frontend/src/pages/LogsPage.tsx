@@ -1,7 +1,9 @@
 // The live log of a container, with search and JSON pretty-print (in the browser) and a tail size.
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 
+import { containerQuery } from "@/api/queries";
 import { useLogStream } from "@/api/useLogStream";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { FormError } from "@/components/FormError";
@@ -16,6 +18,8 @@ export function LogsPage() {
   const { name = "" } = useParams();
   const [tail, setTail] = useState(500);
   const { lines, error } = useLogStream(name, tail);
+  // The container: its API error (for example "No container") says why the log stops.
+  const { error: containerError } = useQuery(containerQuery(name));
   const [query, setQuery] = useState("");
   const [onlyMatches, setOnlyMatches] = useState(false);
   const [position, setPosition] = useState(0);
@@ -72,7 +76,7 @@ export function LogsPage() {
         <Checkbox label="Only matches" checked={onlyMatches} onChange={setOnlyMatches} />
         <Checkbox label="Format JSON" checked={pretty} onChange={setPretty} />
       </div>
-      <FormError error={error} />
+      <FormError error={containerError ?? error} />
       <LogView
         lines={onlyMatches && query ? matches : lines}
         query={query}

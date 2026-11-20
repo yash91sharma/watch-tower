@@ -167,6 +167,41 @@ async def test_vm_history_with_no_rows_has_no_memory_max(
     body = await get(user_client, "/api/metrics/vm/history?range=1h")
 
     assert chart(body, "memory")["max"] is None
+    assert body["empty_label"] == "No values in this range."
+
+
+@pytest.mark.parametrize(
+    ("range_key", "label"),
+    [
+        (
+            "7d",
+            (
+                "No values in this range. It shows 15-minute averages: "
+                "WT makes one after each full 15 minutes."
+            ),
+        ),
+        (
+            "30d",
+            (
+                "No values in this range. It shows 1-hour averages: "
+                "WT makes one after each full hour."
+            ),
+        ),
+    ],
+)
+async def test_an_empty_long_range_says_when_its_values_come(
+    user_client: httpx.AsyncClient, ctx: AppContext, range_key: str, label: str
+) -> None:
+    # 1-minute values do not show in the 7 d and 30 d ranges.
+    add(ctx, vm_row(MetricTier.MINUTE, NOW.replace(second=0) - timedelta(minutes=1), 5))
+
+    vm = await get(user_client, f"/api/metrics/vm/history?range={range_key}")
+    web = await get(
+        user_client, f"/api/metrics/containers/web/history?range={range_key}"
+    )
+
+    assert vm["empty_label"] == label
+    assert web["empty_label"] == label
 
 
 async def test_a_bad_range_is_a_validation_error(
@@ -196,6 +231,7 @@ async def test_container_history(
     assert chart(body, "memory")["series"][0]["values"][-1] == 300
     assert chart(body, "network")["series"][1]["values"][-1] is None
     assert chart(body, "disk_io")["series"][1]["values"][-1] == 4.0
+    assert body["empty_label"] is None
 
 
 async def test_the_container_history_stays_after_a_recreate(

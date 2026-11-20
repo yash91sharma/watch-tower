@@ -43,6 +43,23 @@ def test_join_notes_has_one_heading_per_version() -> None:
     assert notes == "## v1.3.1\n\nFix B\n\n## v1.3.0\n\nFeature A"
 
 
+def test_join_notes_does_not_repeat_the_heading_of_the_notes() -> None:
+    notes = join_notes(
+        [
+            Release("v1.3.1", "## v1.3.1\n- Fix B"),
+            Release("1.3.0", "# 1.3.0 \n\nFeature A"),
+        ]
+    )
+
+    assert notes == "## v1.3.1\n\n- Fix B\n\n## 1.3.0\n\nFeature A"
+
+
+def test_join_notes_keeps_another_heading() -> None:
+    notes = join_notes([Release("v2.0", "## What's Changed\n- A")])
+
+    assert notes == "## v2.0\n\n## What's Changed\n- A"
+
+
 def test_join_notes_of_a_release_with_no_notes() -> None:
     assert join_notes([Release("v2.0", "")]) == "## v2.0"
 

@@ -63,17 +63,20 @@ export function ReleaseSource({ name, source, confirmed }: { name: string; sourc
       ) : (
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="break-all">{source ?? "No release source"}</span>
-          {!confirmed && <Badge variant="outline">not confirmed</Badge>}
+          {/* A value from the image label waits for the admin. No value: nothing to confirm. */}
           {!confirmed && source !== null && (
-            <Button
-              size="sm"
-              disabled={save.isPending}
-              onClick={() => {
-                save.mutate({ source, confirmed: true });
-              }}
-            >
-              Confirm
-            </Button>
+            <>
+              <Badge variant="outline">not confirmed</Badge>
+              <Button
+                size="sm"
+                disabled={save.isPending}
+                onClick={() => {
+                  save.mutate({ source, confirmed: true });
+                }}
+              >
+                Confirm
+              </Button>
+            </>
           )}
           <Button
             size="sm"

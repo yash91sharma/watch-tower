@@ -122,6 +122,9 @@ test("the (i) button opens the help that explains each metric, and Close closes 
     "Graphs and sparklines",
   ]);
   expect(within(help).getAllByText("How to read it")).toHaveLength(titles.length);
+  // One thread uses at most 1 core. An app with more threads can use more.
+  expect(help).not.toHaveTextContent("One app process can use at most 1 core");
+  expect(help).toHaveTextContent("A single-thread app can use at most 1 core");
 
   await user.click(within(help).getByRole("button", { name: "Close" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

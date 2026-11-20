@@ -45,8 +45,8 @@ test("two updates give one digest with high priority", async ({ page }) => {
     /./,
     "1.0.0",
     "1.2.0",
-    "update available",
-    "critical",
+    // The update status and the severity are in one column.
+    "update availablecritical",
   ]);
-  await expect(row("wt_test_e2e_old_b").getByRole("cell").nth(8)).toHaveText("normal");
+  await expect(row("wt_test_e2e_old_b").getByRole("cell").nth(7)).toHaveText("update availablenormal");
 });

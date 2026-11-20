@@ -107,13 +107,15 @@ def container_out(
     status = container_status(row.tag, row.release_source, cache)
     known = status in (Status.UPDATE, Status.UP_TO_DATE)
     update = current_update(session, row)
-    health = live.health if live.health in get_args(Health) else "none"
+    # Docker keeps the last health of a stopped container, so only a running one has one.
+    running = live.state == "running"
+    health = live.health if running and live.health in get_args(Health) else "none"
     latest = cache.latest_tag if cache and known else None
     return ContainerOut(
         name=row.name,
         state=live.state,
         health=cast(Health, health),
-        health_label="no healthcheck" if health == "none" else health,
+        health_label=health_label(running, health),
         image=row.image,
         tag=row.tag,
         status=status,
@@ -128,6 +130,13 @@ def container_out(
         release_source=row.release_source,
         source_confirmed=row.source_confirmed,
     )
+
+
+def health_label(running: bool, health: str) -> str:
+    """The health text. A container that does not run has no health."""
+    if not running:
+        return "not running"
+    return "no healthcheck" if health == "none" else health
 
 
 def compose_groups[T](

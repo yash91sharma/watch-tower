@@ -66,6 +66,34 @@ test("the legend values use the unit of the chart", () => {
   expect(size({} as uPlot, ["0.000%", "0.002%"])).toBe(58);
 });
 
+test("a byte chart has binary tick steps, so that the ticks are round in KiB, MiB and GiB", () => {
+  if (!cpu) throw new Error("no chart");
+  render(
+    <>
+      <MetricChart chart={{ ...cpu, key: "memory", title: "Memory", unit: "bytes", max: null }} times={[1, 2]} ranges={ranges} />
+      <MetricChart chart={cpu} times={[1, 2]} ranges={ranges} />
+    </>,
+  );
+
+  const incrs = plots[0]?.options.axes?.[1]?.incrs as number[];
+  // Not 2,000,000 B (1.907 MiB) and not 0.5 B.
+  expect(incrs).toContain(512 * 1024);
+  expect(incrs).toContain(2 ** 30);
+  expect(incrs.every((step) => Number.isInteger(Math.log2(step)) && step >= 1)).toBe(true);
+  // A percent chart keeps the uPlot steps (10, 20, 25, 50).
+  expect(plots[1]?.options.axes?.[1]?.incrs).toBeUndefined();
+});
+
+test("a range with no values shows the text of the API on the chart", () => {
+  if (!cpu) throw new Error("no chart");
+  const { rerender } = render(<MetricChart chart={cpu} times={[1, 2]} ranges={ranges} emptyLabel={null} />);
+  expect(screen.queryByText("No values in this range.")).not.toBeInTheDocument();
+
+  rerender(<MetricChart chart={cpu} times={[1, 2]} ranges={ranges} emptyLabel="No values in this range." />);
+
+  expect(screen.getByText("No values in this range.")).toBeInTheDocument();
+});
+
 test("a new chart replaces the old one", () => {
   if (!cpu) throw new Error("no chart");
   const { rerender, unmount } = render(<MetricChart chart={cpu} times={[1, 2]} ranges={ranges} />);

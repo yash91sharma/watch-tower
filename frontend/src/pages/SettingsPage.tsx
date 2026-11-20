@@ -26,6 +26,9 @@ const FIELDS: { key: keyof Settings; label: string; numeric?: boolean; options?:
   { key: "metrics_interval_seconds", label: "Metrics interval (seconds)", options: [5, 10, 15, 30, 60] },
 ];
 
+// The label of each field, for the field errors of the API.
+const LABELS: Record<string, string> = Object.fromEntries(FIELDS.map(({ key, label }) => [key, label]));
+
 const SECRETS: { key: keyof SecretState; label: string }[] = [
   { key: "github_token", label: "GitHub token" },
   { key: "ntfy_token", label: "ntfy token" },
@@ -89,8 +92,8 @@ function SettingsForm({ values }: { values: Settings }) {
           <Field key={key} label={label} inputMode={numeric ? "numeric" : undefined} value={form[key]} onChange={onChange} />
         );
       })}
-      <FormError error={save.error} />
-      <FormError error={sendTest.error} />
+      <FormError error={save.error} labels={LABELS} />
+      <FormError error={sendTest.error} labels={LABELS} />
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={save.isPending}>
           Save

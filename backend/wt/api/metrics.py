@@ -365,6 +365,22 @@ class HistoryOut(BaseModel):
     # The start of each slot (Unix seconds), oldest first.
     times: list[int]
     charts: list[ChartOut]
+    # The text for the charts when the range has no values. Null: it has values.
+    empty_label: str | None
+
+
+# The empty_label of a range with no values, by tier.
+EMPTY_LABELS = {
+    MetricTier.MINUTE: "No values in this range.",
+    MetricTier.QUARTER: (
+        "No values in this range. It shows 15-minute averages: "
+        "WT makes one after each full 15 minutes."
+    ),
+    MetricTier.HOUR: (
+        "No values in this range. It shows 1-hour averages: "
+        "WT makes one after each full hour."
+    ),
+}
 
 
 class _Slots:
@@ -476,6 +492,7 @@ def get_vm_history(range_key: RangeQuery, ctx: Ctx) -> HistoryOut:
         step_seconds=int(slots.step.total_seconds()),
         times=slots.times(),
         charts=charts,
+        empty_label=None if rows else EMPTY_LABELS[slots.tier],
     )
 
 
@@ -544,4 +561,5 @@ def get_container_history(name: str, range_key: RangeQuery, ctx: Ctx) -> History
         step_seconds=int(slots.step.total_seconds()),
         times=slots.times(),
         charts=charts,
+        empty_label=None if rows else EMPTY_LABELS[slots.tier],
     )

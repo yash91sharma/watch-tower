@@ -44,7 +44,6 @@ test("a row shows the state, the health and the status", async ({ page }) => {
     "1.0.0",
     "-",
     "no source",
-    "",
   ]);
 
   // The tag "latest" is not a version: WT does no check.

@@ -74,3 +74,13 @@ export function unwrap<T>(result: Result<T>): T {
   const detail = typeof body?.detail === "string" ? body.detail : response.statusText;
   throw new ApiError(response.status, detail, { retryAfter });
 }
+
+/**
+ * The retry rule of the queries: try again after a network or server error (WT can
+ * restart), at most 3 times. A 4xx (for example "No container") does not change, so the
+ * page shows it at once.
+ */
+export function shouldRetry(failureCount: number, error: Error): boolean {
+  if (error instanceof ApiError && error.status < 500) return false;
+  return failureCount < 3;
+}

@@ -90,8 +90,8 @@ test("save shows the backend field errors", async () => {
         {
           error: "Unprocessable Content",
           detail: [
-            { field: "check_interval_hours", message: "Input should be greater than or equal to 1" },
-            { field: "ntfy_url", message: "URL scheme should be 'http' or 'https'" },
+            { field: "check_interval_hours", message: "Give a number of 1 or more" },
+            { field: "ntfy_url", message: "The URL must start with http:// or https://" },
           ],
         },
         { status: 422 },
@@ -103,9 +103,12 @@ test("save shows the backend field errors", async () => {
 
   await user.click(await screen.findByRole("button", { name: "Save" }));
 
+  // The field labels of the form, not the API keys. No HTTP status text.
   const alert = await screen.findByRole("alert");
-  expect(alert).toHaveTextContent("check_interval_hours: Input should be greater than or equal to 1");
-  expect(alert).toHaveTextContent("ntfy_url: URL scheme should be 'http' or 'https'");
+  expect(alert).toHaveTextContent("Some values are not correct:");
+  expect(alert).toHaveTextContent("Check interval (hours): Give a number of 1 or more");
+  expect(alert).toHaveTextContent("ntfy URL: The URL must start with http:// or https://");
+  expect(alert).not.toHaveTextContent("Unprocessable");
   expect(screen.queryByText("Saved.")).not.toBeInTheDocument();
 });
 

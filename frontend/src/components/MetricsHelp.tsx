@@ -17,7 +17,7 @@ const HELP: HelpItem[] = [
   {
     title: "CPU",
     what: "The part of all VM cores that is busy (not idle and not waiting for the disk), as an average over the poll interval. 100% means that all cores are busy. The cores in the label are the same value in cores: \"25% (2.5 cores)\" on 10 cores. For a container, the value is its part of all VM cores, from the Docker stats.",
-    read: "Short peaks are normal. A VM that stays above about 80% for a long time has too little CPU: find the busy app in the list, or give OrbStack more cores. One app process can use at most 1 core, so a container at \"1.0 core\" can be at its limit even when the VM is not.",
+    read: "Short peaks are normal. A VM that stays above about 80% for a long time has too little CPU: find the busy app in the list, or give OrbStack more cores. A single-thread app can use at most 1 core, so its container at \"1.0 core\" can be at its limit even when the VM is not.",
   },
   {
     title: "Memory",

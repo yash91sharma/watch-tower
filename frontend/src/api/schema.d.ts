@@ -696,6 +696,8 @@ export interface components {
             times: number[];
             /** Charts */
             charts: components["schemas"]["ChartOut"][];
+            /** Empty Label */
+            empty_label: string | null;
         };
         /** ImportResult */
         ImportResult: {

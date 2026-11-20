@@ -2,7 +2,7 @@ import { screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { expect, test, vi } from "vitest";
 
-import { api, ApiError, unwrap } from "@/api/client";
+import { api, ApiError, shouldRetry, unwrap } from "@/api/client";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 
@@ -127,4 +127,14 @@ test("before the app sets a 401 handler, a 401 does nothing", async () => {
   const result = await fresh.api.GET("/api/containers");
 
   expect(result.response.status).toBe(401);
+});
+
+test("a query tries again after a network or server error, not after a 4xx", () => {
+  expect(shouldRetry(0, new ApiError(404, "No container 'web'"))).toBe(false);
+  expect(shouldRetry(0, new ApiError(422, "Unprocessable Content"))).toBe(false);
+  expect(shouldRetry(0, new ApiError(502, "Bad Gateway"))).toBe(true);
+  expect(shouldRetry(0, new TypeError("Failed to fetch"))).toBe(true);
+  // At most 3 tries again, as the TanStack Query default.
+  expect(shouldRetry(2, new ApiError(500, "Error"))).toBe(true);
+  expect(shouldRetry(3, new ApiError(500, "Error"))).toBe(false);
 });

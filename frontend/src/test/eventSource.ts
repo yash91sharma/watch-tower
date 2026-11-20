@@ -4,6 +4,9 @@ type Listener = (event: MessageEvent<string>) => void;
 
 export class FakeEventSource {
   static instances: FakeEventSource[] = [];
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 2;
 
   /** The newest EventSource. */
   static get last(): FakeEventSource {
@@ -14,6 +17,7 @@ export class FakeEventSource {
 
   readonly url: string;
   closed = false;
+  readyState: number = FakeEventSource.CONNECTING;
   private listeners = new Map<string, Listener[]>();
 
   constructor(url: string | URL) {
@@ -27,6 +31,13 @@ export class FakeEventSource {
 
   close() {
     this.closed = true;
+    this.readyState = FakeEventSource.CLOSED;
+  }
+
+  /** An HTTP error (for example a 404): the browser closes the stream and does not connect again. */
+  fail() {
+    this.readyState = FakeEventSource.CLOSED;
+    this.emit("error");
   }
 
   /** Send an event. The data is JSON. */

@@ -6,6 +6,13 @@ type Unit = Chart["unit"];
 
 const BYTE_UNITS = ["B", "KiB", "MiB", "GiB", "TiB"];
 
+/**
+ * The tick steps of a byte axis: 1 B, 2 B, 4 B ... 512 TiB. A power of 2 is a round
+ * value in KiB, MiB and GiB (512 KiB = 0.5 MiB). The uPlot steps are decimal (2,000,000 B
+ * shows as 1.907 MiB) and can be less than 1 B.
+ */
+export const BYTE_STEPS = Array.from({ length: 50 }, (_, index) => 2 ** index);
+
 /** A value with 3 significant digits below 10 (0.0412, 2.5), else 1 or 0 decimals (25, 123). */
 function short(value: number): string {
   const size = Math.abs(value);

@@ -150,6 +150,7 @@ export function history(fields: Partial<History> = {}): History {
         series: [{ key: "cpu", label: "CPU", values: [1, null] }],
       },
     ],
+    empty_label: null,
     ...fields,
   };
 }

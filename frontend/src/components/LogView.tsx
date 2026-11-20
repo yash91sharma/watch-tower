@@ -58,7 +58,7 @@ export function LogView({
   }
 
   return (
-    <div className="relative">
+    <div>
       <div
         ref={scrollRef}
         role="log"
@@ -67,7 +67,7 @@ export function LogView({
         aria-live="off"
         tabIndex={0}
         onScroll={onScroll}
-        className="h-[70svh] overflow-auto rounded-lg border bg-muted/30 font-mono text-xs"
+        className="h-[65svh] overflow-auto rounded-lg border bg-muted/30 font-mono text-xs"
       >
         <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
           {virtualizer.getVirtualItems().map((item) => {
@@ -100,16 +100,18 @@ export function LogView({
           })}
         </div>
       </div>
-      <Button
-        size="sm"
-        variant={follow ? "outline" : "default"}
-        className="absolute right-4 bottom-4"
-        onClick={() => {
-          setFollow(!follow);
-        }}
-      >
-        {follow ? "Pause" : "Follow"}
-      </Button>
+      {/* Under the log, not on it: a button on the log covers the newest line. */}
+      <div className="mt-2 flex justify-end">
+        <Button
+          size="sm"
+          variant={follow ? "outline" : "default"}
+          onClick={() => {
+            setFollow(!follow);
+          }}
+        >
+          {follow ? "Pause" : "Follow"}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -71,11 +71,24 @@ def release_range(releases: list[Release], running: str, latest: str) -> list[Re
 
 
 def join_notes(releases: list[Release]) -> str:
-    """The notes of all releases, with one heading per version."""
+    """The notes of all releases, with one heading per version.
+
+    Many release notes start with a heading of their version. WT removes it, so that the
+    version does not show two times.
+    """
     sections = [
-        f"## {release.tag}\n\n{release.notes.strip()}".strip() for release in releases
+        f"## {release.tag}\n\n{_without_tag_heading(release)}".strip()
+        for release in releases
     ]
     return "\n\n".join(sections)
+
+
+def _without_tag_heading(release: Release) -> str:
+    notes = release.notes.strip()
+    first, _, rest = notes.partition("\n")
+    if first.lstrip("#").strip() == release.tag and first.startswith("#"):
+        return rest.strip()
+    return notes
 
 
 class Status(StrEnum):

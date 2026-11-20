@@ -116,6 +116,16 @@ test("a connection error (no data) gives no error text", () => {
   expect(result.current.error).toBeNull();
 });
 
+test("an HTTP error (the browser closes the stream) gives a text", () => {
+  const { result } = renderHook(() => useLogStream("web", 500));
+
+  act(() => {
+    FakeEventSource.last.fail();
+  });
+
+  expect(result.current.error).toBe("The log stream stopped. Reload the page to try again.");
+});
+
 test("unmount closes the stream and cancels a waiting frame", () => {
   const { unmount } = renderHook(() => useLogStream("web", 500));
   const source = FakeEventSource.last;

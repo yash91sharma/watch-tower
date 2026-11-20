@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 
 import type { ContainerDetail } from "@/api/types";
 import { formatTime } from "@/lib/time";
-import { containerDetail } from "@/test/fixtures";
+import { containerDetail, history } from "@/test/fixtures";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 
@@ -95,4 +95,16 @@ test("a container with no current values shows a dash and its history", async ()
   const resources = await screen.findByRole("region", { name: "Resources" });
   expect(await within(resources).findByRole("heading", { name: "CPU" })).toBeInTheDocument();
   expect(within(resources).getAllByText("-")).toHaveLength(4);
+});
+
+test("the charts of a range with no values show the text of the API", async () => {
+  server.use(
+    http.get("*/api/metrics/containers/:name/history", () =>
+      HttpResponse.json(history({ empty_label: "No values in this range." })),
+    ),
+  );
+  renderRoute("/containers/web");
+
+  const resources = await screen.findByRole("region", { name: "Resources" });
+  expect(await within(resources).findByText("No values in this range.")).toBeInTheDocument();
 });

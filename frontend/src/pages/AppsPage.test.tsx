@@ -93,7 +93,8 @@ test("a row shows the container fields", async () => {
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
   // The overview has no values for "app": CPU and memory show "-".
-  expect(cells).toEqual(["app", "running", "unhealthy", "-", "-", "2.1.0", "2.3.0", "update available", "critical"]);
+  // The update status and the severity are in one column.
+  expect(cells).toEqual(["app", "running", "unhealthy", "-", "-", "2.1.0", "2.3.0", "update availablecritical"]);
   expect(within(row).getByText("update available")).toHaveAttribute("data-variant", "info");
 });
 
@@ -121,7 +122,7 @@ test("the row shows the labels from the API, and empty values show a dash", asyn
   const row = (await screen.findByRole("link", { name: "db" })).closest("tr");
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
-  expect(cells).toEqual(["db", "running", "no healthcheck", "-", "-", "-", "-", "no check", ""]);
+  expect(cells).toEqual(["db", "running", "no healthcheck", "-", "-", "-", "-", "no check"]);
 });
 
 test("the page shows a loading text", async () => {
@@ -168,9 +169,26 @@ test("the table has clear column names", async () => {
     "Memory",
     "Current version",
     "Latest version",
-    "Version status",
-    "Update severity",
+    "Update",
   ]);
+});
+
+test("on a phone, the table shows only the name, the health and the update", async () => {
+  answer([{ project: "web", label: "web", update: "none", containers: [container({ name: "app" })] }]);
+  renderRoute("/apps");
+
+  const region = await screen.findByRole("region", { name: "web" });
+  // jsdom has no CSS: the max-sm:hidden class hides a column below the sm width.
+  const shown = (cells: HTMLElement[]) =>
+    cells.filter((cell) => !cell.classList.contains("max-sm:hidden")).map((cell) => cell.textContent);
+  expect(shown(within(region).getAllByRole("columnheader"))).toEqual(["Name", "Health", "Update"]);
+  expect(shown(within(region).getAllByRole("cell"))).toHaveLength(3);
+  // A long name wraps, and the group header wraps (the Check now button stays in the box).
+  const name = within(region).getByRole("link", { name: "app" });
+  expect(name).toHaveClass("max-sm:break-all");
+  // The table cells do not wrap (whitespace-nowrap). The name cell must, on a phone.
+  expect(name.closest("td")).toHaveClass("max-sm:whitespace-normal");
+  expect(within(region).getByRole("heading", { name: "web" }).parentElement).toHaveClass("flex-wrap");
 });
 
 test("every second row has a stripe color", async () => {
