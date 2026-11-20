@@ -40,6 +40,9 @@ def _set_pragmas(
     """Set the pragmas on each new SQLite connection."""
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL")
+    # With WAL, NORMAL does no fsync on each commit, and the DB cannot become corrupt.
+    # A power loss or an OS crash can lose the last commits. A WT crash loses nothing.
+    cursor.execute("PRAGMA synchronous=NORMAL")
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.execute(f"PRAGMA busy_timeout={BUSY_TIMEOUT_MS}")
     cursor.close()

@@ -200,3 +200,16 @@ def test_the_venv_so_files_have_no_debug_sections(image: dict[str, Any]) -> None
     """The build strips the debug data, so that the image is smaller."""
     assert image
     assert run_python(_DEBUG_SECTIONS) == "True []"
+
+
+def test_the_frontend_has_only_the_latin_fonts(image: dict[str, Any]) -> None:
+    """The PWA caches each font file. WT has only the latin and latin-ext subsets."""
+    assert image
+    code = (
+        "import wt.api.static as s;"
+        "print(sorted(f.stem[:-9]"  # The name without '-<8-character hash>'.
+        " for f in (s.STATIC_DIR / 'assets').glob('*.woff2')))"
+    )
+    assert run_python(code) == str(
+        ["geist-latin-ext-wght-normal", "geist-latin-wght-normal"]
+    )

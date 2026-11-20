@@ -33,11 +33,13 @@ def file_mode(path: Path) -> int:
     return stat.S_IMODE(path.stat().st_mode)
 
 
-def pragmas(conn: Connection) -> tuple[str, int, int]:
+def pragmas(conn: Connection) -> tuple[str, int, int, int]:
     return (
         conn.execute(text("PRAGMA journal_mode")).scalar_one(),
         conn.execute(text("PRAGMA foreign_keys")).scalar_one(),
         conn.execute(text("PRAGMA busy_timeout")).scalar_one(),
+        # 1 is NORMAL (2 is FULL, the default).
+        conn.execute(text("PRAGMA synchronous")).scalar_one(),
     )
 
 
@@ -47,8 +49,8 @@ def test_pragmas_on_each_new_connection(
     engine = make_engine(tmp_path)
 
     with engine.connect() as first, engine.connect() as second:
-        assert pragmas(first) == ("wal", 1, 5000)
-        assert pragmas(second) == ("wal", 1, 5000)
+        assert pragmas(first) == ("wal", 1, 5000, 1)
+        assert pragmas(second) == ("wal", 1, 5000, 1)
 
 
 def test_makes_the_data_dir_and_the_db_file(
