@@ -1,46 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type uPlot from "uplot";
-import { beforeEach, expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 
 import { MetricChart } from "@/components/MetricChart";
 import { history, overview } from "@/test/fixtures";
-
-// jsdom has no canvas. The fake keeps the options and the data of each chart.
-const plots = vi.hoisted(
-  () => [] as { options: uPlot.Options; data: uPlot.AlignedData; destroyed: boolean; sizes: unknown[] }[],
-);
-// The resize callback of the last ResizeObserver.
-let resize: () => void = () => undefined;
-vi.mock("uplot", () => ({
-  default: class {
-    private plot: (typeof plots)[number];
-    constructor(options: uPlot.Options, data: uPlot.AlignedData) {
-      this.plot = { options, data, destroyed: false, sizes: [] };
-      plots.push(this.plot);
-    }
-    setSize(size: unknown) {
-      this.plot.sizes.push(size);
-    }
-    destroy() {
-      this.plot.destroyed = true;
-    }
-  },
-}));
-
-beforeEach(() => {
-  plots.length = 0;
-  vi.stubGlobal(
-    "ResizeObserver",
-    class {
-      constructor(callback: () => void) {
-        resize = callback;
-      }
-      observe = vi.fn();
-      disconnect = vi.fn();
-    },
-  );
-});
+import { plots, resizeCallbacks } from "@/test/uplot";
 
 const ranges = overview().ranges;
 const [cpu] = history().charts;
@@ -111,7 +76,7 @@ test("a resize of the box sets the chart size", () => {
   if (!cpu) throw new Error("no chart");
   render(<MetricChart chart={cpu} times={[1, 2]} ranges={ranges} />);
 
-  resize();
+  resizeCallbacks[0]?.();
 
   expect(plots[0]?.sizes).toEqual([{ width: 0, height: 160 }]);
 });
