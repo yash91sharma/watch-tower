@@ -62,9 +62,10 @@ test("save sends the values and says so", async () => {
   });
 });
 
-test("the metrics interval is a select with the 5 values, and a save sends the choice", async () => {
+test("the metrics interval is a select with the values of the API, and a save sends the choice", async () => {
   let body: unknown;
   server.use(
+    http.get("*/api/settings", () => HttpResponse.json({ ...settingsOut(), metrics_intervals: [10, 30] })),
     http.put("*/api/settings", async ({ request }) => {
       body = await request.json();
       return HttpResponse.json(settingsOut());
@@ -74,7 +75,7 @@ test("the metrics interval is a select with the 5 values, and a save sends the c
   renderRoute("/settings");
   const select = await screen.findByLabelText("Metrics interval (seconds)");
 
-  expect(within(select).getAllByRole("option").map((option) => option.textContent)).toEqual(["5", "10", "15", "30", "60"]);
+  expect(within(select).getAllByRole("option").map((option) => option.textContent)).toEqual(["10", "30"]);
   expect(select).toHaveValue("10");
   await user.selectOptions(select, "30");
   await user.click(screen.getByRole("button", { name: "Save" }));

@@ -14,8 +14,8 @@ import { Section } from "@/components/Section";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-// A field with `options` is a select. The options are the values that the backend accepts.
-const FIELDS: { key: keyof Settings; label: string; numeric?: boolean; options?: Settings["metrics_interval_seconds"][] }[] = [
+// A `select` field shows the values that the API gives for it (metrics_intervals).
+const FIELDS: { key: keyof Settings; label: string; numeric?: boolean; select?: boolean }[] = [
   { key: "check_interval_hours", label: "Check interval (hours)", numeric: true },
   { key: "restart_count", label: "Restart loop: restarts", numeric: true },
   { key: "restart_window_minutes", label: "Restart loop: window (minutes)", numeric: true },
@@ -24,7 +24,7 @@ const FIELDS: { key: keyof Settings; label: string; numeric?: boolean; options?:
   { key: "llm_url", label: "LLM URL" },
   { key: "llm_model", label: "LLM model" },
   { key: "public_url", label: "WT URL (for links in notifications)" },
-  { key: "metrics_interval_seconds", label: "Metrics interval (seconds)", options: [5, 10, 15, 30, 60] },
+  { key: "metrics_interval_seconds", label: "Metrics interval (seconds)", select: true },
 ];
 
 // The label of each field, for the field errors of the API.
@@ -45,7 +45,7 @@ export function SettingsPage() {
         <QueryPending error={error} />
       ) : (
         <>
-          <SettingsForm values={data.values} />
+          <SettingsForm values={data.values} intervals={data.metrics_intervals} />
           <Secrets secrets={data.secrets} />
         </>
       )}
@@ -54,7 +54,7 @@ export function SettingsPage() {
   );
 }
 
-function SettingsForm({ values }: { values: Settings }) {
+function SettingsForm({ values, intervals }: { values: Settings; intervals: number[] }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(() =>
     Object.fromEntries(FIELDS.map(({ key }) => [key, String(values[key] ?? "")])),
@@ -82,14 +82,14 @@ function SettingsForm({ values }: { values: Settings }) {
 
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
-      {FIELDS.map(({ key, label, numeric, options }) => {
+      {FIELDS.map(({ key, label, numeric, select }) => {
         const onChange = (event: { target: { value: string } }) => {
           setForm({ ...form, [key]: event.target.value });
           save.reset();
           sendTest.reset();
         };
-        return options ? (
-          <SelectField key={key} label={label} value={form[key]} options={options} onChange={onChange} />
+        return select ? (
+          <SelectField key={key} label={label} value={form[key]} options={intervals} onChange={onChange} />
         ) : (
           <Field key={key} label={label} inputMode={numeric ? "numeric" : undefined} value={form[key]} onChange={onChange} />
         );

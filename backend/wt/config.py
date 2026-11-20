@@ -10,7 +10,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, get_args
 
 from pydantic import (
     AfterValidator,
@@ -150,7 +150,9 @@ HttpUrl = Annotated[str, AfterValidator(http_url)]
 NtfyTopic = Annotated[str, StringConstraints(pattern=r"^[-_A-Za-z0-9]{1,64}$")]
 ModelName = Annotated[str, StringConstraints(max_length=200)]
 # The poll intervals that the admin can select for the resource metrics.
-MetricsInterval = Annotated[Literal[5, 10, 15, 30, 60], BeforeValidator(_text_to_int)]
+MetricsIntervalValue = Literal[5, 10, 15, 30, 60]
+METRICS_INTERVALS: tuple[int, ...] = get_args(MetricsIntervalValue)
+MetricsInterval = Annotated[MetricsIntervalValue, BeforeValidator(_text_to_int)]
 
 
 class Settings(BaseModel):

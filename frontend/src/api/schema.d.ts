@@ -832,6 +832,8 @@ export interface components {
         SettingsOut: {
             values: components["schemas"]["Settings"];
             secrets: components["schemas"]["SecretState"];
+            /** Metrics Intervals */
+            metrics_intervals: number[];
         };
         /** SetupBeginIn */
         SetupBeginIn: {

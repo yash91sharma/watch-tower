@@ -2659,12 +2659,20 @@
           },
           "secrets": {
             "$ref": "#/components/schemas/SecretState"
+          },
+          "metrics_intervals": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Metrics Intervals"
           }
         },
         "type": "object",
         "required": [
           "values",
-          "secrets"
+          "secrets",
+          "metrics_intervals"
         ],
         "title": "SettingsOut"
       },

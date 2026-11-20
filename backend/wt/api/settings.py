@@ -7,7 +7,14 @@ from pydantic import BaseModel
 
 from wt.api.deps import Ctx
 from wt.bus import Topic
-from wt.config import SECRET_FIELDS, Env, Settings, load_settings, save_settings
+from wt.config import (
+    METRICS_INTERVALS,
+    SECRET_FIELDS,
+    Env,
+    Settings,
+    load_settings,
+    save_settings,
+)
 from wt.notify.messages import ntfy_test_message
 from wt.notify.ntfy import send
 
@@ -27,6 +34,8 @@ class SecretState(BaseModel):
 class SettingsOut(BaseModel):
     values: Settings
     secrets: SecretState
+    # The values that the admin can select for `metrics_interval_seconds`.
+    metrics_intervals: list[int]
 
 
 def settings_out(env: Env, values: Settings) -> SettingsOut:
@@ -34,7 +43,11 @@ def settings_out(env: Env, values: Settings) -> SettingsOut:
         name: "not set" if getattr(env, name) is None else "set"
         for name in SECRET_FIELDS
     }
-    return SettingsOut(values=values, secrets=SecretState.model_validate(secrets))
+    return SettingsOut(
+        values=values,
+        secrets=SecretState.model_validate(secrets),
+        metrics_intervals=list(METRICS_INTERVALS),
+    )
 
 
 @router.get("")

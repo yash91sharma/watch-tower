@@ -51,6 +51,7 @@ export function settingsOut(): SettingsOut {
       metrics_interval_seconds: 10,
     },
     secrets: { github_token: "not set", ntfy_token: "set", llm_api_key: "not set" },
+    metrics_intervals: [5, 10, 15, 30, 60],
   };
 }
 

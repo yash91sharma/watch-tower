@@ -35,6 +35,8 @@ async def test_get_gives_defaults_and_secret_state(
     body = response.json()
     assert body["values"]["check_interval_hours"] == 24
     assert body["values"]["metrics_interval_seconds"] == 10
+    # The UI shows these values in the metrics interval select.
+    assert body["metrics_intervals"] == [5, 10, 15, 30, 60]
     assert body["secrets"] == {
         "github_token": "not set",
         "ntfy_token": "not set",
