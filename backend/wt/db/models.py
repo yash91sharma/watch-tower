@@ -8,7 +8,7 @@ from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import JSON, Column, DateTime, Dialect, UniqueConstraint
+from sqlalchemy import JSON, Column, DateTime, Dialect, Index, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.types import TypeDecorator
 from sqlmodel import Field, SQLModel
@@ -44,9 +44,11 @@ class UTCDateTime(TypeDecorator[datetime]):
         return None if value is None else value.replace(tzinfo=UTC)
 
 
-def _time(nullable: bool = False) -> Any:
+def _time(nullable: bool = False, primary_key: bool = False) -> Any:
     """A UTC time column."""
-    return Field(sa_column=Column(UTCDateTime(), nullable=nullable))
+    return Field(
+        sa_column=Column(UTCDateTime(), nullable=nullable, primary_key=primary_key)
+    )
 
 
 class Severity(StrEnum):
@@ -67,14 +69,14 @@ def _enum_values(enum_type: type[StrEnum]) -> list[str]:
     return [member.value for member in enum_type]
 
 
-def _enum(enum_type: type[StrEnum]) -> Any:
+def _enum(enum_type: type[StrEnum], primary_key: bool = False) -> Any:
     """An enum column that stores the values (for example "critical"), not the names."""
     column_type = SAEnum(
         enum_type,
         native_enum=False,
         values_callable=_enum_values,
     )
-    return Field(sa_column=Column(column_type, nullable=False))
+    return Field(sa_column=Column(column_type, nullable=False, primary_key=primary_key))
 
 
 class Host(SQLModel, table=True):
@@ -155,6 +157,67 @@ class Setting(SQLModel, table=True):
 
     key: str = Field(primary_key=True)
     value: Any = Field(sa_column=Column(JSON, nullable=False))
+
+
+class MetricTier(StrEnum):
+    """The time step of a metric sample. A row has the average of its step."""
+
+    MINUTE = "1m"
+    QUARTER = "15m"
+    HOUR = "1h"
+
+
+class VmSample(SQLModel, table=True):
+    """The Docker VM values of one step. None: no value in the step (for example the
+    first poll has no CPU %). Bytes are int, rates are bytes per second.
+    """
+
+    __tablename__ = "vm_sample"  # pyright: ignore[reportAssignmentType]
+
+    host_id: int = Field(foreign_key="host.id", ondelete="CASCADE", primary_key=True)
+    tier: MetricTier = _enum(MetricTier, primary_key=True)
+    # The start of the step.
+    time: datetime = _time(primary_key=True)
+    cpu_percent: float | None
+    mem_used: int
+    mem_total: int
+    swap_used: int
+    swap_total: int
+    load_1: float
+    load_5: float
+    load_15: float
+    disk_used: int
+    disk_total: int
+    disk_read_bps: float | None
+    disk_write_bps: float | None
+    # The sum of the containers (WT cannot see the VM network).
+    net_rx_bps: float | None
+    net_tx_bps: float | None
+
+
+class ContainerSample(SQLModel, table=True):
+    """The values of a container in one step. The key is the container row, so the
+    history stays after a recreate. None: no value in the step.
+    """
+
+    __tablename__ = "container_sample"  # pyright: ignore[reportAssignmentType]
+    # The sparklines and the cleanup read all containers of a tier and time range.
+    __table_args__ = (Index(None, "tier", "time"),)
+
+    container_id: int = Field(
+        foreign_key="container.id", ondelete="CASCADE", primary_key=True
+    )
+    tier: MetricTier = _enum(MetricTier, primary_key=True)
+    # The start of the step.
+    time: datetime = _time(primary_key=True)
+    # % of all VM cores.
+    cpu_percent: float | None
+    mem_used: int
+    mem_limit: int
+    net_rx_bps: float | None
+    net_tx_bps: float | None
+    disk_read_bps: float | None
+    disk_write_bps: float | None
 
 
 # The one admin row always has this id, so that there cannot be two admins.

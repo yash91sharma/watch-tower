@@ -63,7 +63,7 @@ The worker makes its own Docker client (`ctx.docker_factory`). It polls with at 
 
 ### Storage
 
-Two tables, so that each column has one meaning and no nulls:
+Two tables, so that each column has one meaning. A CPU % or rate is null when the step has no value (for example the first poll):
  - `vm_sample`: host_id, tier, time, cpu_percent, mem_used, mem_total, swap_used, swap_total, load_1, load_5, load_15, disk_used, disk_total, disk_read_bps, disk_write_bps, net_rx_bps, net_tx_bps. PK (host_id, tier, time).
  - `container_sample`: container_id (FK, cascade), tier, time, cpu_percent, mem_used, mem_limit, net_rx_bps, net_tx_bps, disk_read_bps, disk_write_bps. PK (container_id, tier, time).
 

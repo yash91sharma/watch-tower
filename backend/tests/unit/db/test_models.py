@@ -11,13 +11,16 @@ from wt.db.models import (
     Admin,
     AuthSession,
     Container,
+    ContainerSample,
     Event,
     EventKind,
     Host,
+    MetricTier,
     RepoCache,
     Setting,
     Severity,
     Update,
+    VmSample,
 )
 
 T0 = datetime(2026, 1, 1, tzinfo=UTC)
@@ -180,3 +183,75 @@ def test_enums_are_stored_as_values(db_engine: Engine) -> None:
         kind = conn.execute(text("SELECT kind FROM event")).scalar_one()
         severity = conn.execute(text('SELECT severity FROM "update"')).scalar_one()
     assert (kind, severity) == ("restart_loop", "critical")
+
+
+def vm_sample(tier: MetricTier = MetricTier.MINUTE) -> VmSample:
+    return VmSample(
+        host_id=1,
+        tier=tier,
+        time=T0,
+        cpu_percent=None,
+        mem_used=1,
+        mem_total=2,
+        swap_used=0,
+        swap_total=0,
+        load_1=0.5,
+        load_5=0.4,
+        load_15=0.3,
+        disk_used=1,
+        disk_total=2,
+        disk_read_bps=None,
+        disk_write_bps=None,
+        net_rx_bps=None,
+        net_tx_bps=None,
+    )
+
+
+def container_sample(container_id: int) -> ContainerSample:
+    return ContainerSample(
+        container_id=container_id,
+        tier=MetricTier.MINUTE,
+        time=T0,
+        cpu_percent=1.5,
+        mem_used=100,
+        mem_limit=1000,
+        net_rx_bps=None,
+        net_tx_bps=None,
+        disk_read_bps=None,
+        disk_write_bps=None,
+    )
+
+
+def test_a_sample_is_unique_per_target_tier_and_time(db_engine: Engine) -> None:
+    with Session(db_engine) as session:
+        container_id = add_container(session).id
+    assert container_id is not None
+
+    add_twice(db_engine, vm_sample(), vm_sample())
+    add_twice(db_engine, container_sample(container_id), container_sample(container_id))
+    with Session(db_engine) as session:
+        session.add(vm_sample(MetricTier.HOUR))
+        session.commit()
+        assert len(session.exec(select(VmSample)).all()) == 2
+
+
+def test_the_tier_is_stored_as_its_value(db_engine: Engine) -> None:
+    with Session(db_engine) as session:
+        add_container(session)
+        session.add(vm_sample(MetricTier.QUARTER))
+        session.commit()
+
+    with db_engine.connect() as conn:
+        assert conn.execute(text("SELECT tier FROM vm_sample")).scalar_one() == "15m"
+
+
+def test_a_container_delete_deletes_its_samples(db_engine: Engine) -> None:
+    with Session(db_engine) as session:
+        container = add_container(session)
+        assert container.id is not None
+        session.add(container_sample(container.id))
+        session.commit()
+        session.delete(container)
+        session.commit()
+
+        assert session.exec(select(ContainerSample)).all() == []
