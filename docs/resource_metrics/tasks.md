@@ -50,7 +50,7 @@ Rules:
   - **Test (uPlot mocked in jsdom):** a range change in one chart changes the select and the fetched range of all charts. After a reload the range stays. The series labels are in the legend. The ticks for each unit.
 - [x] **3.4** Routes: `ContainersPage` becomes `AppsPage` at `/apps`. `/` opens the new `OverviewPage` (empty frame for now). Top nav: Overview, Apps, Settings. Breadcrumbs say "Apps". The ntfy digest message (`wt/notify/messages.py`) links to `/apps`.
   - **Test:** the routes, the nav links, the breadcrumb on the container page and logs page, the digest click URL.
-- [ ] **3.5** App details: CPU and Memory columns (label and sparkline) and a Logs button in each row. The group header shows the sums. `?group=<label>` opens that group and scrolls to it.
+- [x] **3.5** App details: CPU and Memory columns (label and sparkline) and a Logs button in each row. The group header shows the sums. `?group=<label>` opens that group and scrolls to it.
   - **Test:** a row shows the labels from the API. Logs opens `/containers/<name>/logs`. `?group=` opens a collapsed group.
 - [ ] **3.6** Overview page: VM tiles, VM charts (CPU, memory, disk I/O, network, load), counts with a link to `/apps`, the app list (group header with sums and sparkline, container rows with CPU, memory and sparkline). A container opens its page. A group opens `/apps?group=<label>`.
   - **Test:** the tiles and counts from the API. The links. No containers: the text from `ContainersPage`.

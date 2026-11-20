@@ -1,7 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { delay, http, HttpResponse } from "msw";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 
 import type { Group } from "@/api/types";
 import { container } from "@/test/fixtures";
@@ -22,7 +22,9 @@ test("groups show in API order with their containers", async () => {
   const groups = await screen.findAllByRole("region");
   expect(groups.map((group) => within(group).getByRole("heading").textContent)).toEqual(["media", "Other"]);
   const media = screen.getByRole("region", { name: "media" });
-  const names = within(media).getAllByRole("link").filter((link) => !link.hasAttribute("target"));
+  const names = within(media)
+    .getAllByRole("link")
+    .filter((link) => !link.hasAttribute("target") && !link.textContent.startsWith("Logs"));
   expect(names.map((link) => link.textContent)).toEqual(["plex", "sonarr"]);
   expect(within(media).getByRole("link", { name: "plex" })).toHaveAttribute("href", "/containers/plex");
 });
@@ -90,7 +92,8 @@ test("a row shows the container fields", async () => {
   const row = (await screen.findByRole("link", { name: "app" })).closest("tr");
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
-  expect(cells).toEqual(["app", "running", "unhealthy", "2.1.0", "2.3.0", "update available", "critical"]);
+  // The overview has no values for "app": CPU and memory show "-".
+  expect(cells).toEqual(["app", "running", "unhealthy", "-", "-", "2.1.0", "2.3.0", "update available", "critical", "Logs"]);
   expect(within(row).getByText("update available")).toHaveAttribute("data-variant", "info");
 });
 
@@ -118,7 +121,7 @@ test("the row shows the labels from the API, and empty values show a dash", asyn
   const row = (await screen.findByRole("link", { name: "db" })).closest("tr");
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
-  expect(cells).toEqual(["db", "running", "no healthcheck", "-", "-", "no check", ""]);
+  expect(cells).toEqual(["db", "running", "no healthcheck", "-", "-", "-", "-", "no check", "", "Logs"]);
 });
 
 test("the page shows a loading text", async () => {
@@ -161,10 +164,13 @@ test("the table has clear column names", async () => {
     "Name",
     "State",
     "Health",
+    "CPU",
+    "Memory",
     "Current version",
     "Latest version",
     "Version status",
     "Update severity",
+    "Logs",
   ]);
 });
 
@@ -224,4 +230,47 @@ test("the table links always have an underline, and the release link has an exte
   expect(release).toHaveClass("underline");
   expect(release.querySelector("svg")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "a" })).toHaveClass("underline");
+});
+
+test("a row shows the CPU and memory of the container with a sparkline", async () => {
+  answer([{ project: "site", label: "site", update: "none", containers: [container({ name: "web" })] }]);
+  renderRoute("/apps");
+
+  const site = await screen.findByRole("region", { name: "site" });
+  const row = (await within(site).findByText("1.0 / 8.0 GiB")).closest("tr");
+  if (!row) throw new Error("no row");
+  expect(within(row).getByText("9.1% (1.0 core)")).toBeInTheDocument();
+  expect(await within(row).findByRole("img", { name: "CPU of web, last hour" })).toBeInTheDocument();
+  expect(within(row).getByRole("img", { name: "Memory of web, last hour" })).toBeInTheDocument();
+});
+
+test("a row has a Logs link", async () => {
+  answer([{ project: "site", label: "site", update: "none", containers: [container({ name: "web" })] }]);
+  renderRoute("/apps");
+
+  expect(await screen.findByRole("link", { name: "Logs of web" })).toHaveAttribute("href", "/containers/web/logs");
+});
+
+test("the group header shows the sums of the group", async () => {
+  answer([{ project: "site", label: "site", update: "none", containers: [container({ name: "web" })] }]);
+  renderRoute("/apps");
+
+  const site = await screen.findByRole("region", { name: "site" });
+  expect(await within(site).findByText("CPU 9.1% (1.0 core)")).toBeInTheDocument();
+  expect(within(site).getByText("Memory 1.0 GiB")).toBeInTheDocument();
+});
+
+test("?group= opens that group and scrolls to it", async () => {
+  const scroll = vi.fn();
+  Element.prototype.scrollIntoView = scroll;
+  localStorage.setItem("wt.collapsedGroups", JSON.stringify(["media", "Other"]));
+  answer([
+    { project: "media", label: "media", update: "none", containers: [container({ name: "plex" })] },
+    { project: null, label: "Other", update: "none", containers: [container({ name: "adhoc" })] },
+  ]);
+  renderRoute("/apps?group=media");
+
+  expect(await screen.findByRole("button", { name: "media" })).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "false");
+  expect(scroll).toHaveBeenCalledTimes(1);
 });

@@ -1,15 +1,19 @@
-// App details: the container list. Compose groups in API order, one row per container.
+// App details: the container list. Compose groups in API order, one row per container,
+// with the CPU and memory of each container and a Logs link.
 // The admin can collapse a group. The browser keeps the collapsed groups in localStorage.
+// ?group=<label> (a link from the Overview) opens that group and scrolls to it.
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ExternalLink } from "lucide-react";
-import { useId, useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useId, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router";
 
 import { containersQuery } from "@/api/queries";
 import type { Group } from "@/api/types";
 import { HealthBadge, SeverityBadge, StatusBadge } from "@/components/badges";
 import { CheckNow } from "@/components/CheckNow";
 import { QueryPending } from "@/components/QueryPending";
+import { Button } from "@/components/ui/button";
+import { UsageCell, useUsage } from "@/components/Usage";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn, plural } from "@/lib/utils";
 
@@ -25,7 +29,9 @@ function readCollapsed() {
 
 export function AppsPage() {
   const { data, error } = useQuery(containersQuery);
-  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const focus = useSearchParams()[0].get("group");
+  // The group of ?group= is open, also if it was collapsed.
+  const [collapsed, setCollapsed] = useState(() => readCollapsed().filter((label) => label !== focus));
 
   function toggle(label: string) {
     const next = collapsed.includes(label) ? collapsed.filter((item) => item !== label) : [...collapsed, label];
@@ -52,6 +58,7 @@ export function AppsPage() {
             key={group.label}
             group={group}
             open={!collapsed.includes(group.label)}
+            focus={group.label === focus}
             onToggle={() => {
               toggle(group.label);
             }}
@@ -62,10 +69,16 @@ export function AppsPage() {
   );
 }
 
-function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; onToggle: () => void }) {
+function GroupTable({ group, open, focus, onToggle }: { group: Group; open: boolean; focus: boolean; onToggle: () => void }) {
   const id = useId();
+  const usage = useUsage();
+  const sums = usage.group(group.label);
+  const section = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (focus) section.current?.scrollIntoView();
+  }, [focus]);
   return (
-    <section aria-labelledby={id} className="overflow-hidden rounded-xl border bg-card shadow-xs">
+    <section ref={section} aria-labelledby={id} className="overflow-hidden rounded-xl border bg-card shadow-xs">
       <div className={cn("flex items-center gap-2 px-2 py-1", headerColor[group.update])}>
         <h2 id={id} className="flex-1 font-medium">
           <button
@@ -82,6 +95,12 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
             {group.label}
           </button>
         </h2>
+        {sums && (
+          <span className="hidden gap-3 pr-2 text-sm text-muted-foreground sm:flex">
+            <span>CPU {sums.cpu_label}</span>
+            <span>Memory {sums.mem_label}</span>
+          </span>
+        )}
         <span className="pr-2 text-sm text-muted-foreground">
           {plural(group.containers.length, "container", "containers")}
         </span>
@@ -94,10 +113,15 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
               <TableHead>Name</TableHead>
               <TableHead>State</TableHead>
               <TableHead>Health</TableHead>
+              <TableHead>CPU</TableHead>
+              <TableHead>Memory</TableHead>
               <TableHead>Current version</TableHead>
               <TableHead>Latest version</TableHead>
               <TableHead>Version status</TableHead>
               <TableHead>Update severity</TableHead>
+              <TableHead>
+                <span className="sr-only">Logs</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -111,6 +135,20 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
                 <TableCell>{item.state}</TableCell>
                 <TableCell>
                   <HealthBadge health={item.health} label={item.health_label} />
+                </TableCell>
+                <TableCell>
+                  <UsageCell
+                    label={usage.container(item.name)?.cpu_label}
+                    values={usage.containerLine(item.name)?.cpu}
+                    title={`CPU of ${item.name}, last hour`}
+                  />
+                </TableCell>
+                <TableCell>
+                  <UsageCell
+                    label={usage.container(item.name)?.mem_label}
+                    values={usage.containerLine(item.name)?.mem}
+                    title={`Memory of ${item.name}, last hour`}
+                  />
                 </TableCell>
                 <TableCell>{item.tag ?? "-"}</TableCell>
                 <TableCell>
@@ -133,6 +171,13 @@ function GroupTable({ group, open, onToggle }: { group: Group; open: boolean; on
                 </TableCell>
                 <TableCell>
                   <SeverityBadge severity={item.severity} />
+                </TableCell>
+                <TableCell>
+                  <Button asChild variant="outline" size="xs">
+                    <Link to={`/containers/${item.name}/logs`} aria-label={`Logs of ${item.name}`}>
+                      Logs
+                    </Link>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
