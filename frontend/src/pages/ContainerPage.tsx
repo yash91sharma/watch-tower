@@ -1,16 +1,19 @@
-// One container: state, health, release source, update, events of the last 7 days, link to the logs.
+// One container: state, health, resources, release source, update, events of the last 7 days, link to the logs.
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 
-import { containerQuery } from "@/api/queries";
+import { containerHistoryQuery, containerQuery } from "@/api/queries";
 import type { ContainerDetail } from "@/api/types";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { HealthBadge } from "@/components/badges";
+import { MetricChart } from "@/components/MetricChart";
 import { QueryPending } from "@/components/QueryPending";
 import { ReleaseSource } from "@/components/ReleaseSource";
 import { Section } from "@/components/Section";
 import { UpdateBlock } from "@/components/UpdateBlock";
+import { useUsage } from "@/components/Usage";
 import { Button } from "@/components/ui/button";
+import { useMetricsRange } from "@/lib/metricsRange";
 import { formatTime } from "@/lib/time";
 
 export function ContainerPage() {
@@ -46,6 +49,7 @@ function Details({ container }: { container: ContainerDetail }) {
         <dt className="text-muted-foreground">Running</dt>
         <dd>{container.tag ?? "-"}</dd>
       </dl>
+      <Resources name={container.name} />
       <ReleaseSource name={container.name} source={container.release_source} confirmed={container.source_confirmed} />
       <UpdateBlock update={container.update} status={container.status} />
       <Section title="Events (last 7 days)">
@@ -62,5 +66,37 @@ function Details({ container }: { container: ContainerDetail }) {
         )}
       </Section>
     </>
+  );
+}
+
+/** The current values (from the overview) and the charts of the container, with the shared range. */
+function Resources({ name }: { name: string }) {
+  const usage = useUsage();
+  const current = usage.container(name);
+  const ranges = usage.overview?.ranges ?? [];
+  const [range] = useMetricsRange(ranges);
+  const { data, error } = useQuery(containerHistoryQuery(name, range));
+  return (
+    <Section title="Resources">
+      <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
+        <dt className="text-muted-foreground">CPU</dt>
+        <dd>{current?.cpu_label ?? "-"}</dd>
+        <dt className="text-muted-foreground">Memory</dt>
+        <dd>{current?.mem_label ?? "-"}</dd>
+        <dt className="text-muted-foreground">Network</dt>
+        <dd>{current ? `In ${current.net_rx_label}, out ${current.net_tx_label}` : "-"}</dd>
+        <dt className="text-muted-foreground">Disk I/O</dt>
+        <dd>{current ? `Read ${current.disk_read_label}, write ${current.disk_write_label}` : "-"}</dd>
+      </dl>
+      {data === undefined ? (
+        <QueryPending error={error} text="Loading charts…" />
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {data.charts.map((chart) => (
+            <MetricChart key={chart.key} chart={chart} times={data.times} ranges={ranges} />
+          ))}
+        </div>
+      )}
+    </Section>
   );
 }

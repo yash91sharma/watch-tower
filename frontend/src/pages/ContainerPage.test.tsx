@@ -76,3 +76,23 @@ test("the breadcrumb links to the container list", async () => {
   expect(within(crumbs).getByRole("link", { name: "Apps" })).toHaveAttribute("href", "/apps");
   expect(within(crumbs).getByText("web")).toHaveAttribute("aria-current", "page");
 });
+
+test("the Resources section shows the current values and the charts of the container", async () => {
+  renderRoute("/containers/web");
+
+  const resources = await screen.findByRole("region", { name: "Resources" });
+  expect(await within(resources).findByText("9.1% (1.0 core)")).toBeInTheDocument();
+  expect(within(resources).getByText("1.0 / 8.0 GiB")).toBeInTheDocument();
+  expect(within(resources).getByText("In 1.2 KiB/s, out 300 B/s")).toBeInTheDocument();
+  expect(within(resources).getByText("Read 0 B/s, write 4.0 KiB/s")).toBeInTheDocument();
+  expect(await within(resources).findByRole("heading", { name: "CPU" })).toBeInTheDocument();
+  expect(within(resources).getByRole("combobox", { name: "Range" })).toHaveValue("1h");
+});
+
+test("a container with no current values shows a dash and its history", async () => {
+  renderRoute("/containers/db");
+
+  const resources = await screen.findByRole("region", { name: "Resources" });
+  expect(await within(resources).findByRole("heading", { name: "CPU" })).toBeInTheDocument();
+  expect(within(resources).getAllByText("-")).toHaveLength(4);
+});

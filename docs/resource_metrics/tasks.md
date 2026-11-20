@@ -54,7 +54,7 @@ Rules:
   - **Test:** a row shows the labels from the API. Logs opens `/containers/<name>/logs`. `?group=` opens a collapsed group.
 - [x] **3.6** Overview page: VM tiles, VM charts (CPU, memory, disk I/O, network, load), counts with a link to `/apps`, the app list (group header with sums and sparkline, container rows with CPU, memory and sparkline). A container opens its page. A group opens `/apps?group=<label>`.
   - **Test:** the tiles and counts from the API. The links. No containers: the text from `ContainersPage`.
-- [ ] **3.7** Container page: Resources section with the current values and charts for CPU, memory, network and disk I/O.
+- [x] **3.7** Container page: Resources section with the current values and charts for CPU, memory, network and disk I/O.
   - **Test:** the current labels. A stopped container shows `-` and the charts of its history.
 - [ ] **3.8** Settings page: a select for the poll interval.
   - **Test:** a save sends the value. The select has the 5 values.
