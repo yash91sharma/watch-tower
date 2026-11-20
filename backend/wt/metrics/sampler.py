@@ -71,7 +71,6 @@ class Sampler:
         # The current values, by container name. Only running, shown containers.
         self.containers: dict[str, ContainerValues] = {}
         self.vm: VmValues | None = None
-        self.sampled_at: datetime | None = None
 
     def vm_network(self) -> Network:
         """The VM network in and out (bytes/s): the sum of the containers."""
@@ -93,7 +92,6 @@ class Sampler:
 
         docker_ok = await self._poll_containers(docker)
         self._poll_vm(now)
-        self.sampled_at = now
 
         if self.vm is not None:
             minute.vm.append(self.vm)

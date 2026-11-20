@@ -71,7 +71,6 @@ async def test_the_first_poll_has_no_cpu_and_the_second_has(
         assert await sampler.poll(docker)
         assert (await subscription.get()).data == {"kind": "current"}
 
-    assert sampler.sampled_at == clock.now()
     assert set(sampler.containers) == {"web", "db"}
     assert sampler.containers["web"].cpu_percent is None
     assert sampler.vm is not None

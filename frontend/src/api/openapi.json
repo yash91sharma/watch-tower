@@ -1915,42 +1915,9 @@
             "type": "string",
             "title": "State"
           },
-          "cpu_percent": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cpu Percent"
-          },
           "cpu_label": {
             "type": "string",
             "title": "Cpu Label"
-          },
-          "mem_used": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mem Used"
-          },
-          "mem_percent": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mem Percent"
           },
           "mem_label": {
             "type": "string",
@@ -1981,10 +1948,7 @@
         "required": [
           "name",
           "state",
-          "cpu_percent",
           "cpu_label",
-          "mem_used",
-          "mem_percent",
           "mem_label",
           "mem_used_label",
           "net_rx_label",
@@ -1993,22 +1957,10 @@
           "disk_write_label"
         ],
         "title": "ContainerUsage",
-        "description": "The current values of a container. Null values and \"-\" labels: the container\ndoes not run, or WT has no value yet."
+        "description": "The current values of a container. \"-\" labels: the container does not run, or WT\nhas no value yet."
       },
       "CountsOut": {
         "properties": {
-          "apps": {
-            "type": "integer",
-            "title": "Apps"
-          },
-          "containers": {
-            "type": "integer",
-            "title": "Containers"
-          },
-          "running": {
-            "type": "integer",
-            "title": "Running"
-          },
           "apps_label": {
             "type": "string",
             "title": "Apps Label"
@@ -2020,9 +1972,6 @@
         },
         "type": "object",
         "required": [
-          "apps",
-          "containers",
-          "running",
           "apps_label",
           "containers_label"
         ],
@@ -2153,46 +2102,13 @@
       },
       "GroupUsage": {
         "properties": {
-          "project": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Project"
-          },
           "label": {
             "type": "string",
             "title": "Label"
           },
-          "cpu_percent": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cpu Percent"
-          },
           "cpu_label": {
             "type": "string",
             "title": "Cpu Label"
-          },
-          "mem_used": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mem Used"
           },
           "mem_label": {
             "type": "string",
@@ -2208,11 +2124,8 @@
         },
         "type": "object",
         "required": [
-          "project",
           "label",
-          "cpu_percent",
           "cpu_label",
-          "mem_used",
           "mem_label",
           "containers"
         ],
@@ -2245,10 +2158,6 @@
             ],
             "title": "Range"
           },
-          "step_seconds": {
-            "type": "integer",
-            "title": "Step Seconds"
-          },
           "times": {
             "items": {
               "type": "integer"
@@ -2278,7 +2187,6 @@
         "type": "object",
         "required": [
           "range",
-          "step_seconds",
           "times",
           "charts",
           "empty_label"
@@ -2349,22 +2257,6 @@
       },
       "OverviewOut": {
         "properties": {
-          "sampled_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Sampled At"
-          },
-          "interval_seconds": {
-            "type": "integer",
-            "title": "Interval Seconds"
-          },
           "vm": {
             "anyOf": [
               {
@@ -2395,8 +2287,6 @@
         },
         "type": "object",
         "required": [
-          "sampled_at",
-          "interval_seconds",
           "vm",
           "counts",
           "groups",
@@ -2789,11 +2679,6 @@
       },
       "SparklinesOut": {
         "properties": {
-          "start": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Start"
-          },
           "containers": {
             "additionalProperties": {
               "$ref": "#/components/schemas/Sparkline"
@@ -2804,7 +2689,6 @@
         },
         "type": "object",
         "required": [
-          "start",
           "containers"
         ],
         "title": "SparklinesOut"
@@ -2870,10 +2754,6 @@
             "type": "string",
             "title": "Cpu Label"
           },
-          "cores": {
-            "type": "integer",
-            "title": "Cores"
-          },
           "mem_percent": {
             "type": "number",
             "title": "Mem Percent"
@@ -2938,7 +2818,6 @@
         "required": [
           "cpu_percent",
           "cpu_label",
-          "cores",
           "mem_percent",
           "mem_label",
           "containers_mem_label",

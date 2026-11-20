@@ -571,22 +571,16 @@ export interface components {
         };
         /**
          * ContainerUsage
-         * @description The current values of a container. Null values and "-" labels: the container
-         *     does not run, or WT has no value yet.
+         * @description The current values of a container. "-" labels: the container does not run, or WT
+         *     has no value yet.
          */
         ContainerUsage: {
             /** Name */
             name: string;
             /** State */
             state: string;
-            /** Cpu Percent */
-            cpu_percent: number | null;
             /** Cpu Label */
             cpu_label: string;
-            /** Mem Used */
-            mem_used: number | null;
-            /** Mem Percent */
-            mem_percent: number | null;
             /** Mem Label */
             mem_label: string;
             /** Mem Used Label */
@@ -602,12 +596,6 @@ export interface components {
         };
         /** CountsOut */
         CountsOut: {
-            /** Apps */
-            apps: number;
-            /** Containers */
-            containers: number;
-            /** Running */
-            running: number;
             /** Apps Label */
             apps_label: string;
             /** Containers Label */
@@ -663,16 +651,10 @@ export interface components {
          * @description A Compose group with the sums of its containers.
          */
         GroupUsage: {
-            /** Project */
-            project: string | null;
             /** Label */
             label: string;
-            /** Cpu Percent */
-            cpu_percent: number | null;
             /** Cpu Label */
             cpu_label: string;
-            /** Mem Used */
-            mem_used: number | null;
             /** Mem Label */
             mem_label: string;
             /** Containers */
@@ -690,8 +672,6 @@ export interface components {
              * @enum {string}
              */
             range: "1h" | "6h" | "24h" | "7d" | "30d";
-            /** Step Seconds */
-            step_seconds: number;
             /** Times */
             times: number[];
             /** Charts */
@@ -724,10 +704,6 @@ export interface components {
         };
         /** OverviewOut */
         OverviewOut: {
-            /** Sampled At */
-            sampled_at: string | null;
-            /** Interval Seconds */
-            interval_seconds: number;
             vm: components["schemas"]["VmOut"] | null;
             counts: components["schemas"]["CountsOut"];
             /** Groups */
@@ -875,11 +851,6 @@ export interface components {
         };
         /** SparklinesOut */
         SparklinesOut: {
-            /**
-             * Start
-             * Format: date-time
-             */
-            start: string;
             /** Containers */
             containers: {
                 [key: string]: components["schemas"]["Sparkline"];
@@ -911,8 +882,6 @@ export interface components {
             cpu_percent: number | null;
             /** Cpu Label */
             cpu_label: string;
-            /** Cores */
-            cores: number;
             /** Mem Percent */
             mem_percent: number;
             /** Mem Label */

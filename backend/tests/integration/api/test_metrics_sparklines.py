@@ -81,7 +81,6 @@ async def test_60_minute_slots_with_null_for_a_gap(
 
     body = await get(user_client)
 
-    assert body["start"] == "2026-01-01T00:00:00Z"
     web = body["containers"]["web"]
     assert len(web["cpu"]) == len(web["mem"]) == 60
     assert web["cpu"][0] == 1.0
@@ -97,7 +96,7 @@ async def test_all_shown_containers_and_no_group_lines(
     body = await get(user_client)
 
     # The UI shows no group sparklines, so the API sends none.
-    assert set(body) == {"start", "containers"}
+    assert set(body) == {"containers"}
     # All shown containers, also a stopped one. Not the excluded one.
     assert set(body["containers"]) == {"web", "api", "tool"}
     assert body["containers"]["tool"]["cpu"] == [None] * 60

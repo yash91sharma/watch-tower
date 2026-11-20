@@ -60,10 +60,7 @@ export function containerUsage(fields: Partial<ContainerUsage> = {}): ContainerU
   return {
     name: "web",
     state: "running",
-    cpu_percent: 9.1,
     cpu_label: "9.1% (1.0 core)",
-    mem_used: 1073741824,
-    mem_percent: 12.5,
     mem_label: "1.0 / 8.0 GiB",
     mem_used_label: "1.0 GiB",
     net_rx_label: "1.2 KiB/s",
@@ -77,11 +74,8 @@ export function containerUsage(fields: Partial<ContainerUsage> = {}): ContainerU
 /** A group with one container. */
 export function groupUsage(fields: Partial<GroupUsage> = {}): GroupUsage {
   return {
-    project: "site",
     label: "site",
-    cpu_percent: 9.1,
     cpu_label: "9.1% (1.0 core)",
-    mem_used: 1073741824,
     mem_label: "1.0 GiB",
     containers: [containerUsage()],
     ...fields,
@@ -93,7 +87,6 @@ export function vmOut(fields: Partial<VmOut> = {}): VmOut {
   return {
     cpu_percent: 25,
     cpu_label: "25% (2.8 cores)",
-    cores: 11,
     mem_percent: 40,
     mem_label: "3.2 / 8.0 GiB",
     containers_mem_label: "2.1 GiB",
@@ -114,10 +107,8 @@ export function vmOut(fields: Partial<VmOut> = {}): VmOut {
 /** The overview: the VM, one group with one container. */
 export function overview(fields: Partial<Overview> = {}): Overview {
   return {
-    sampled_at: "2026-01-01T00:00:00Z",
-    interval_seconds: 10,
     vm: vmOut(),
-    counts: { apps: 1, containers: 1, running: 1, apps_label: "1 app", containers_label: "1 running of 1 containers" },
+    counts: { apps_label: "1 app", containers_label: "1 running of 1 containers" },
     groups: [groupUsage()],
     ranges: [
       { key: "1h", label: "1 hour" },
@@ -133,14 +124,13 @@ export function overview(fields: Partial<Overview> = {}): Overview {
 /** Sparklines of the container "web": 60 slots, values in the last 2. */
 export function sparklines(): Sparklines {
   const line = { cpu: [...Array<null>(58).fill(null), 1, 2], mem: [...Array<null>(58).fill(null), 100, 200] };
-  return { start: "2026-01-01T00:00:00Z", containers: { web: line } };
+  return { containers: { web: line } };
 }
 
 /** A history with 2 slots and one CPU chart. */
 export function history(fields: Partial<History> = {}): History {
   return {
     range: "1h",
-    step_seconds: 60,
     times: [1767225600, 1767225660],
     charts: [
       {

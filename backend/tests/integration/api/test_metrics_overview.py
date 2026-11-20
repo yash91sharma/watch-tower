@@ -8,7 +8,6 @@ import pytest
 from fastapi import FastAPI
 
 from tests.factories import make_info
-from wt.clock import FakeClock
 from wt.context import AppContext
 from wt.metrics.calc import ContainerValues
 from wt.metrics.vm import VmValues
@@ -75,12 +74,11 @@ async def test_before_the_first_poll_there_are_no_values(
 ) -> None:
     body = await get(user_client)
 
-    assert body["sampled_at"] is None
+    # Only the values that the UI shows.
+    assert set(body) == {"vm", "counts", "groups", "ranges"}
     assert body["vm"] is None
-    assert body["interval_seconds"] == 10
     web = body["groups"][1]["containers"][1]
     assert web["name"] == "web"
-    assert web["cpu_percent"] is None
     assert web["cpu_label"] == "-"
 
 
@@ -91,24 +89,17 @@ async def test_counts_and_groups_in_the_order_of_the_container_list(
 
     # 2 projects, and 2 containers with no project: 4 apps. The excluded one is not counted.
     assert body["counts"] == {
-        "apps": 4,
-        "containers": 5,
-        "running": 4,
         "apps_label": "4 apps",
         "containers_label": "4 running of 5 containers",
     }
-    assert [(g["project"], g["label"]) for g in body["groups"]] == [
-        ("data", "data"),
-        ("site", "site"),
-        (None, "Other"),
-    ]
+    assert [g["label"] for g in body["groups"]] == ["data", "site", "Other"]
     assert [c["name"] for c in body["groups"][2]["containers"]] == ["cron", "tool"]
     assert [r["key"] for r in body["ranges"]] == ["1h", "6h", "24h", "7d", "30d"]
     assert body["ranges"][0]["label"] == "1 hour"
 
 
 async def test_current_values_with_labels_and_group_sums(
-    user_client: httpx.AsyncClient, ctx: AppContext, clock: FakeClock
+    user_client: httpx.AsyncClient, ctx: AppContext
 ) -> None:
     ctx.sampler.containers = {
         "web": values(cpu=9.09, mem=GIB),
@@ -116,24 +107,17 @@ async def test_current_values_with_labels_and_group_sums(
         "tool": values(cpu=0.5, mem=1024),
     }
     ctx.sampler.vm = VM
-    ctx.sampler.sampled_at = clock.now()
 
     body = await get(user_client)
 
-    assert body["sampled_at"] == "2026-01-01T00:00:00Z"
     site = body["groups"][1]
-    assert site["cpu_percent"] == pytest.approx(9.09)
     assert site["cpu_label"] == "9.1% (0.91 core)"
-    assert site["mem_used"] == GIB + GIB // 2
     assert site["mem_label"] == "1.5 GiB"
     web = site["containers"][1]
     assert web == {
         "name": "web",
         "state": "running",
-        "cpu_percent": pytest.approx(9.09),
         "cpu_label": "9.1% (0.91 core)",
-        "mem_used": GIB,
-        "mem_percent": 12.5,
         "mem_label": "1.0 / 8.0 GiB",
         "mem_used_label": "1.0 GiB",
         "net_rx_label": "100 B/s",
@@ -143,29 +127,24 @@ async def test_current_values_with_labels_and_group_sums(
     }
     # A stopped container has no values.
     db = body["groups"][0]
-    assert db["cpu_percent"] is None
     assert db["cpu_label"] == "-"
     assert db["mem_label"] == "-"
     assert db["containers"][0]["mem_label"] == "-"
     assert db["containers"][0]["mem_used_label"] == "-"
 
 
-async def test_the_vm_values(
-    user_client: httpx.AsyncClient, ctx: AppContext, clock: FakeClock
-) -> None:
+async def test_the_vm_values(user_client: httpx.AsyncClient, ctx: AppContext) -> None:
     ctx.sampler.containers = {
         "web": values(cpu=1.0, mem=GIB),
         "tool": values(cpu=1.0, mem=GIB),
     }
     ctx.sampler.vm = VM
-    ctx.sampler.sampled_at = clock.now()
 
     vm = (await get(user_client))["vm"]
 
     assert vm == {
         "cpu_percent": 25.0,
         "cpu_label": "25% (2.5 cores)",
-        "cores": 10,
         "mem_percent": 25.0,
         "mem_label": "2.0 / 8.0 GiB",
         "containers_mem_label": "2.0 GiB",
@@ -183,7 +162,7 @@ async def test_the_vm_values(
 
 
 async def test_a_vm_with_no_swap(
-    user_client: httpx.AsyncClient, ctx: AppContext, clock: FakeClock
+    user_client: httpx.AsyncClient, ctx: AppContext
 ) -> None:
     ctx.sampler.vm = replace(VM, swap_total=0, cpu_percent=None)
 

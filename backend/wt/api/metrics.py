@@ -16,7 +16,6 @@ from sqlmodel import Session, col
 
 from wt import clock
 from wt.api.deps import Ctx, get_live
-from wt.config import load_settings
 from wt.db import LOCAL_HOST_ID
 from wt.db.models import ContainerSample, MetricTier, VmSample
 from wt.docker.inventory import LiveGroup
@@ -61,7 +60,6 @@ class VmOut(BaseModel):
 
     cpu_percent: float | None
     cpu_label: str
-    cores: int
     mem_percent: float
     mem_label: str
     # The memory of the containers that WT shows.
@@ -80,17 +78,13 @@ class VmOut(BaseModel):
 
 
 class ContainerUsage(BaseModel):
-    """The current values of a container. Null values and "-" labels: the container
-    does not run, or WT has no value yet.
+    """The current values of a container. "-" labels: the container does not run, or WT
+    has no value yet.
     """
 
     name: str
     state: str
-    cpu_percent: float | None
     cpu_label: str
-    mem_used: int | None
-    # % of the memory limit (or of the VM memory if the container has no limit).
-    mem_percent: float | None
     # Used of the limit, for example "18.4 MiB / 7.8 GiB".
     mem_label: str
     # Only the used memory, for example "18.4 MiB" (for narrow table columns).
@@ -104,29 +98,20 @@ class ContainerUsage(BaseModel):
 class GroupUsage(BaseModel):
     """A Compose group with the sums of its containers."""
 
-    project: str | None
     label: str
-    cpu_percent: float | None
     cpu_label: str
-    mem_used: int | None
     mem_label: str
     containers: list[ContainerUsage]
 
 
 class CountsOut(BaseModel):
-    # Compose projects, plus the containers with no project.
-    apps: int
-    # The containers that WT shows (not the excluded ones).
-    containers: int
-    running: int
+    # The apps: the Compose projects, plus the containers with no project.
     apps_label: str
+    # The running and all containers that WT shows (not the excluded ones).
     containers_label: str
 
 
 class OverviewOut(BaseModel):
-    # The time of the last poll. None before the first poll.
-    sampled_at: datetime | None
-    interval_seconds: int
     vm: VmOut | None
     counts: CountsOut
     groups: list[GroupUsage]
@@ -146,7 +131,6 @@ def _vm_out(sampler: Sampler) -> VmOut | None:
     return VmOut(
         cpu_percent=vm.cpu_percent,
         cpu_label=cpu_label(vm.cpu_percent, cores_used(vm.cpu_percent, vm.cores)),
-        cores=vm.cores,
         mem_percent=_percent(vm.mem_used, vm.mem_total) or 0.0,
         mem_label=used_of_label(vm.mem_used, vm.mem_total),
         containers_mem_label=bytes_label(containers_mem),
@@ -170,10 +154,7 @@ def _container_usage(
         return ContainerUsage(
             name=name,
             state=state,
-            cpu_percent=None,
             cpu_label=cpu_label(None, None),
-            mem_used=None,
-            mem_percent=None,
             mem_label=used_of_label(None, 0),
             mem_used_label=bytes_label(None),
             net_rx_label=rate_label(None),
@@ -185,10 +166,7 @@ def _container_usage(
     return ContainerUsage(
         name=name,
         state=state,
-        cpu_percent=cpu,
         cpu_label=cpu_label(cpu, cores_used(cpu, values.cpus)),
-        mem_used=values.mem_used,
-        mem_percent=_percent(values.mem_used, values.mem_limit),
         mem_label=used_of_label(values.mem_used, values.mem_limit),
         mem_used_label=bytes_label(values.mem_used),
         net_rx_label=rate_label(values.net_rx_bps),
@@ -198,19 +176,19 @@ def _container_usage(
     )
 
 
-def _group_usage(
-    group: LiveGroup, containers: list[ContainerUsage], cores: int
-) -> GroupUsage:
-    cpu = total(item.cpu_percent for item in containers)
-    mem = total(item.mem_used for item in containers)
+def _group_usage(group: LiveGroup, sampler: Sampler, cores: int) -> GroupUsage:
+    """The group with its containers. The sums skip the containers with no value."""
+    values = [sampler.containers.get(live.name) for _, live in group.members]
+    cpu = total(item.cpu_percent for item in values if item)
+    mem = total(item.mem_used for item in values if item)
     return GroupUsage(
-        project=group.project,
         label=group.label,
-        cpu_percent=cpu,
         cpu_label=cpu_label(cpu, cores_used(cpu, cores)),
-        mem_used=mem,
         mem_label=bytes_label(mem),
-        containers=containers,
+        containers=[
+            _container_usage(live.name, live.state, item)
+            for (_, live), item in zip(group.members, values, strict=True)
+        ],
     )
 
 
@@ -223,29 +201,18 @@ def get_overview(ctx: Ctx) -> OverviewOut:
     # All containers of a VM see the same cores (also when WT cannot read the VM).
     container_cores = (item.cpus for item in sampler.containers.values())
     cores = sampler.vm.cores if sampler.vm else max(container_cores, default=0)
-    group_usages: list[GroupUsage] = []
     apps = running = count = 0
     for group in groups:
-        usages = [
-            _container_usage(live.name, live.state, sampler.containers.get(live.name))
-            for _, live in group.members
-        ]
-        group_usages.append(_group_usage(group, usages, cores))
         apps += 1 if group.project is not None else len(group.members)
         count += len(group.members)
         running += sum(1 for _, live in group.members if live.state == "running")
     return OverviewOut(
-        sampled_at=sampler.sampled_at,
-        interval_seconds=load_settings(ctx.engine).metrics_interval_seconds,
         vm=_vm_out(sampler),
         counts=CountsOut(
-            apps=apps,
-            containers=count,
-            running=running,
             apps_label=f"{apps} app" if apps == 1 else f"{apps} apps",
             containers_label=f"{running} running of {count} containers",
         ),
-        groups=group_usages,
+        groups=[_group_usage(group, sampler, cores) for group in groups],
         ranges=RANGES,
     )
 
@@ -262,8 +229,6 @@ class Sparkline(BaseModel):
 
 
 class SparklinesOut(BaseModel):
-    # The start of the first slot. Slot i starts i minutes later.
-    start: datetime
     # By container name: all shown containers, also the stopped ones.
     containers: dict[str, Sparkline]
 
@@ -291,7 +256,7 @@ def get_sparklines(ctx: Ctx) -> SparklinesOut:
         line = lines[names[row.container_id]]
         line.cpu[slot] = row.cpu_percent
         line.mem[slot] = row.mem_used
-    return SparklinesOut(start=start, containers=lines)
+    return SparklinesOut(containers=lines)
 
 
 # The query `?range=`. The name in Python is range_key, because `range` is a built-in.
@@ -324,7 +289,6 @@ class ChartOut(BaseModel):
 
 class HistoryOut(BaseModel):
     range: RangeKey
-    step_seconds: int
     # The start of each slot (Unix seconds), oldest first.
     times: list[int]
     charts: list[ChartOut]
@@ -458,7 +422,6 @@ def _history_out(
 ) -> HistoryOut:
     return HistoryOut(
         range=range_key,
-        step_seconds=int(slots.step.total_seconds()),
         times=slots.times(),
         charts=charts,
         empty_label=None if has_rows else EMPTY_LABELS[slots.tier],

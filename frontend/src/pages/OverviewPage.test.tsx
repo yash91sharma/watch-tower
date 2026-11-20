@@ -52,7 +52,6 @@ test("the app list links to the containers and to the groups on App details", as
           groups: [
             groupUsage(),
             groupUsage({
-              project: null,
               label: "Other",
               containers: [containerUsage({ name: "tool", state: "exited", cpu_label: "-", mem_label: "-" })],
             }),
@@ -82,7 +81,7 @@ function answerGroups() {
         overview({
           groups: [
             groupUsage(),
-            groupUsage({ project: null, label: "Other", containers: [containerUsage({ name: "tool" })] }),
+            groupUsage({ label: "Other", containers: [containerUsage({ name: "tool" })] }),
           ],
         }),
       ),

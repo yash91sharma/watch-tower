@@ -103,8 +103,8 @@ async def test_vm_history_of_1h_has_60_minute_slots(
 
     body = await get(user_client, "/api/metrics/vm/history?range=1h")
 
+    assert set(body) == {"range", "times", "charts", "empty_label"}
     assert body["range"] == "1h"
-    assert body["step_seconds"] == 60
     assert len(body["times"]) == 60
     assert body["times"][0] == int((end - timedelta(minutes=60)).timestamp())
     assert body["times"][1] - body["times"][0] == 60
@@ -155,8 +155,8 @@ async def test_each_range_reads_its_tier(
 
     body = await get(user_client, f"/api/metrics/vm/history?range={range_key}")
 
-    assert body["step_seconds"] == step
     assert len(body["times"]) == slots
+    assert body["times"][1] - body["times"][0] == step
     assert body["times"][-1] == int(end.timestamp()) - step
     assert chart(body, "cpu")["series"][0]["values"][-1] == 7.0
 
