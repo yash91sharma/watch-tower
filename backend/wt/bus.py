@@ -18,6 +18,7 @@ class Topic(StrEnum):
     CHECK = "check"
     DOCKER = "docker"
     SETTINGS = "settings"
+    METRICS = "metrics"
 
 
 @dataclass(frozen=True)

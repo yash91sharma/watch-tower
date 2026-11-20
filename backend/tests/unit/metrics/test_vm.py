@@ -6,51 +6,14 @@ from pathlib import Path
 
 import pytest
 
+from tests.unit.metrics.conftest import BLOCK_DEVICES
 from wt.metrics.vm import VmCounters, VmReadError, VmValues, read_vm, vm_values
 
 T0 = datetime(2026, 11, 20, 12, 0, tzinfo=UTC)
 
-STAT = """cpu  100 0 50 800 50 0 0 0 0 0
-cpu0 50 0 25 400 25 0 0 0 0 0
-cpu1 50 0 25 400 25 0 0 0 0 0
-intr 12345
-"""
-MEMINFO = """MemTotal:        8000000 kB
-MemFree:          200000 kB
-MemAvailable:    6000000 kB
-SwapTotal:       4000000 kB
-SwapFree:        3000000 kB
-"""
-# vda and vdb are disks. vda1 is a partition (not in /sys/block). The others are not real disks.
-DISKSTATS = """ 254       0 vda 10 0 100 0 20 0 200 0 0 0 0 0 0 0 0 0 0
- 254       1 vda1 10 0 100 0 20 0 200 0 0 0 0 0 0 0 0 0 0
- 254      16 vdb 1 0 10 0 2 0 20 0 0 0 0 0 0 0 0 0 0
-   7       0 loop0 5 0 5000 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-   1       0 ram0 5 0 5000 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-  43       0 nbd0 5 0 5000 0 0 0 0 0 0 0 0 0 0 0 0 0 0
- 253       0 dm-0 5 0 5000 0 0 0 0 0 0 0 0 0 0 0 0 0 0
- 252       0 zram0 5 0 5000 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-"""
-BLOCK_DEVICES = ["vda", "vdb", "loop0", "ram0", "nbd0", "dm-0", "zram0"]
 
-
-@pytest.fixture
-def root(tmp_path: Path) -> Path:
-    """A root dir with the /proc and /sys files of a VM with 2 cores."""
-    proc = tmp_path / "proc"
-    proc.mkdir()
-    (proc / "stat").write_text(STAT)
-    (proc / "meminfo").write_text(MEMINFO)
-    (proc / "loadavg").write_text("0.52 0.40 0.35 1/760 34299\n")
-    (proc / "uptime").write_text("3700.50 7000.00\n")
-    (proc / "diskstats").write_text(DISKSTATS)
-    for name in BLOCK_DEVICES:
-        (tmp_path / "sys" / "block" / name).mkdir(parents=True)
-    return tmp_path
-
-
-def test_read_vm(root: Path, tmp_path: Path) -> None:
-    counters = read_vm(root, tmp_path, T0)
+def test_read_vm(vm_root: Path, tmp_path: Path) -> None:
+    counters = read_vm(vm_root, tmp_path, T0)
 
     assert replace(counters, disk_used=0, disk_total=0) == VmCounters(
         time=T0,
@@ -76,33 +39,33 @@ def test_read_vm(root: Path, tmp_path: Path) -> None:
     assert 0 < counters.disk_used <= counters.disk_total
 
 
-def test_a_missing_file_gives_a_clear_error(root: Path, tmp_path: Path) -> None:
-    (root / "proc" / "meminfo").unlink()
+def test_a_missing_file_gives_a_clear_error(vm_root: Path, tmp_path: Path) -> None:
+    (vm_root / "proc" / "meminfo").unlink()
 
     with pytest.raises(VmReadError, match="meminfo"):
-        read_vm(root, tmp_path, T0)
+        read_vm(vm_root, tmp_path, T0)
 
 
-def test_a_missing_block_dir_gives_a_clear_error(root: Path, tmp_path: Path) -> None:
+def test_a_missing_block_dir_gives_a_clear_error(vm_root: Path, tmp_path: Path) -> None:
     for name in BLOCK_DEVICES:
-        (root / "sys" / "block" / name).rmdir()
-    (root / "sys" / "block").rmdir()
+        (vm_root / "sys" / "block" / name).rmdir()
+    (vm_root / "sys" / "block").rmdir()
 
     with pytest.raises(VmReadError, match="block"):
-        read_vm(root, tmp_path, T0)
+        read_vm(vm_root, tmp_path, T0)
 
 
 def test_a_file_with_a_missing_value_gives_a_clear_error(
-    root: Path, tmp_path: Path
+    vm_root: Path, tmp_path: Path
 ) -> None:
-    (root / "proc" / "meminfo").write_text("MemTotal: 8000000 kB\n")
+    (vm_root / "proc" / "meminfo").write_text("MemTotal: 8000000 kB\n")
 
     with pytest.raises(VmReadError, match="MemAvailable"):
-        read_vm(root, tmp_path, T0)
+        read_vm(vm_root, tmp_path, T0)
 
 
-def test_vm_values_of_two_reads(root: Path, tmp_path: Path) -> None:
-    first = read_vm(root, tmp_path, T0)
+def test_vm_values_of_two_reads(vm_root: Path, tmp_path: Path) -> None:
+    first = read_vm(vm_root, tmp_path, T0)
     # 10 s later: 500 more CPU ticks, 100 of them busy. 1 MB read, 2 MB written.
     second = replace(
         first,
@@ -132,9 +95,9 @@ def test_vm_values_of_two_reads(root: Path, tmp_path: Path) -> None:
 
 
 def test_the_first_read_has_no_cpu_and_no_disk_rates(
-    root: Path, tmp_path: Path
+    vm_root: Path, tmp_path: Path
 ) -> None:
-    values = vm_values(None, read_vm(root, tmp_path, T0))
+    values = vm_values(None, read_vm(vm_root, tmp_path, T0))
 
     assert values.cpu_percent is None
     assert values.disk_read_bps is None
