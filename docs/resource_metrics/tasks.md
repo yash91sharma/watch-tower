@@ -42,7 +42,7 @@ Rules:
 
 ## 3. Frontend
 
-- [ ] **3.1** Queries for the 4 metric routes. `useEventStream`: `metrics` current fetches the overview again, `metrics` history fetches the sparklines and the open history queries again.
+- [x] **3.1** Queries for the 4 metric routes. `useEventStream`: `metrics` current fetches the overview again, `metrics` history fetches the sparklines and the open history queries again.
   - **Test:** each event kind fetches only its queries again (MSW).
 - [ ] **3.2** `components/Sparkline.tsx`: an SVG line from the values. A null makes a gap. It has no axes.
   - **Test:** the path for sample values, a gap, all null.

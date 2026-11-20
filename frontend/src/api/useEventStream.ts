@@ -3,7 +3,7 @@
 import { type QueryKey, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import { authStateQuery, checkStatusQuery, containersQuery } from "@/api/queries";
+import { authStateQuery, checkStatusQuery, containersQuery, historyKey, overviewQuery, sparklinesQuery } from "@/api/queries";
 
 const RETRY_MS = 3000;
 
@@ -43,6 +43,15 @@ export function useEventStream(): { wt: boolean; docker: boolean } {
       source.addEventListener("check", () => {
         refetch(checkStatusQuery.queryKey);
         refetch(containersQuery.queryKey);
+      });
+      source.addEventListener("metrics", (event: MessageEvent<string>) => {
+        const { kind } = JSON.parse(event.data) as { kind: "current" | "history" };
+        if (kind === "current") {
+          refetch(overviewQuery.queryKey);
+        } else {
+          refetch(sparklinesQuery.queryKey);
+          refetch(historyKey);
+        }
       });
       source.addEventListener("docker", (event: MessageEvent<string>) => {
         const { connected } = JSON.parse(event.data) as { connected: boolean };

@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
+import { containerHistoryQuery, overviewQuery, sparklinesQuery, vmHistoryQuery } from "@/api/queries";
 import { useEventStream } from "@/api/useEventStream";
 import { FakeEventSource } from "@/test/eventSource";
 
@@ -151,5 +152,53 @@ test("an error refetches the auth state at once", async () => {
 
   await waitFor(() => {
     expect(authFetches).toBe(2);
+  });
+});
+
+/** The hook with the metric queries, which count their fetches. */
+async function renderMetrics() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const fetches = { overview: 0, sparklines: 0, vm: 0, container: 0, containers: 0 };
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  renderHook(
+    () => {
+      useQuery({ queryKey: overviewQuery.queryKey, queryFn: () => ++fetches.overview });
+      useQuery({ queryKey: sparklinesQuery.queryKey, queryFn: () => ++fetches.sparklines });
+      useQuery({ queryKey: vmHistoryQuery("1h").queryKey, queryFn: () => ++fetches.vm });
+      useQuery({ queryKey: containerHistoryQuery("web", "1h").queryKey, queryFn: () => ++fetches.container });
+      useQuery({ queryKey: ["containers"], queryFn: () => ++fetches.containers });
+      return useEventStream();
+    },
+    { wrapper },
+  );
+  await waitFor(() => {
+    expect(fetches).toEqual({ overview: 1, sparklines: 1, vm: 1, container: 1, containers: 1 });
+  });
+  return fetches;
+}
+
+test("a metrics current event refetches only the overview", async () => {
+  const fetches = await renderMetrics();
+
+  act(() => {
+    FakeEventSource.last.emit("metrics", { kind: "current" });
+  });
+
+  await waitFor(() => {
+    expect(fetches).toEqual({ overview: 2, sparklines: 1, vm: 1, container: 1, containers: 1 });
+  });
+});
+
+test("a metrics history event refetches the sparklines and the charts", async () => {
+  const fetches = await renderMetrics();
+
+  act(() => {
+    FakeEventSource.last.emit("metrics", { kind: "history" });
+  });
+
+  await waitFor(() => {
+    expect(fetches).toEqual({ overview: 1, sparklines: 2, vm: 2, container: 2, containers: 1 });
   });
 });
