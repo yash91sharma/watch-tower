@@ -56,7 +56,7 @@ The worker makes its own Docker client (`ctx.docker_factory`). It polls with at 
 | VM CPU % | `/proc/stat` line `cpu`: 1 - Δ(idle + iowait) / Δtotal. Cores: the number of `cpuN` lines. |
 | VM memory | `MemTotal - MemAvailable` of `MemTotal`. On OrbStack, `MemTotal` is the memory limit of OrbStack. |
 | VM swap, load, uptime | `/proc/meminfo`, `/proc/loadavg`, `/proc/uptime`. |
-| VM disk | `statvfs` of the data dir (the Docker disk). Disk I/O: `/proc/diskstats` of the devices in `/sys/block`, not `loop*`, `ram*`, `zram*` or `dm-*`. |
+| VM disk | `statvfs` of the data dir (the Docker disk). Disk I/O: `/proc/diskstats` of the devices in `/sys/block`, not `loop*`, `ram*`, `zram*`, `dm-*` or `nbd*`. |
 | VM network | Sum of the container rates. WT has its own network namespace, so it cannot see the VM network. |
 | App values | Sum of its containers. |
 | Counts | Apps: Compose projects + containers with no project. Containers: running of all shown. `wt.enable=false` containers are not counted or polled. |
