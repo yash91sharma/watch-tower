@@ -17,7 +17,8 @@ from wt.db import local_containers
 from wt.db.models import Update
 from wt.notify.messages import UpdateInfo, digest_message, update_message
 from wt.notify.ntfy import send
-from wt.versions.updates import current_update
+from wt.versions.cache import status_caches
+from wt.versions.updates import current_updates
 
 
 @dataclass(frozen=True)
@@ -27,7 +28,7 @@ class _Pending:
 
 
 async def notify_updates(engine: Engine, env: Env) -> None:
-    pending = await asyncio.to_thread(_pending, engine)
+    pending = await asyncio.to_thread(pending_updates, engine)
     if not pending:
         return
     settings = await asyncio.to_thread(load_settings, engine)
@@ -42,13 +43,14 @@ async def notify_updates(engine: Engine, env: Env) -> None:
         )
 
 
-def _pending(engine: Engine) -> list[_Pending]:
+def pending_updates(engine: Engine) -> list[_Pending]:
+    """The current updates with no message yet, by container name."""
     pending: list[_Pending] = []
     with Session(engine) as session:
-        for container in local_containers(session):
-            if not container.enabled:
-                continue
-            update = current_update(session, container)
+        containers = [row for row in local_containers(session) if row.enabled]
+        updates = current_updates(session, containers, status_caches(session))
+        for container in containers:
+            update = updates.get(container.name)
             if update is None or update.notified_at is not None or update.id is None:
                 continue
             info = UpdateInfo(

@@ -4,10 +4,11 @@ The check run plans the rows that need new notes, gets the summary, and saves th
 API and the update notifications read the current row of a container.
 """
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
 from sqlalchemy import Engine
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from wt.db.models import Container, RepoCache, Update
 from wt.llm.client import LlmResult
@@ -15,14 +16,29 @@ from wt.versions.cache import cached_releases
 from wt.versions.rules import Status, container_status, join_notes, release_range
 
 
-def current_update(session: Session, container: Container) -> Update | None:
-    """The current update of a container: the row for the latest tag, while the status is
-    "update". Older rows are not current.
+def current_updates(
+    session: Session,
+    containers: Iterable[Container],
+    caches: Mapping[str, RepoCache],
+) -> dict[str, Update]:
+    """The current update of each container that has one, by container name. One query.
+
+    The current update is the row for the latest tag, while the status is "update". Older
+    rows are not current. `caches` has the repo caches by repo (see status_caches).
     """
-    cache = _update_cache(session, container)
-    if cache is None or container.id is None:
-        return None
-    return _update_row(session, container.id, cache.latest_tag or "")
+    # Container id -> (name, latest tag).
+    latest: dict[int, tuple[str, str]] = {}
+    for container in containers:
+        cache = caches.get(container.release_source or "")
+        status = container_status(container.tag, container.release_source, cache)
+        if cache is not None and container.id is not None and status is Status.UPDATE:
+            latest[container.id] = (container.name, cache.latest_tag or "")
+    rows = session.exec(select(Update).where(col(Update.container_id).in_(latest)))
+    return {
+        latest[row.container_id][0]: row
+        for row in rows
+        if row.to_version == latest[row.container_id][1]
+    }
 
 
 def _update_cache(session: Session, container: Container) -> RepoCache | None:

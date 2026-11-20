@@ -7,9 +7,11 @@ WT saves no ETag, so that the next run gets the full answer again (not a 304).
 
 import asyncio
 from dataclasses import asdict
+from typing import Any, cast
 
 from sqlalchemy import Engine
-from sqlmodel import Session
+from sqlalchemy.orm import QueryableAttribute, defer
+from sqlmodel import Session, select
 
 from wt import clock
 from wt.db.models import RepoCache
@@ -26,6 +28,18 @@ from wt.versions.rules import Release, is_version_tag
 
 def cached_releases(cache: RepoCache) -> list[Release]:
     return [Release(**item) for item in cache.releases]
+
+
+def status_caches(session: Session) -> dict[str, RepoCache]:
+    """All repo caches by repo, for the version status. One query.
+
+    The release lists are big and the status does not use them, so they are not loaded.
+    Do not read `releases` from these rows after the session closes.
+    """
+    # SQLModel types the column as a list. It is a mapped attribute at run time.
+    releases = cast(QueryableAttribute[Any], RepoCache.releases)
+    rows = session.exec(select(RepoCache).options(defer(releases)))
+    return {row.repo: row for row in rows}
 
 
 async def refresh_repo(engine: Engine, github: GitHub, repo: str) -> None:

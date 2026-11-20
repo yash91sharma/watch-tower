@@ -16,8 +16,9 @@ from wt.clock import FakeClock
 from wt.config import Env, Settings, save_settings
 from wt.db.models import Container, Severity, Update
 from wt.docker.inventory import Inventory
+from wt.versions.cache import status_caches
 from wt.versions.check import CheckRunner
-from wt.versions.updates import current_update
+from wt.versions.updates import current_updates
 
 pytestmark = pytest.mark.anyio
 
@@ -71,7 +72,7 @@ def updates(engine: Engine) -> list[Update]:
 def current(engine: Engine) -> Update | None:
     with Session(engine) as session:
         container = session.exec(select(Container).where(Container.name == "web")).one()
-        return current_update(session, container)
+        return current_updates(session, [container], status_caches(session)).get("web")
 
 
 async def test_update_row_has_notes_severity_and_summary(

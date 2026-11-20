@@ -1,5 +1,6 @@
 """Tests for the static frontend files and the SPA fallback (wt.api.static)."""
 
+import gzip
 import json
 from collections.abc import AsyncIterator, Awaitable, Callable
 from pathlib import Path
@@ -129,3 +130,52 @@ async def test_404_handler_for_another_error_type_gives_json_404(
         "error": "Not Found",
         "detail": "Not Found",
     }
+
+
+@pytest.fixture
+def gzip_asset(static_dir: Path) -> bytes:
+    """A precompressed copy of the asset (the image build makes them with gzip)."""
+    body = gzip.compress(b"console.log(1)")
+    (static_dir / "assets" / "index-abc123.js.gz").write_bytes(body)
+    return body
+
+
+@pytest.mark.anyio
+async def test_a_client_that_accepts_gzip_gets_the_precompressed_file(
+    site: httpx.AsyncClient, gzip_asset: bytes
+) -> None:
+    response = await site.get(
+        "/assets/index-abc123.js", headers={"Accept-Encoding": "br, gzip;q=0.8"}
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-encoding"] == "gzip"
+    assert response.headers["content-length"] == str(len(gzip_asset))
+    assert response.headers["content-type"].startswith("text/javascript")
+    assert response.headers["vary"] == "Accept-Encoding"
+    assert response.headers["cache-control"] == IMMUTABLE
+    # httpx decompresses the body.
+    assert response.text == "console.log(1)"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("accept", ["identity", "gzip;q=0", "deflate"])
+async def test_a_client_that_does_not_accept_gzip_gets_the_plain_file(
+    site: httpx.AsyncClient, gzip_asset: bytes, accept: str
+) -> None:
+    response = await site.get(
+        "/assets/index-abc123.js", headers={"Accept-Encoding": accept}
+    )
+
+    assert "content-encoding" not in response.headers
+    assert response.headers["vary"] == "Accept-Encoding"
+    assert response.content == b"console.log(1)"
+
+
+@pytest.mark.anyio
+async def test_a_file_with_no_gzip_copy_is_plain(site: httpx.AsyncClient) -> None:
+    response = await site.get("/sw.js", headers={"Accept-Encoding": "gzip"})
+
+    assert "content-encoding" not in response.headers
+    assert "vary" not in response.headers
+    assert response.text == "// service worker"

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from sqlalchemy import Engine
 from sqlmodel import Session
 
-from wt.db import LOCAL_HOST_ID, find_container
+from wt.db import LOCAL_HOST_ID, find_container, local_containers
 from wt.db.models import Container
 from wt.docker.client import ContainerInfo, ContainerNotFoundError, DockerApi
 from wt.docker.parse import (
@@ -70,9 +70,11 @@ class Inventory:
         """The DB row and the live state of each container that exists now and is not
         excluded. Sorted by name.
         """
+        # One query for all rows: the UI calls this often (for example the overview).
+        rows = {row.name: row for row in local_containers(session)}
         pairs: list[LiveRow] = []
         for name, live in sorted(self._live.items()):
-            row = find_container(session, name)
+            row = rows.get(name)
             if row is not None and row.enabled:
                 pairs.append((row, live))
         return pairs

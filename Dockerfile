@@ -10,7 +10,11 @@ WORKDIR /frontend
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
-RUN pnpm build
+# gzip copies of the text files over 1 KiB. WT sends them to browsers that accept gzip.
+RUN pnpm build \
+    && find dist -type f -size +1k \
+       \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.svg' -o -name '*.webmanifest' \) \
+       -exec gzip -9 --keep {} +
 
 FROM python:3.15.2-slim-trixie AS backend
 COPY --from=uv /uv /usr/local/bin/uv

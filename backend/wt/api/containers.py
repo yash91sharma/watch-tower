@@ -11,11 +11,20 @@ from sqlmodel import Session, col, select
 
 from wt import clock
 from wt.api.deps import Ctx, get_container, get_live
-from wt.db.models import EVENT_MAX_AGE, Container, Event, EventKind, RepoCache, Severity
+from wt.db.models import (
+    EVENT_MAX_AGE,
+    Container,
+    Event,
+    EventKind,
+    RepoCache,
+    Severity,
+    Update,
+)
 from wt.docker.inventory import LiveContainer
 from wt.docker.parse import release_source
+from wt.versions.cache import status_caches
 from wt.versions.rules import Status, container_status
-from wt.versions.updates import current_update
+from wt.versions.updates import current_updates
 
 router = APIRouter(prefix="/containers", tags=["containers"])
 
@@ -101,12 +110,11 @@ def update_level(containers: list[ContainerOut]) -> UpdateLevel:
 
 
 def container_out(
-    session: Session, row: Container, live: LiveContainer
+    row: Container, live: LiveContainer, cache: RepoCache | None, update: Update | None
 ) -> ContainerOut:
-    cache = session.get(RepoCache, row.release_source or "")
+    """One container. `cache`: its repo cache. `update`: its current update."""
     status = container_status(row.tag, row.release_source, cache)
     known = status in (Status.UPDATE, Status.UP_TO_DATE)
-    update = current_update(session, row)
     # Docker keeps the last health of a stopped container, so only a running one has one.
     running = live.state == "running"
     health = live.health if running and live.health in get_args(Health) else "none"
@@ -146,10 +154,20 @@ def list_containers(ctx: Ctx) -> list[GroupOut]:
     Groups are sorted by label; "Other" (no project) is last. Containers by name.
     """
     with Session(ctx.engine) as session:
+        groups = ctx.inventory.live_groups(session)
+        caches = status_caches(session)
+        rows = [row for group in groups for row, _ in group.members]
+        updates = current_updates(session, rows, caches)
         result: list[GroupOut] = []
-        for group in ctx.inventory.live_groups(session):
+        for group in groups:
             containers = [
-                container_out(session, row, live) for row, live in group.members
+                container_out(
+                    row,
+                    live,
+                    caches.get(row.release_source or ""),
+                    updates.get(row.name),
+                )
+                for row, live in group.members
             ]
             result.append(
                 GroupOut(
@@ -198,7 +216,8 @@ def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
     """One container with its current update and its events. 404 if it is not in Docker now."""
     with Session(ctx.engine) as session:
         row, live = get_live(session, ctx.inventory, name)
-        update = current_update(session, row)
+        caches = status_caches(session)
+        update = current_updates(session, [row], caches).get(row.name)
         since = clock.now() - EVENT_MAX_AGE
         events = session.exec(
             select(Event)
@@ -206,7 +225,9 @@ def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
             .order_by(col(Event.time).desc())
         )
         return ContainerDetail(
-            **container_out(session, row, live).model_dump(),
+            **container_out(
+                row, live, caches.get(row.release_source or ""), update
+            ).model_dump(),
             update=UpdateOut.model_validate(update, from_attributes=True)
             if update
             else None,

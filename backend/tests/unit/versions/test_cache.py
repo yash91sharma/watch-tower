@@ -5,12 +5,12 @@ from collections.abc import AsyncIterator
 import httpx
 import pytest
 import respx
-from sqlalchemy import Engine
+from sqlalchemy import Engine, inspect
 from sqlmodel import Session
 
 from wt.clock import FakeClock
 from wt.db.models import RepoCache
-from wt.versions.cache import cached_releases, refresh_repo
+from wt.versions.cache import cached_releases, refresh_repo, status_caches
 from wt.versions.github import GitHub
 from wt.versions.rules import Release
 
@@ -168,3 +168,26 @@ async def test_failed_release_list_keeps_the_old_tag(
     cache = row(db_engine)
     assert cache.error == "GitHub answered HTTP 500"
     assert (cache.latest_tag, cache.etag) == (None, None)
+
+
+def test_status_caches_gives_each_repo_without_the_release_list(
+    db_engine: Engine, clock: FakeClock
+) -> None:
+    notes = [{"tag": "1.0", "notes": "n", "draft": False, "prerelease": False}]
+    with Session(db_engine) as session:
+        session.add(RepoCache(repo="o/a", latest_tag="1.0", releases=notes))
+        session.add(RepoCache(repo="o/b", error="HTTP 500", fetched_at=clock.now()))
+        session.commit()
+
+    with Session(db_engine) as session:
+        caches = status_caches(session)
+
+        assert {repo: (c.latest_tag, c.error) for repo, c in caches.items()} == {
+            "o/a": ("1.0", None),
+            "o/b": (None, "HTTP 500"),
+        }
+        # Not loaded. A read in the session still loads it.
+        state = inspect(caches["o/a"])
+        assert state is not None
+        assert "releases" not in state.dict
+        assert caches["o/a"].releases == notes

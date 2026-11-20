@@ -11,15 +11,15 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy import Engine
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from wt import clock
 from wt.bus import Bus, Topic
 from wt.config import Env, load_settings
-from wt.db.models import Container, RepoCache, Setting
+from wt.db.models import Container, Setting
 from wt.docker.inventory import Inventory
 from wt.llm.summary import summarize
-from wt.versions.cache import refresh_repo
+from wt.versions.cache import refresh_repo, status_caches
 from wt.versions.github import GitHub
 from wt.versions.rules import (
     container_status,
@@ -141,7 +141,7 @@ def _save_status(engine: Engine, rows: list[Container], full: bool) -> None:
     """Save the status counts of all live containers. Only a full run sets the run time."""
     last_run = clock.now() if full else load_check_status(engine).last_run
     with Session(engine) as session:
-        caches = {cache.repo: cache for cache in session.exec(select(RepoCache))}
+        caches = status_caches(session)
         counts = Counter(
             container_status(
                 row.tag, row.release_source, caches.get(row.release_source or "")

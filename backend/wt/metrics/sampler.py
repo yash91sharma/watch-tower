@@ -18,7 +18,7 @@ from sqlmodel import Session
 
 from wt import clock
 from wt.bus import Bus, Topic
-from wt.db import find_container
+from wt.db import local_containers
 from wt.db.models import MetricTier
 from wt.docker.client import (
     ContainerNotFoundError,
@@ -159,8 +159,9 @@ def _save(engine: Engine, minute: _Minute, now: datetime) -> None:
             session.merge(
                 vm_average(minute.vm, minute.net, MetricTier.MINUTE, minute.start)
             )
+        rows = {row.name: row for row in local_containers(session)}
         for name, polls in minute.containers.items():
-            row = find_container(session, name)
+            row = rows.get(name)
             if row is None or row.id is None:
                 continue  # The row is gone (for example a config import).
             session.merge(

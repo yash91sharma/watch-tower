@@ -161,3 +161,15 @@ def test_only_data_and_tmp_are_writable(running: str) -> None:
     writable = docker("exec", running, "python", "-c", code).split()
 
     assert writable == ["/data", "/tmp"]  # noqa: S108 (paths in the container)
+
+
+def test_the_built_js_and_css_have_gzip_copies(image: dict[str, Any]) -> None:
+    """WT sends the gzip copy to browsers that accept it (wt.api.static)."""
+    assert image
+    code = (
+        "import wt.api.static as s;"
+        "files = [f for f in (s.STATIC_DIR / 'assets').iterdir()"
+        " if f.suffix in ('.js', '.css')];"
+        "print(bool(files), all(f.with_name(f.name + '.gz').is_file() for f in files))"
+    )
+    assert run_python(code) == "True True"
