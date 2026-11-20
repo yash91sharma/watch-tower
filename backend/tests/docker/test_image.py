@@ -1,6 +1,7 @@
 """The WT image (Dockerfile, tasks 15.1 and 16.21): config, CVE scan, run checks."""
 
 import json
+import os
 import shutil
 import subprocess
 import time
@@ -86,7 +87,8 @@ def test_the_image_has_only_the_venv_and_no_pip(image: dict[str, Any]) -> None:
 
 # Task 16.21: image checks.
 TRIVY_IMAGE = "aquasec/trivy:0.58.1"
-RUN_NAME = "wt_test_image"
+# One container for each xdist worker: two workers must not use the same name.
+RUN_NAME = f"wt_test_image_{os.environ.get('PYTEST_XDIST_WORKER', 'main')}"
 
 
 def test_trivy_finds_no_high_or_critical_cve(image: dict[str, Any]) -> None:
@@ -127,7 +129,7 @@ def running(image: dict[str, Any]) -> Iterator[str]:
         "--security-opt",
         "no-new-privileges:true",
         "-v",
-        "wt_test_image_data:/data",
+        f"{RUN_NAME}_data:/data",
         # The same health command, checked often, so that the test is fast.
         "--health-interval",
         "2s",
@@ -173,3 +175,28 @@ def test_the_built_js_and_css_have_gzip_copies(image: dict[str, Any]) -> None:
         "print(bool(files), all(f.with_name(f.name + '.gz').is_file() for f in files))"
     )
     assert run_python(code) == "True True"
+
+
+# Read the ELF section names of each .so file (64-bit, little-endian: amd64 and arm64).
+_DEBUG_SECTIONS = """
+import pathlib, struct
+
+def sections(data):
+    shoff, = struct.unpack_from('<Q', data, 0x28)
+    size, count, names = struct.unpack_from('<HHH', data, 0x3A)
+    headers = [shoff + i * size for i in range(count)]
+    strtab, = struct.unpack_from('<Q', data, headers[names] + 0x18)
+    for header in headers:
+        name, = struct.unpack_from('<I', data, header)
+        yield data[strtab + name:data.index(b'\\0', strtab + name)].decode()
+
+files = list(pathlib.Path('/app/.venv').rglob('*.so'))
+debug = [str(f) for f in files if any(s.startswith('.debug_') for s in sections(f.read_bytes()))]
+print(bool(files), debug)
+"""
+
+
+def test_the_venv_so_files_have_no_debug_sections(image: dict[str, Any]) -> None:
+    """The build strips the debug data, so that the image is smaller."""
+    assert image
+    assert run_python(_DEBUG_SECTIONS) == "True []"

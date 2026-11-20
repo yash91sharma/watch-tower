@@ -20,9 +20,15 @@ FROM python:3.15.2-slim-trixie AS backend
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 WORKDIR /app
+# strip (binutils) is only in this build stage.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends binutils \
+    && rm -rf /var/lib/apt/lists/*
 # Deps first, so that a code change does not install them again.
+# Then remove the debug data from the compiled modules (WT does not use it): a smaller image.
 COPY backend/pyproject.toml backend/uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev --no-install-project \
+    && find .venv -name '*.so' -exec strip --strip-debug {} +
 COPY backend/wt ./wt
 COPY --from=frontend /frontend/dist ./wt/static
 # Install WT as a normal package (not editable), so that the final image needs only the venv.
