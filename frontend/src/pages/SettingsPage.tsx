@@ -6,6 +6,7 @@ import { api, unwrap } from "@/api/client";
 import { settingsQuery } from "@/api/queries";
 import type { SecretState, Settings } from "@/api/types";
 import { ConfigFile } from "@/components/ConfigFile";
+import { DetailList } from "@/components/DetailList";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { QueryPending } from "@/components/QueryPending";
@@ -154,14 +155,7 @@ function Secrets({ secrets }: { secrets: SecretState }) {
   return (
     <Section title="Secrets">
       <p className="text-sm text-muted-foreground">Env vars set the secrets. Restart WT after a change.</p>
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1 text-sm">
-        {SECRETS.map(({ key, label }) => [
-          <dt key={`${key}-label`} className="text-muted-foreground">
-            {label}
-          </dt>,
-          <dd key={key}>{secrets[key]}</dd>,
-        ])}
-      </dl>
+      <DetailList className="gap-y-1" items={SECRETS.map(({ key, label }) => ({ term: label, value: secrets[key] }))} />
     </Section>
   );
 }

@@ -2,6 +2,7 @@
 // (React escapes them; never use them as HTML).
 import type { Status, Update } from "@/api/types";
 import { SeverityBadge } from "@/components/badges";
+import { DetailList } from "@/components/DetailList";
 import { Section } from "@/components/Section";
 
 export function UpdateBlock({ update, status }: { update: Update | null; status: Status }) {
@@ -16,16 +17,13 @@ export function UpdateBlock({ update, status }: { update: Update | null; status:
         </p>
       ) : (
         <>
-          <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
-            <dt className="text-muted-foreground">Running</dt>
-            <dd>{update.from_version}</dd>
-            <dt className="text-muted-foreground">Latest</dt>
-            <dd>{update.to_version}</dd>
-            <dt className="text-muted-foreground">Severity</dt>
-            <dd>
-              <SeverityBadge severity={update.severity} />
-            </dd>
-          </dl>
+          <DetailList
+            items={[
+              { term: "Running", value: update.from_version },
+              { term: "Latest", value: update.to_version },
+              { term: "Severity", value: <SeverityBadge severity={update.severity} /> },
+            ]}
+          />
           {update.summary && <p className="text-sm">{update.summary}</p>}
           <pre
             data-testid="release-notes"

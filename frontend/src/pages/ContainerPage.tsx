@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router";
 import { containerHistoryQuery, containerQuery } from "@/api/queries";
 import type { ContainerDetail } from "@/api/types";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { DetailList } from "@/components/DetailList";
 import { HealthBadge } from "@/components/badges";
 import { ChartGrid } from "@/components/MetricChart";
 import { QueryPending } from "@/components/QueryPending";
@@ -37,18 +38,14 @@ export function ContainerPage() {
 function Details({ container }: { container: ContainerDetail }) {
   return (
     <>
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
-        <dt className="text-muted-foreground">State</dt>
-        <dd>{container.state}</dd>
-        <dt className="text-muted-foreground">Health</dt>
-        <dd>
-          <HealthBadge health={container.health} label={container.health_label} />
-        </dd>
-        <dt className="text-muted-foreground">Image</dt>
-        <dd className="break-all">{container.image ?? "-"}</dd>
-        <dt className="text-muted-foreground">Running</dt>
-        <dd>{container.tag ?? "-"}</dd>
-      </dl>
+      <DetailList
+        items={[
+          { term: "State", value: container.state },
+          { term: "Health", value: <HealthBadge health={container.health} label={container.health_label} /> },
+          { term: "Image", value: container.image ?? "-", className: "break-all" },
+          { term: "Running", value: container.tag ?? "-" },
+        ]}
+      />
       <Resources name={container.name} />
       <ReleaseSource name={container.name} source={container.release_source} confirmed={container.source_confirmed} />
       <UpdateBlock update={container.update} status={container.status} />
@@ -78,16 +75,14 @@ function Resources({ name }: { name: string }) {
   const { data, error } = useQuery(containerHistoryQuery(name, range));
   return (
     <Section title="Resources">
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
-        <dt className="text-muted-foreground">CPU</dt>
-        <dd>{current?.cpu_label ?? "-"}</dd>
-        <dt className="text-muted-foreground">Memory</dt>
-        <dd>{current?.mem_label ?? "-"}</dd>
-        <dt className="text-muted-foreground">Network</dt>
-        <dd>{current ? `In ${current.net_rx_label}, out ${current.net_tx_label}` : "-"}</dd>
-        <dt className="text-muted-foreground">Disk I/O</dt>
-        <dd>{current ? `Read ${current.disk_read_label}, write ${current.disk_write_label}` : "-"}</dd>
-      </dl>
+      <DetailList
+        items={[
+          { term: "CPU", value: current?.cpu_label ?? "-" },
+          { term: "Memory", value: current?.mem_label ?? "-" },
+          { term: "Network", value: current ? `In ${current.net_rx_label}, out ${current.net_tx_label}` : "-" },
+          { term: "Disk I/O", value: current ? `Read ${current.disk_read_label}, write ${current.disk_write_label}` : "-" },
+        ]}
+      />
       {data === undefined ? (
         <QueryPending error={error} text="Loading charts…" />
       ) : (
