@@ -104,11 +104,7 @@ class Sampler:
         return docker_ok
 
     async def _poll_containers(self, docker: DockerApi) -> bool:
-        names = [
-            name
-            for name in self._inventory.names()
-            if (live := self._inventory.get(name)) and live.state == "running"
-        ]
+        names = self._inventory.running_names()
         limit = asyncio.Semaphore(MAX_CALLS)
         errors: list[DockerUnavailableError] = []
 

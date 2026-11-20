@@ -79,7 +79,7 @@ async def test_excluded_container_is_saved_disabled_with_no_live_state(
 
     assert rows(db_engine)["secret"].enabled is False
     assert inventory.get("secret") is None
-    assert inventory.names() == []
+    assert inventory.running_names() == []
 
 
 async def test_recreate_keeps_the_confirmed_source(db_engine: Engine) -> None:
@@ -200,7 +200,21 @@ async def test_sync_all_skips_a_container_removed_after_the_list(
     infos = await inventory.sync_all(docker)
 
     assert [item.name for item in infos] == ["web"]
-    assert inventory.names() == ["web"]
+    assert inventory.running_names() == ["web"]
+
+
+async def test_running_names_gives_only_the_running_containers_by_name(
+    db_engine: Engine,
+) -> None:
+    docker = FakeDocker()
+    docker.add(info("web"))
+    docker.add(info("api"))
+    docker.add(info("db", state="exited"))
+    inventory = Inventory(db_engine)
+
+    await inventory.sync_all(docker)
+
+    assert inventory.running_names() == ["api", "web"]
 
 
 async def test_live_rows_gives_live_enabled_containers_by_name(

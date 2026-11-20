@@ -63,8 +63,11 @@ class Inventory:
     def get(self, name: str) -> LiveContainer | None:
         return self._live.get(name)
 
-    def names(self) -> list[str]:
-        return sorted(self._live)
+    def running_names(self) -> list[str]:
+        """The names of the live containers that run now, sorted."""
+        return sorted(
+            name for name, live in self._live.items() if live.state == "running"
+        )
 
     def live_rows(self, session: Session) -> list[LiveRow]:
         """The DB row and the live state of each container that exists now and is not
