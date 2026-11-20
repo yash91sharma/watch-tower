@@ -10,7 +10,7 @@ import { server } from "@/test/server";
 test("the app renders the container list at /", async () => {
   render(<App />);
 
-  expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
 });
 
 test("a 401 in the app opens the login page", async () => {

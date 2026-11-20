@@ -9,7 +9,7 @@ export function ErrorPage() {
       <h1 className="text-xl font-semibold">Something went wrong</h1>
       <p className="text-muted-foreground">{message}</p>
       <Link className="underline" to="/">
-        Open the container list
+        Open the home page
       </Link>
     </main>
   );

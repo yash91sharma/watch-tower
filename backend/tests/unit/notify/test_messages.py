@@ -41,7 +41,7 @@ def test_digest() -> None:
         title="2 updates",
         body="web 1.0 -> 1.2\ndb 16.3 -> 16.4 (critical)",
         tags=("warning", "package"),
-        click="https://wt.example.com/",
+        click="https://wt.example.com/apps",
         priority="high",
     )
 

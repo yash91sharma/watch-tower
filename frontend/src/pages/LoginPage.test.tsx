@@ -39,7 +39,7 @@ async function logIn(code = "123456") {
 test("a good login opens the app", async () => {
   await logIn();
 
-  expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
   expect(loginBody).toEqual({ password: "a-long-password", totp_code: "123456" });
 });
 
@@ -76,7 +76,7 @@ test("after the login limit, the page shows the wait time", async () => {
 
 test("log out calls logout and opens /login", async () => {
   const user = await logIn();
-  await screen.findByRole("heading", { level: 1, name: "Containers" });
+  await screen.findByRole("heading", { level: 1, name: "Overview" });
 
   await user.click(screen.getByRole("button", { name: "Log out" }));
 
@@ -95,7 +95,7 @@ test("a value that is not a 6-digit code shows a clear error and sends nothing",
 test("a code with a space is sent as typed (the backend ignores spaces)", async () => {
   await logIn("123 456");
 
-  expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
   expect(loginBody).toEqual({ password: "a-long-password", totp_code: "123 456" });
 });
 

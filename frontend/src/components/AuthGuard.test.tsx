@@ -19,8 +19,8 @@ test.each([
   ["logged out", "/settings", "/login", "Log in"],
   ["logged out", "/setup", "/login", "Log in"],
   ["logged out", "/login", "/login", "Log in"],
-  ["logged in", "/login", "/", "Containers"],
-  ["logged in", "/setup", "/", "Containers"],
+  ["logged in", "/login", "/", "Overview"],
+  ["logged in", "/setup", "/", "Overview"],
   ["logged in", "/settings", "/settings", "Settings"],
 ] as const)("%s: %s opens %s", async (state, from, to, heading) => {
   server.use(http.get("*/api/auth/state", () => HttpResponse.json(states[state])));
@@ -34,12 +34,12 @@ test("the guard shows a loading text until the state comes", async () => {
   renderRoute("/");
 
   expect(screen.getByText("Loading…")).toBeInTheDocument();
-  expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
 });
 
 test("a failed refetch keeps the page", async () => {
   const { queryClient } = renderRoute("/");
-  await screen.findByRole("heading", { level: 1, name: "Containers" });
+  await screen.findByRole("heading", { level: 1, name: "Overview" });
   server.use(http.get("*/api/auth/state", () => HttpResponse.error()));
 
   await act(async () => {
@@ -49,7 +49,7 @@ test("a failed refetch keeps the page", async () => {
   });
 
   expect(queryClient.getQueryState(authStateQuery.queryKey)?.status).toBe("error");
-  expect(screen.getByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
 });
 
 test("an auth state error shows the error page", async () => {

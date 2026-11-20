@@ -19,7 +19,7 @@ export function ContainerPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb crumbs={[{ label: "Containers", to: "/" }, { label: name }]} />
+      <Breadcrumb crumbs={[{ label: "Apps", to: "/apps" }, { label: name }]} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold break-all">{name}</h1>
         <Button asChild variant="outline" size="sm">

@@ -59,7 +59,7 @@ def digest_message(updates: list[UpdateInfo], public_url: str | None) -> Message
         updates,
         title=f"{len(updates)} updates",
         body="\n".join(lines),
-        click=_click(public_url, "/"),
+        click=_click(public_url, "/apps"),
     )
 
 

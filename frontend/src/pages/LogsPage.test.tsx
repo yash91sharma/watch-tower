@@ -121,7 +121,7 @@ test("the breadcrumb goes back to the container page", async () => {
   const { router } = renderRoute("/containers/web/logs");
   const crumbs = await screen.findByRole("navigation", { name: "Breadcrumb" });
 
-  expect(within(crumbs).getByRole("link", { name: "Containers" })).toHaveAttribute("href", "/");
+  expect(within(crumbs).getByRole("link", { name: "Apps" })).toHaveAttribute("href", "/apps");
   expect(within(crumbs).getByText("Logs")).toHaveAttribute("aria-current", "page");
   await user.click(within(crumbs).getByRole("link", { name: "web" }));
 

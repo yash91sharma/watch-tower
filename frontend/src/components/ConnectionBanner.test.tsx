@@ -9,7 +9,7 @@ const DOCKER_LOST = "Docker is not connected. The data can be old.";
 
 test("the banner shows when WT is not connected, and hides after the reconnect", async () => {
   renderRoute("/");
-  await screen.findByRole("heading", { level: 1, name: "Containers" });
+  await screen.findByRole("heading", { level: 1, name: "Overview" });
   expect(screen.queryByRole("status")).not.toBeInTheDocument();
 
   act(() => {
@@ -28,7 +28,7 @@ test("the banner shows when WT is not connected, and hides after the reconnect",
 
 test("the banner shows when Docker is not connected", async () => {
   renderRoute("/");
-  await screen.findByRole("heading", { level: 1, name: "Containers" });
+  await screen.findByRole("heading", { level: 1, name: "Overview" });
 
   act(() => {
     FakeEventSource.last.emit("docker", { connected: false });

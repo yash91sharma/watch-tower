@@ -16,7 +16,7 @@ function status(running: boolean, lastRun: string | null = LAST_RUN) {
 
 test("the bar shows the last check time", async () => {
   server.use(http.get("*/api/checks/status", () => HttpResponse.json(status(false))));
-  renderRoute("/");
+  renderRoute("/apps");
 
   expect(await screen.findByText(`Last check: ${formatTime(LAST_RUN)}`)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Check now" })).toBeEnabled();
@@ -24,14 +24,14 @@ test("the bar shows the last check time", async () => {
 
 test("with no check yet, the bar shows never", async () => {
   server.use(http.get("*/api/checks/status", () => HttpResponse.json(status(false, null))));
-  renderRoute("/");
+  renderRoute("/apps");
 
   expect(await screen.findByText("Last check: never")).toBeInTheDocument();
 });
 
 test("the button is off during a run", async () => {
   server.use(http.get("*/api/checks/status", () => HttpResponse.json(status(true))));
-  renderRoute("/");
+  renderRoute("/apps");
 
   expect(await screen.findByText("Checking…")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Check now" })).toBeDisabled();
@@ -47,7 +47,7 @@ test("Check now starts a run. The end of the run turns the button on", async () 
     }),
   );
   const user = userEvent.setup();
-  renderRoute("/");
+  renderRoute("/apps");
   await screen.findByText(`Last check: ${formatTime(LAST_RUN)}`);
 
   await user.click(screen.getByRole("button", { name: "Check now" }));
@@ -72,7 +72,7 @@ test("a failed start shows the error", async () => {
     ),
   );
   const user = userEvent.setup();
-  renderRoute("/");
+  renderRoute("/apps");
 
   await user.click(await screen.findByRole("button", { name: "Check now" }));
 
@@ -92,7 +92,7 @@ test("the Check now button of an app checks only that app", async () => {
     }),
   );
   const user = userEvent.setup();
-  renderRoute("/");
+  renderRoute("/apps");
 
   await user.click(await screen.findByRole("button", { name: "Check now: media" }));
 

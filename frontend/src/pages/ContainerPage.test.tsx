@@ -73,6 +73,6 @@ test("the breadcrumb links to the container list", async () => {
   renderRoute("/containers/web");
   const crumbs = await screen.findByRole("navigation", { name: "Breadcrumb" });
 
-  expect(within(crumbs).getByRole("link", { name: "Containers" })).toHaveAttribute("href", "/");
+  expect(within(crumbs).getByRole("link", { name: "Apps" })).toHaveAttribute("href", "/apps");
   expect(within(crumbs).getByText("web")).toHaveAttribute("aria-current", "page");
 });

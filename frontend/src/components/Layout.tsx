@@ -51,7 +51,8 @@ export function Layout() {
             </Link>
           </div>
           <nav aria-label="Main" className="flex items-center gap-1">
-            <NavItem to="/">Containers</NavItem>
+            <NavItem to="/">Overview</NavItem>
+            <NavItem to="/apps">Apps</NavItem>
             <NavItem to="/settings">Settings</NavItem>
             <Button
               variant="outline"

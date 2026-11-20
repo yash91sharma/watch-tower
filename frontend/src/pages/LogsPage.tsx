@@ -28,7 +28,7 @@ export function LogsPage() {
   return (
     <div className="space-y-3">
       <Breadcrumb
-        crumbs={[{ label: "Containers", to: "/" }, { label: name, to: `/containers/${name}` }, { label: "Logs" }]}
+        crumbs={[{ label: "Apps", to: "/apps" }, { label: name, to: `/containers/${name}` }, { label: "Logs" }]}
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold break-all">Logs: {name}</h1>

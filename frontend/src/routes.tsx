@@ -5,11 +5,12 @@ import type { RouteObject } from "react-router";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Layout } from "@/components/Layout";
 import { ContainerPage } from "@/pages/ContainerPage";
-import { ContainersPage } from "@/pages/ContainersPage";
+import { AppsPage } from "@/pages/AppsPage";
 import { ErrorPage } from "@/pages/ErrorPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { LogsPage } from "@/pages/LogsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { OverviewPage } from "@/pages/OverviewPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { SetupPage } from "@/pages/SetupPage";
 
@@ -40,7 +41,8 @@ export const routes: RouteObject[] = [
     ),
     errorElement: <ErrorPage />,
     children: [
-      { path: "/", element: <ContainersPage /> },
+      { path: "/", element: <OverviewPage /> },
+      { path: "/apps", element: <AppsPage /> },
       { path: "/containers/:name", element: <ContainerPage /> },
       { path: "/containers/:name/logs", element: <LogsPage /> },
       { path: "/settings", element: <SettingsPage /> },

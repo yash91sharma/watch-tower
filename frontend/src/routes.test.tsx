@@ -7,7 +7,8 @@ import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 
 test.each([
-  ["/", "Containers"],
+  ["/", "Overview"],
+  ["/apps", "Apps"],
   ["/containers/web", "web"],
   ["/containers/web/logs", "Logs: web"],
   ["/settings", "Settings"],
@@ -16,7 +17,8 @@ test.each([
 
   expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
   const nav = screen.getByRole("navigation", { name: "Main" });
-  expect(within(nav).getByRole("link", { name: "Containers" })).toHaveAttribute("href", "/");
+  expect(within(nav).getByRole("link", { name: "Overview" })).toHaveAttribute("href", "/");
+  expect(within(nav).getByRole("link", { name: "Apps" })).toHaveAttribute("href", "/apps");
   expect(within(nav).getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
   expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
 });
@@ -36,22 +38,23 @@ test("an unknown path shows the not-found page", async () => {
   renderRoute("/no/such/page");
 
   expect(await screen.findByRole("heading", { name: "Page not found" })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Open the container list" })).toHaveAttribute("href", "/");
+  expect(screen.getByRole("link", { name: "Open the home page" })).toHaveAttribute("href", "/");
 });
 
 test("the nav marks the link of the open page", async () => {
   renderRoute("/settings");
 
   expect(await screen.findByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
-  expect(screen.getByRole("link", { name: "Containers" })).not.toHaveAttribute("aria-current");
+  expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute("aria-current");
+  expect(screen.getByRole("link", { name: "Apps" })).not.toHaveAttribute("aria-current");
 });
 
-test("a click on the logo opens the container list", async () => {
+test("a click on the logo opens the overview", async () => {
   const user = userEvent.setup();
   const { router } = renderRoute("/settings");
 
   await user.click(await screen.findByRole("link", { name: "WT" }));
 
   expect(router.state.location.pathname).toBe("/");
-  expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
 });

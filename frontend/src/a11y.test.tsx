@@ -20,7 +20,8 @@ function expectNamedControls() {
 }
 
 test.each([
-  ["/", "Containers"],
+  ["/", "Overview"],
+  ["/apps", "Apps"],
   ["/containers/web", "web"],
   ["/containers/web/logs", "Logs: web"],
   ["/settings", "Settings"],

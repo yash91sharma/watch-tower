@@ -17,7 +17,7 @@ test("groups show in API order with their containers", async () => {
     { project: "media", label: "media", update: "none", containers: [container({ name: "plex" }), container({ name: "sonarr" })] },
     { project: null, label: "Other", update: "none", containers: [container({ name: "adhoc" })] },
   ]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   const groups = await screen.findAllByRole("region");
   expect(groups.map((group) => within(group).getByRole("heading").textContent)).toEqual(["media", "Other"]);
@@ -30,7 +30,7 @@ test("groups show in API order with their containers", async () => {
 test("a click on the group name collapses and expands the group", async () => {
   const user = userEvent.setup();
   answer([{ project: "media", label: "media", update: "none", containers: [container({ name: "plex" }), container({ name: "sonarr" })] }]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   const toggle = await screen.findByRole("button", { name: "media" });
   expect(toggle).toHaveAttribute("aria-expanded", "true");
@@ -52,11 +52,11 @@ test("a collapsed group stays collapsed when the page opens again", async () => 
     { project: "media", label: "media", update: "none", containers: [container({ name: "plex" })] },
     { project: null, label: "Other", update: "none", containers: [container({ name: "adhoc" })] },
   ]);
-  const first = renderRoute("/");
+  const first = renderRoute("/apps");
   await user.click(await screen.findByRole("button", { name: "media" }));
   first.unmount();
 
-  renderRoute("/");
+  renderRoute("/apps");
 
   expect(await screen.findByRole("button", { name: "media" })).toHaveAttribute("aria-expanded", "false");
   expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "true");
@@ -85,7 +85,7 @@ test("a row shows the container fields", async () => {
       ],
     },
   ]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   const row = (await screen.findByRole("link", { name: "app" })).closest("tr");
   if (!row) throw new Error("No row");
@@ -113,7 +113,7 @@ test("the row shows the labels from the API, and empty values show a dash", asyn
       ],
     },
   ]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   const row = (await screen.findByRole("link", { name: "db" })).closest("tr");
   if (!row) throw new Error("No row");
@@ -128,7 +128,7 @@ test("the page shows a loading text", async () => {
       return HttpResponse.json([]);
     }),
   );
-  renderRoute("/");
+  renderRoute("/apps");
 
   expect(await screen.findByText("Loading containers…")).toBeInTheDocument();
   expect(await screen.findByText(/No containers/)).toBeInTheDocument();
@@ -136,7 +136,7 @@ test("the page shows a loading text", async () => {
 
 test("no containers shows the empty state", async () => {
   answer([]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   expect(await screen.findByText(/No containers/)).toBeInTheDocument();
 });
@@ -147,14 +147,14 @@ test("an API error shows the error", async () => {
       HttpResponse.json({ error: "Internal Server Error", detail: "An error occurred. See the WT log." }, { status: 500 }),
     ),
   );
-  renderRoute("/");
+  renderRoute("/apps");
 
   expect(await screen.findByRole("alert")).toHaveTextContent("An error occurred. See the WT log.");
 });
 
 test("the table has clear column names", async () => {
   answer([{ project: "web", label: "web", update: "none", containers: [container({ name: "app" })] }]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   const region = await screen.findByRole("region", { name: "web" });
   expect(within(region).getAllByRole("columnheader").map((head) => head.textContent)).toEqual([
@@ -177,7 +177,7 @@ test("every second row has a stripe color", async () => {
       containers: [container({ name: "a" }), container({ name: "b" }), container({ name: "c" })],
     },
   ]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   const rows = await Promise.all(["a", "b", "c"].map(async (name) => (await screen.findByRole("link", { name })).closest("tr")));
   expect(rows.map((row) => row?.classList.contains("even:bg-muted/30"))).toEqual([true, true, true]);
@@ -189,7 +189,7 @@ test("the group header color shows the update level of the group", async () => {
     { project: "b", label: "b", update: "update", containers: [container({ name: "b1" })] },
     { project: "c", label: "c", update: "none", containers: [container({ name: "c1" })] },
   ]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   const header = (label: string) => screen.getByRole("heading", { name: label }).parentElement;
   await screen.findByRole("heading", { name: "a" });
@@ -207,7 +207,7 @@ test("the latest version links to its GitHub release in a new tab", async () => 
       containers: [container({ name: "a" }), container({ name: "b", latest_version: null, latest_url: null })],
     },
   ]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   const link = await screen.findByRole("link", { name: "1.27.0" });
   expect(link).toHaveAttribute("href", "https://github.com/nginx/nginx/releases/tag/1.27.0");
@@ -218,7 +218,7 @@ test("the latest version links to its GitHub release in a new tab", async () => 
 
 test("the table links always have an underline, and the release link has an external-link icon", async () => {
   answer([{ project: "web", label: "web", update: "none", containers: [container({ name: "a" })] }]);
-  renderRoute("/");
+  renderRoute("/apps");
 
   const release = await screen.findByRole("link", { name: "1.27.0" });
   expect(release).toHaveClass("underline");

@@ -1,4 +1,4 @@
-// The container list: Compose groups in API order, one row per container.
+// App details: the container list. Compose groups in API order, one row per container.
 // The admin can collapse a group. The browser keeps the collapsed groups in localStorage.
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ExternalLink } from "lucide-react";
@@ -23,7 +23,7 @@ function readCollapsed() {
   return JSON.parse(localStorage.getItem(collapsedKey) ?? "[]") as string[];
 }
 
-export function ContainersPage() {
+export function AppsPage() {
   const { data, error } = useQuery(containersQuery);
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
@@ -36,7 +36,7 @@ export function ContainersPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Containers</h1>
+        <h1 className="text-xl font-semibold">Apps</h1>
         <CheckNow />
       </div>
       {data === undefined ? (

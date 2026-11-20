@@ -27,5 +27,5 @@ test("a thrown value that is not an Error shows 'Unknown error'", async () => {
   render(<RouterProvider router={router} />);
 
   expect(await screen.findByText("Unknown error")).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Open the container list" })).toHaveAttribute("href", "/");
+  expect(screen.getByRole("link", { name: "Open the home page" })).toHaveAttribute("href", "/");
 });

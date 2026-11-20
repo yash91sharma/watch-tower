@@ -48,7 +48,7 @@ Rules:
   - **Test:** the path for sample values, a gap, all null.
 - [x] **3.3** Add the dependency `uplot`. `useMetricsRange()`: one shared range for all charts, kept in localStorage (`wt.metricsRange`, default `1h`). `components/MetricChart.tsx`: a uPlot wrapper with a title, a range select (the ranges from the API, value from `useMetricsRange`), a tooltip, the theme colors from CSS variables (light and dark) and resize. It formats the axis ticks from the series `unit`. It has an `aria-label`.
   - **Test (uPlot mocked in jsdom):** a range change in one chart changes the select and the fetched range of all charts. After a reload the range stays. The series labels are in the legend. The ticks for each unit.
-- [ ] **3.4** Routes: `ContainersPage` becomes `AppsPage` at `/apps`. `/` opens the new `OverviewPage` (empty frame for now). Top nav: Overview, Apps, Settings. Breadcrumbs say "Apps". The ntfy digest message (`wt/notify/messages.py`) links to `/apps`.
+- [x] **3.4** Routes: `ContainersPage` becomes `AppsPage` at `/apps`. `/` opens the new `OverviewPage` (empty frame for now). Top nav: Overview, Apps, Settings. Breadcrumbs say "Apps". The ntfy digest message (`wt/notify/messages.py`) links to `/apps`.
   - **Test:** the routes, the nav links, the breadcrumb on the container page and logs page, the digest click URL.
 - [ ] **3.5** App details: CPU and Memory columns (label and sparkline) and a Logs button in each row. The group header shows the sums. `?group=<label>` opens that group and scrolls to it.
   - **Test:** a row shows the labels from the API. Logs opens `/containers/<name>/logs`. `?group=` opens a collapsed group.

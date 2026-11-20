@@ -61,7 +61,7 @@ test("the full setup opens the app", async () => {
 
   await finish(user, PASSWORD, CODE);
 
-  expect(await screen.findByRole("heading", { level: 1, name: "Containers" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
   expect(finishBody).toEqual({ token: TOKEN, password: PASSWORD, totp_code: CODE });
 });
 
