@@ -5,6 +5,8 @@
 // masked: it shows all containers on the host Docker, and they change from host to host.
 // The footer (the version) is masked. The metric values and charts change at each poll, and
 // the Overview counts and app list show all host containers: they are masked too.
+import { fileURLToPath } from "node:url";
+
 import { expect, type Page, test } from "@playwright/test";
 
 import { useSession } from "../../helpers/admin";
@@ -49,16 +51,22 @@ test.describe("logged in", () => {
         footer(page),
       ];
 
-      await expect(page).toHaveScreenshot(`overview-${colorScheme}.png`, { fullPage: true, mask });
+      // Only the screen, not the full page: the app list below shows all host containers,
+      // so the page height changes from host to host (the list is masked, its height is not).
+      await expect(page).toHaveScreenshot(`overview-${colorScheme}.png`, { mask });
     });
 
     test(`apps, ${colorScheme}`, async ({ page }) => {
       await open(page, "/apps", "Apps", colorScheme);
       const group = page.getByRole("region", { name: "wt_test_e2e" });
-      // The CPU and Memory columns (4 and 5) and the sums in the group header.
-      const mask = [group.locator("td:nth-child(4), td:nth-child(5)"), group.getByText(/^(CPU|Memory) /)];
+      // The CPU and Memory columns (4 and 5), and the box of the sums in the group header
+      // (it has a fixed width; the texts in it do not).
+      const sums = group.getByText(/^CPU /).locator("xpath=..");
+      const mask = [group.locator("td:nth-child(4), td:nth-child(5)"), sums];
 
-      await expect(group).toHaveScreenshot(`apps-${colorScheme}.png`, { mask });
+      const stylePath = fileURLToPath(new URL("visual-apps.css", import.meta.url));
+
+      await expect(group).toHaveScreenshot(`apps-${colorScheme}.png`, { mask, stylePath });
     });
 
     test(`container page, ${colorScheme}`, async ({ page }) => {

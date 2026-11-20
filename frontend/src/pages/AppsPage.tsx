@@ -96,7 +96,8 @@ function GroupTable({ group, open, focus, onToggle }: { group: Group; open: bool
           </button>
         </h2>
         {sums && (
-          <span className="hidden gap-3 pr-2 text-sm text-muted-foreground sm:flex">
+          // A fixed width: the sums of all groups are in one column, and the layout does not move when a value changes.
+          <span className="hidden w-72 justify-end gap-3 pr-2 text-sm text-muted-foreground sm:flex">
             <span>CPU {sums.cpu_label}</span>
             <span>Memory {sums.mem_label}</span>
           </span>

@@ -44,9 +44,14 @@ export function formatTicks(ticks: number[], unit: Unit): string[] {
   const steps = ticks.slice(1).map((tick, index) => tick - (ticks[index] ?? 0));
   const step = Math.min(...steps.filter((value) => value > 0)) / divisor;
   if (!Number.isFinite(step)) return ticks.map((tick) => formatTick(tick, unit));
-  // A small epsilon: a step of 0.1 can be 0.09999999 after the divide.
-  const decimals = Math.max(0, Math.ceil(-Math.log10(step) - 1e-9));
-  return ticks.map((tick) => withUnit(tick, unit, (scaled) => scaled.toFixed(decimals), largest));
+  const scaled = ticks.map((tick) => tick / divisor);
+  // The fewest decimals that show each tick exactly (0.025 needs 3). A small tolerance:
+  // a tick of 0.1 can be 0.09999999 after the divide.
+  let decimals = 0;
+  while (decimals < 6 && scaled.some((tick) => Math.abs(Number(tick.toFixed(decimals)) - tick) > step / 1000)) {
+    decimals += 1;
+  }
+  return ticks.map((tick) => withUnit(tick, unit, (value) => value.toFixed(decimals), largest));
 }
 
 /** The width (px) of the y axis: enough for the longest tick label. */

@@ -1,0 +1,11 @@
+/* Only for the apps screenshot (visual.spec.ts): fixed widths for the CPU and Memory
+   columns. Their values change at each poll, and a different text width moves the
+   columns to the right of them. */
+td:nth-child(4),
+td:nth-child(5),
+th:nth-child(4),
+th:nth-child(5) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
