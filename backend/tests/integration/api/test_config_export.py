@@ -16,7 +16,10 @@ from wt.db.models import Container
 
 
 def add_data(ctx: AppContext) -> None:
-    save_settings(ctx.engine, Settings(check_interval_hours=6, ntfy_topic="wt"))
+    save_settings(
+        ctx.engine,
+        Settings(check_interval_hours=6, ntfy_topic="wt", metrics_interval_seconds=30),
+    )
     with Session(ctx.engine) as session:
         session.add(
             Container(
@@ -51,7 +54,9 @@ async def test_export_has_settings_and_container_values(
     assert body["format_version"] == 1
     assert (
         body["settings"]
-        == Settings(check_interval_hours=6, ntfy_topic="wt").model_dump()
+        == Settings(
+            check_interval_hours=6, ntfy_topic="wt", metrics_interval_seconds=30
+        ).model_dump()
     )
     assert body["containers"] == [
         {"name": "db", "release_source": None, "source_confirmed": False},

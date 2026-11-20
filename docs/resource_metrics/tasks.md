@@ -10,7 +10,7 @@ Rules:
 
 ## 1. Backend: collect and store
 
-- [ ] **1.1** Setting `metrics_interval_seconds` in `Settings` (`wt/config.py`): `Literal[5, 10, 15, 30, 60]`, default 10.
+- [x] **1.1** Setting `metrics_interval_seconds` in `Settings` (`wt/config.py`): `Literal[5, 10, 15, 30, 60]`, default 10.
   - **Test:** default, a value not in the list fails validation, the config export and import have it.
 - [ ] **1.2** Docker stats in `wt/docker/client.py`: dataclass `ContainerStats` (read time, cpu_total, system_cpu, online_cpus, mem_usage, mem_inactive_file, mem_limit, net_rx, net_tx, disk_read, disk_write), parser `container_stats(data)`, `DockerApi.stats(container_id)` with `stream=false&one-shot=true`. Add `stats` to `FakeDocker` (the test sets the counters).
   - **Test:** the parser with a sample from Docker 29 (cgroup v2), with no `networks` and with no `blkio` values. Docker test (`-m docker`): `stats` of `wt_test_healthy` through the socket proxy gives counters in less than 200 ms.

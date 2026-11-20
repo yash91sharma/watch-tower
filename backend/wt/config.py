@@ -137,11 +137,20 @@ def _empty_to_none(value: object) -> object:
     return value
 
 
+def _text_to_int(value: object) -> object:
+    """A form sends a number as text (for example "10")."""
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value)
+    return value
+
+
 EmptyIsNone = BeforeValidator(_empty_to_none)
 HttpUrl = Annotated[str, AfterValidator(http_url)]
 # The topic goes in the URL path. ntfy allows these characters.
 NtfyTopic = Annotated[str, StringConstraints(pattern=r"^[-_A-Za-z0-9]{1,64}$")]
 ModelName = Annotated[str, StringConstraints(max_length=200)]
+# The poll intervals that the admin can select for the resource metrics.
+MetricsInterval = Annotated[Literal[5, 10, 15, 30, 60], BeforeValidator(_text_to_int)]
 
 
 class Settings(BaseModel):
@@ -161,6 +170,8 @@ class Settings(BaseModel):
     llm_model: Annotated[ModelName | None, EmptyIsNone] = None
     # The URL of WT. Notifications link to it.
     public_url: Annotated[HttpUrl | None, EmptyIsNone] = None
+    # How often WT gets the CPU, memory, network and disk values (seconds).
+    metrics_interval_seconds: MetricsInterval = 10
 
 
 def load_settings(engine: Engine) -> Settings:

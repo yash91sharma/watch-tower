@@ -16,7 +16,9 @@ from wt.db.models import Container, Setting
 
 CONFIG: dict[str, Any] = {
     "format_version": 1,
-    "settings": Settings(check_interval_hours=12, ntfy_topic="wt").model_dump(),
+    "settings": Settings(
+        check_interval_hours=12, ntfy_topic="wt", metrics_interval_seconds=5
+    ).model_dump(),
     "containers": [
         {"name": "db", "release_source": None, "source_confirmed": True},
         {"name": "web", "release_source": "nginx/nginx", "source_confirmed": True},
@@ -62,7 +64,7 @@ async def test_import_of_an_export_into_an_empty_db_gives_the_same_export(
     assert response.json() == {
         "dry_run": False,
         "valid": True,
-        "settings": 8,
+        "settings": 9,
         "containers_added": 2,
         "containers_updated": 0,
         "errors": [],
@@ -105,7 +107,7 @@ async def test_dry_run_gives_counts_and_changes_nothing(
     assert response.json() == {
         "dry_run": True,
         "valid": True,
-        "settings": 8,
+        "settings": 9,
         "containers_added": 1,
         "containers_updated": 1,
         "errors": [],

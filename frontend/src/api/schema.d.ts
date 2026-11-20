@@ -611,6 +611,12 @@ export interface components {
             llm_model?: string | null;
             /** Public Url */
             public_url?: string | null;
+            /**
+             * Metrics Interval Seconds
+             * @default 10
+             * @enum {integer}
+             */
+            metrics_interval_seconds: 5 | 10 | 15 | 30 | 60;
         };
         /** SettingsOut */
         SettingsOut: {

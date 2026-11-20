@@ -23,6 +23,7 @@ def test_defaults_on_an_empty_db(db_engine: Engine) -> None:
         llm_url=None,
         llm_model=None,
         public_url=None,
+        metrics_interval_seconds=10,
     )
 
 
@@ -36,6 +37,7 @@ def test_save_and_load(db_engine: Engine) -> None:
         llm_url="http://ollama:11434",
         llm_model="qwen3:4b",
         public_url="https://wt.example.com",
+        metrics_interval_seconds=30,
     )
 
     save_settings(db_engine, settings)
@@ -72,6 +74,13 @@ def test_empty_strings_mean_not_set() -> None:
     assert settings.llm_model is None
 
 
+def test_the_form_text_of_the_interval_is_a_number() -> None:
+    # The settings form sends the text of each input.
+    settings = Settings.model_validate({"metrics_interval_seconds": "30"})
+
+    assert settings.metrics_interval_seconds == 30
+
+
 @pytest.mark.parametrize(
     "values",
     [
@@ -89,6 +98,11 @@ def test_empty_strings_mean_not_set() -> None:
         {"ntfy_topic": "a/b"},
         {"ntfy_topic": "x" * 65},
         {"unknown": 1},
+        # The poll interval is one of 5, 10, 15, 30, 60 s.
+        {"metrics_interval_seconds": 0},
+        {"metrics_interval_seconds": 7},
+        {"metrics_interval_seconds": 120},
+        {"metrics_interval_seconds": "x"},
     ],
 )
 def test_bad_values_fail(values: dict[str, Any]) -> None:

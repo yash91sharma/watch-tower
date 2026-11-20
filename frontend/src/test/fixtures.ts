@@ -38,6 +38,7 @@ export function settingsOut(): SettingsOut {
       llm_url: null,
       llm_model: null,
       public_url: null,
+      metrics_interval_seconds: 10,
     },
     secrets: { github_token: "not set", ntfy_token: "set", llm_api_key: "not set" },
   };

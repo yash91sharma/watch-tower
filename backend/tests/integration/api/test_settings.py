@@ -21,6 +21,7 @@ NEW_VALUES = {
     "llm_url": None,
     "llm_model": None,
     "public_url": "https://wt.example.com",
+    "metrics_interval_seconds": 30,
 }
 
 
@@ -33,6 +34,7 @@ async def test_get_gives_defaults_and_secret_state(
     assert response.status_code == 200
     body = response.json()
     assert body["values"]["check_interval_hours"] == 24
+    assert body["values"]["metrics_interval_seconds"] == 10
     assert body["secrets"] == {
         "github_token": "not set",
         "ntfy_token": "not set",

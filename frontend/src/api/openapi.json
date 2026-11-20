@@ -1944,6 +1944,18 @@
               }
             ],
             "title": "Public Url"
+          },
+          "metrics_interval_seconds": {
+            "type": "integer",
+            "enum": [
+              5,
+              10,
+              15,
+              30,
+              60
+            ],
+            "title": "Metrics Interval Seconds",
+            "default": 10
           }
         },
         "additionalProperties": false,
