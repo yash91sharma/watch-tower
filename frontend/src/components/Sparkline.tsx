@@ -34,7 +34,7 @@ export function Sparkline({ values, label }: { values: (number | null)[]; label:
       aria-label={label}
       viewBox={`0 0 ${String(WIDTH)} ${String(HEIGHT)}`}
       preserveAspectRatio="none"
-      className="h-5 w-20 shrink-0 overflow-visible text-chart-1"
+      className="h-5 w-20 shrink-0 overflow-visible text-series-1"
     >
       <path
         d={sparklinePath(values, WIDTH, HEIGHT)}

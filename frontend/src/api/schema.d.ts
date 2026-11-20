@@ -733,8 +733,11 @@ export interface components {
         };
         /** RangeOut */
         RangeOut: {
-            /** Key */
-            key: string;
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "1h" | "6h" | "24h" | "7d" | "30d";
             /** Label */
             label: string;
         };

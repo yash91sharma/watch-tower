@@ -2391,6 +2391,13 @@
         "properties": {
           "key": {
             "type": "string",
+            "enum": [
+              "1h",
+              "6h",
+              "24h",
+              "7d",
+              "30d"
+            ],
             "title": "Key"
           },
           "label": {

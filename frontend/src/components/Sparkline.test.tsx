@@ -8,6 +8,10 @@ test("the path goes from the first slot to the last, scaled to the largest value
   expect(sparklinePath([0, 2, 4], 100, 10)).toBe("M0,10L50,5L100,0");
 });
 
+test("one value is a point at the left", () => {
+  expect(sparklinePath([5], 80, 10)).toBe("M0,0");
+});
+
 test("a null value makes a gap", () => {
   expect(sparklinePath([1, null, 1, 1], 30, 10)).toBe("M0,0M20,0L30,0");
 });

@@ -34,9 +34,12 @@ from wt.metrics.sampler import Sampler
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 
+RangeKey = Literal["1h", "6h", "24h", "7d", "30d"]
+
+
 class RangeOut(BaseModel):
     # For the `range` query of the history routes.
-    key: str
+    key: RangeKey
     label: str
 
 
@@ -315,7 +318,6 @@ def get_sparklines(ctx: Ctx) -> SparklinesOut:
     )
 
 
-RangeKey = Literal["1h", "6h", "24h", "7d", "30d"]
 # Each range: its length and the tier that it reads (see the tiers in METRIC_MAX_AGE).
 RANGE_TIERS: dict[RangeKey, tuple[timedelta, MetricTier]] = {
     "1h": (timedelta(hours=1), MetricTier.MINUTE),
@@ -346,7 +348,8 @@ class ChartOut(BaseModel):
     key: str
     title: str
     unit: Unit
-    # The top of the y axis (100 for a percent, the memory total or limit). Null: auto.
+    # The largest top of the y axis (100 for a percent, the memory total or limit).
+    # Null: no limit. The UI scales the axis to the values, up to this max.
     max: float | None
     series: list[SeriesOut]
 
