@@ -4,6 +4,7 @@ A counter only goes up until its container restarts. A counter that goes down, o
 first sample with no earlier sample, gives no value (None), not a wrong value.
 """
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from statistics import fmean
 
@@ -91,3 +92,10 @@ def mean(values: list[float | None]) -> float | None:
 def mean_int(values: list[int]) -> int:
     """The rounded average (for byte counts)."""
     return round(fmean(values))
+
+
+def total[N: (int, float)](values: Iterable[N | None]) -> N | None:
+    """The sum of the values that are not None. None if there are none."""
+    known = [value for value in values if value is not None]
+    # Start from the first value, so that a sum of ints stays an int for the type check.
+    return sum(known[1:], start=known[0]) if known else None

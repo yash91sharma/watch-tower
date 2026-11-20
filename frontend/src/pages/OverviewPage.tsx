@@ -6,8 +6,9 @@ import { Link } from "react-router";
 
 import { overviewQuery, vmHistoryQuery } from "@/api/queries";
 import type { Overview, VmOut } from "@/api/types";
-import { MetricChart } from "@/components/MetricChart";
+import { ChartGrid } from "@/components/MetricChart";
 import { MetricsHelp } from "@/components/MetricsHelp";
+import { NoContainers } from "@/components/NoContainers";
 import { QueryPending } from "@/components/QueryPending";
 import { Section } from "@/components/Section";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -97,13 +98,7 @@ function VmCharts({ ranges }: { ranges: Overview["ranges"] }) {
   const [range] = useMetricsRange(ranges);
   const { data, error } = useQuery(vmHistoryQuery(range));
   if (data === undefined) return <QueryPending error={error} text="Loading charts…" />;
-  return (
-    <div className="grid gap-3 lg:grid-cols-2">
-      {data.charts.map((chart) => (
-        <MetricChart key={chart.key} chart={chart} times={data.times} ranges={ranges} emptyLabel={data.empty_label} />
-      ))}
-    </div>
-  );
+  return <ChartGrid history={data} ranges={ranges} />;
 }
 
 function AppList({ overview }: { overview: Overview }) {
@@ -111,10 +106,7 @@ function AppList({ overview }: { overview: Overview }) {
   return (
     <Section title="Apps">
       {overview.groups.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No containers. WT shows all containers on this Docker host, except the containers with the label{" "}
-          <code>wt.enable=false</code>.
-        </p>
+        <NoContainers className="text-sm" />
       ) : (
         <div className="rounded-xl border bg-card px-2 pb-1 shadow-xs">
           <Table>

@@ -1,10 +1,11 @@
 """Tests for the restart window and the health state machine in wt.health.state (pure)."""
 
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 from tests.factories import make_info
 from wt.db.models import EventKind
-from wt.docker.client import ContainerInfo, DockerEvent
+from wt.docker.client import ContainerInfo, DockerEvent, EventAction
 from wt.health.state import HealthState, RestartWindow
 
 T0 = datetime(2026, 1, 1, tzinfo=UTC)
@@ -13,7 +14,7 @@ M = timedelta(minutes=10)
 
 
 def event(
-    action: str,
+    action: EventAction,
     at: timedelta = timedelta(0),
     docker_id: str = "id-1",
     health: str | None = None,
@@ -112,7 +113,8 @@ def test_destroy_of_an_unknown_container_gives_no_change() -> None:
 
 
 def test_another_action_gives_no_change() -> None:
-    assert handle(HealthState(), event("pause")) == []
+    # docker_event drops other actions. The state ignores them too.
+    assert handle(HealthState(), event(cast(EventAction, "pause"))) == []
 
 
 def info(health: str, docker_id: str = "id-1", name: str = "web") -> ContainerInfo:

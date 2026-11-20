@@ -3,11 +3,12 @@
 // The legend under the chart shows the series labels and, on hover, the values.
 // The colors come from the CSS variables when WT draws the chart. The page draws the
 // charts again at each new minute, so a change of the light or dark theme shows then.
+// ChartGrid shows all charts of a history response.
 import { useEffect, useId, useRef } from "react";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 
-import type { Chart, RangeKey } from "@/api/types";
+import type { Chart, History, Range, RangeKey } from "@/api/types";
 import { useMetricsRange } from "@/lib/metricsRange";
 import { axisSize, BYTE_STEPS, formatTick, formatTicks } from "@/lib/ticks";
 
@@ -64,7 +65,7 @@ export function MetricChart({
 }: {
   chart: Chart;
   times: number[];
-  ranges: { key: RangeKey; label: string }[];
+  ranges: Range[];
   /** The text of the API for a range with no values. It shows on the chart. */
   emptyLabel?: string | null;
 }) {
@@ -117,5 +118,16 @@ export function MetricChart({
         )}
       </div>
     </section>
+  );
+}
+
+/** The charts of a history response, two per row on a large screen. */
+export function ChartGrid({ history, ranges }: { history: History; ranges: Range[] }) {
+  return (
+    <div className="grid gap-3 lg:grid-cols-2">
+      {history.charts.map((chart) => (
+        <MetricChart key={chart.key} chart={chart} times={history.times} ranges={ranges} emptyLabel={history.empty_label} />
+      ))}
+    </div>
   );
 }

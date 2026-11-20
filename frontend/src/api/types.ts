@@ -22,4 +22,5 @@ export type Sparklines = Schemas["SparklinesOut"];
 export type Sparkline = Schemas["Sparkline"];
 export type History = Schemas["HistoryOut"];
 export type Chart = Schemas["ChartOut"];
-export type RangeKey = History["range"];
+export type Range = Schemas["RangeOut"];
+export type RangeKey = Range["key"];

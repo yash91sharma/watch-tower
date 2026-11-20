@@ -253,3 +253,110 @@ async def test_an_unknown_container_is_404(
     response = await user_client.get("/api/metrics/containers/nope/history?range=1h")
 
     assert response.status_code == 404
+
+
+def shape(body: dict[str, Any]) -> list[tuple[Any, ...]]:
+    """The fixed part of each chart: key, title, unit and the series keys and labels."""
+    return [
+        (
+            item["key"],
+            item["title"],
+            item["unit"],
+            [(series["key"], series["label"]) for series in item["series"]],
+        )
+        for item in body["charts"]
+    ]
+
+
+async def test_the_vm_charts_have_a_fixed_shape(
+    user_client: httpx.AsyncClient, ctx: AppContext
+) -> None:
+    body = await get(user_client, "/api/metrics/vm/history?range=1h")
+
+    assert shape(body) == [
+        ("cpu", "CPU", "percent", [("cpu", "CPU")]),
+        ("memory", "Memory", "bytes", [("used", "Used")]),
+        (
+            "disk_io",
+            "Disk I/O",
+            "bytes_per_second",
+            [("read", "Read"), ("write", "Write")],
+        ),
+        ("network", "Network", "bytes_per_second", [("rx", "In"), ("tx", "Out")]),
+        (
+            "load",
+            "Load",
+            "load",
+            [("load_1", "1 min"), ("load_5", "5 min"), ("load_15", "15 min")],
+        ),
+    ]
+    assert [item["max"] for item in body["charts"]] == [100, None, None, None, None]
+
+
+async def test_the_container_charts_have_a_fixed_shape(
+    user_client: httpx.AsyncClient, ctx: AppContext
+) -> None:
+    body = await get(user_client, "/api/metrics/containers/web/history?range=1h")
+
+    assert shape(body) == [
+        ("cpu", "CPU", "percent", [("cpu", "CPU")]),
+        ("memory", "Memory", "bytes", [("used", "Used")]),
+        ("network", "Network", "bytes_per_second", [("rx", "In"), ("tx", "Out")]),
+        (
+            "disk_io",
+            "Disk I/O",
+            "bytes_per_second",
+            [("read", "Read"), ("write", "Write")],
+        ),
+    ]
+    assert [item["max"] for item in body["charts"]] == [100, None, None, None]
+    assert body["empty_label"] == "No values in this range."
+
+
+async def test_each_vm_series_reads_its_column(
+    user_client: httpx.AsyncClient, ctx: AppContext
+) -> None:
+    end = NOW.replace(second=0)
+    add(ctx, vm_row(MetricTier.MINUTE, end - timedelta(minutes=1), cpu=7.0))
+
+    body = await get(user_client, "/api/metrics/vm/history?range=1h")
+
+    last = {
+        (item["key"], series["key"]): series["values"][-1]
+        for item in body["charts"]
+        for series in item["series"]
+    }
+    assert last == {
+        ("cpu", "cpu"): 7.0,
+        ("memory", "used"): 100,
+        ("disk_io", "read"): 10.0,
+        ("disk_io", "write"): None,
+        ("network", "rx"): 5.0,
+        ("network", "tx"): 6.0,
+        ("load", "load_1"): 1.0,
+        ("load", "load_5"): 2.0,
+        ("load", "load_15"): 3.0,
+    }
+
+
+async def test_each_container_series_reads_its_column(
+    user_client: httpx.AsyncClient, ctx: AppContext
+) -> None:
+    end = NOW.replace(second=0)
+    add(ctx, container_row(ctx, MetricTier.MINUTE, end - timedelta(minutes=1), limit=9))
+
+    body = await get(user_client, "/api/metrics/containers/web/history?range=1h")
+
+    last = {
+        (item["key"], series["key"]): series["values"][-1]
+        for item in body["charts"]
+        for series in item["series"]
+    }
+    assert last == {
+        ("cpu", "cpu"): 2.0,
+        ("memory", "used"): 300,
+        ("network", "rx"): 1.0,
+        ("network", "tx"): None,
+        ("disk_io", "read"): None,
+        ("disk_io", "write"): 4.0,
+    }

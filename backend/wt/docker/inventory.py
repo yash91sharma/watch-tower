@@ -19,6 +19,7 @@ from wt.docker.parse import (
     SOURCE_LABEL,
     InvalidImageRefError,
     compose_project,
+    group_label,
     is_excluded,
     parse_image,
     release_source,
@@ -35,6 +36,23 @@ class LiveContainer:
     health: str
 
 
+# The DB row and the live state of a container.
+LiveRow = tuple[Container, LiveContainer]
+
+
+@dataclass(frozen=True)
+class LiveGroup:
+    """A Compose group of live containers. Project None: the containers with no project."""
+
+    project: str | None
+    # Sorted by name.
+    members: list[LiveRow]
+
+    @property
+    def label(self) -> str:
+        return group_label(self.project)
+
+
 class Inventory:
     def __init__(self, engine: Engine) -> None:
         self._engine = engine
@@ -48,16 +66,27 @@ class Inventory:
     def names(self) -> list[str]:
         return sorted(self._live)
 
-    def live_rows(self, session: Session) -> list[tuple[Container, LiveContainer]]:
+    def live_rows(self, session: Session) -> list[LiveRow]:
         """The DB row and the live state of each container that exists now and is not
         excluded. Sorted by name.
         """
-        pairs: list[tuple[Container, LiveContainer]] = []
+        pairs: list[LiveRow] = []
         for name, live in sorted(self._live.items()):
             row = find_container(session, name)
             if row is not None and row.enabled:
                 pairs.append((row, live))
         return pairs
+
+    def live_groups(self, session: Session) -> list[LiveGroup]:
+        """The live rows in Compose groups: sorted by project, "Other" (no project) last.
+        The UI shows the groups in this order.
+        """
+        groups: dict[str | None, list[LiveRow]] = {}
+        for row, live in self.live_rows(session):
+            groups.setdefault(row.compose_project, []).append((row, live))
+        projects = sorted(project for project in groups if project is not None)
+        ordered = [*projects, None] if None in groups else projects
+        return [LiveGroup(project, groups[project]) for project in ordered]
 
     async def sync_all(self, docker: DockerApi) -> list[ContainerInfo]:
         """List and inspect all containers. Replace the live state. Give the infos."""

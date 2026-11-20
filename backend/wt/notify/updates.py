@@ -13,8 +13,8 @@ from sqlmodel import Session, col, select
 
 from wt import clock
 from wt.config import Env, load_settings
-from wt.db import LOCAL_HOST_ID
-from wt.db.models import Container, Update
+from wt.db import local_containers
+from wt.db.models import Update
 from wt.notify.messages import UpdateInfo, digest_message, update_message
 from wt.notify.ntfy import send
 from wt.versions.updates import current_update
@@ -45,12 +45,9 @@ async def notify_updates(engine: Engine, env: Env) -> None:
 def _pending(engine: Engine) -> list[_Pending]:
     pending: list[_Pending] = []
     with Session(engine) as session:
-        containers = session.exec(
-            select(Container)
-            .where(Container.host_id == LOCAL_HOST_ID, col(Container.enabled))
-            .order_by(col(Container.name))
-        )
-        for container in containers:
+        for container in local_containers(session):
+            if not container.enabled:
+                continue
             update = current_update(session, container)
             if update is None or update.notified_at is not None or update.id is None:
                 continue

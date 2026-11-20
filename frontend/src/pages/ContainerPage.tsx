@@ -6,7 +6,7 @@ import { containerHistoryQuery, containerQuery } from "@/api/queries";
 import type { ContainerDetail } from "@/api/types";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { HealthBadge } from "@/components/badges";
-import { MetricChart } from "@/components/MetricChart";
+import { ChartGrid } from "@/components/MetricChart";
 import { QueryPending } from "@/components/QueryPending";
 import { ReleaseSource } from "@/components/ReleaseSource";
 import { Section } from "@/components/Section";
@@ -91,11 +91,7 @@ function Resources({ name }: { name: string }) {
       {data === undefined ? (
         <QueryPending error={error} text="Loading charts…" />
       ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {data.charts.map((chart) => (
-            <MetricChart key={chart.key} chart={chart} times={data.times} ranges={ranges} emptyLabel={data.empty_label} />
-          ))}
-        </div>
+        <ChartGrid history={data} ranges={ranges} />
       )}
     </Section>
   );

@@ -4,7 +4,7 @@ import { useState, type SubmitEvent } from "react";
 
 import { authStateQuery } from "@/api/queries";
 import { api, ApiError, unwrap } from "@/api/client";
-import { Field } from "@/components/Field";
+import { Field, TotpCodeField } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
 import { isTotpCode, TOTP_CODE_ERROR } from "@/lib/totp";
@@ -53,16 +53,7 @@ export function LoginPage() {
             setPassword(event.target.value);
           }}
         />
-        <Field
-          label="TOTP code"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          required
-          value={code}
-          onChange={(event) => {
-            setCode(event.target.value);
-          }}
-        />
+        <TotpCodeField value={code} onChange={setCode} />
         <FormError error={badCode ? TOTP_CODE_ERROR : loginError(login.error)} />
         <Button type="submit" disabled={login.isPending}>
           Log in

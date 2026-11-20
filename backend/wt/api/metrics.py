@@ -6,21 +6,21 @@ history (sparklines, charts) on each `metrics {kind: history}` message.
 """
 
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
-from sqlmodel import Session, col, select
+from sqlmodel import Session, col
 
 from wt import clock
-from wt.api.containers import compose_groups
 from wt.api.deps import Ctx, get_live
 from wt.config import load_settings
 from wt.db import LOCAL_HOST_ID
 from wt.db.models import ContainerSample, MetricTier, VmSample
-from wt.docker.parse import group_label
-from wt.metrics.calc import ContainerValues, cores_used
+from wt.docker.inventory import LiveGroup
+from wt.metrics.calc import ContainerValues, cores_used, total
 from wt.metrics.labels import (
     bytes_label,
     cpu_label,
@@ -30,6 +30,7 @@ from wt.metrics.labels import (
     used_of_label,
 )
 from wt.metrics.sampler import Sampler
+from wt.metrics.store import select_samples
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
@@ -130,13 +131,8 @@ class OverviewOut(BaseModel):
     ranges: list[RangeOut]
 
 
-def _percent(part: int, total: int) -> float | None:
-    return part / total * 100 if total > 0 else None
-
-
-def _sum(values: list[float | None]) -> float | None:
-    known = [value for value in values if value is not None]
-    return sum(known) if known else None
+def _percent(part: int, whole: int) -> float | None:
+    return part / whole * 100 if whole > 0 else None
 
 
 def _vm_out(sampler: Sampler) -> VmOut | None:
@@ -201,14 +197,13 @@ def _container_usage(
 
 
 def _group_usage(
-    project: str | None, containers: list[ContainerUsage], cores: int
+    group: LiveGroup, containers: list[ContainerUsage], cores: int
 ) -> GroupUsage:
-    cpu = _sum([item.cpu_percent for item in containers])
-    used = [item.mem_used for item in containers if item.mem_used is not None]
-    mem = sum(used) if used else None
+    cpu = total(item.cpu_percent for item in containers)
+    mem = total(item.mem_used for item in containers)
     return GroupUsage(
-        project=project,
-        label=group_label(project),
+        project=group.project,
+        label=group.label,
         cpu_percent=cpu,
         cpu_label=cpu_label(cpu, cores_used(cpu, cores)),
         mem_used=mem,
@@ -222,31 +217,31 @@ def get_overview(ctx: Ctx) -> OverviewOut:
     """The current values, the counts and the groups (in the order of /api/containers)."""
     sampler = ctx.sampler
     with Session(ctx.engine) as session:
-        groups = compose_groups(ctx.inventory.live_rows(session))
+        groups = ctx.inventory.live_groups(session)
     # All containers of a VM see the same cores (also when WT cannot read the VM).
     container_cores = (item.cpus for item in sampler.containers.values())
     cores = sampler.vm.cores if sampler.vm else max(container_cores, default=0)
     group_usages: list[GroupUsage] = []
-    apps = running = total = 0
-    for project, pairs in groups:
+    apps = running = count = 0
+    for group in groups:
         usages = [
             _container_usage(live.name, live.state, sampler.containers.get(live.name))
-            for _, live in pairs
+            for _, live in group.members
         ]
-        group_usages.append(_group_usage(project, usages, cores))
-        apps += 1 if project is not None else len(pairs)
-        total += len(pairs)
-        running += sum(1 for _, live in pairs if live.state == "running")
+        group_usages.append(_group_usage(group, usages, cores))
+        apps += 1 if group.project is not None else len(group.members)
+        count += len(group.members)
+        running += sum(1 for _, live in group.members if live.state == "running")
     return OverviewOut(
         sampled_at=sampler.sampled_at,
         interval_seconds=load_settings(ctx.engine).metrics_interval_seconds,
         vm=_vm_out(sampler),
         counts=CountsOut(
             apps=apps,
-            containers=total,
+            containers=count,
             running=running,
             apps_label=f"{apps} app" if apps == 1 else f"{apps} apps",
-            containers_label=f"{running} running of {total} containers",
+            containers_label=f"{running} running of {count} containers",
         ),
         groups=group_usages,
         ranges=RANGES,
@@ -275,14 +270,10 @@ class SparklinesOut(BaseModel):
 
 def _slot_sum(lines: list[Sparkline]) -> Sparkline:
     """The sum of the lines in each slot. Null if no line has a value in the slot."""
+    slots = range(SPARKLINE_SLOTS)
     return Sparkline(
-        cpu=[_sum([line.cpu[i] for line in lines]) for i in range(SPARKLINE_SLOTS)],
-        mem=[
-            None
-            if all(line.mem[i] is None for line in lines)
-            else sum(line.mem[i] or 0 for line in lines)
-            for i in range(SPARKLINE_SLOTS)
-        ],
+        cpu=[total(line.cpu[i] for line in lines) for i in slots],
+        mem=[total(line.mem[i] for line in lines) for i in slots],
     )
 
 
@@ -294,14 +285,11 @@ def get_sparklines(ctx: Ctx) -> SparklinesOut:
     end = clock.now().replace(second=0, microsecond=0)
     start = end - timedelta(minutes=SPARKLINE_SLOTS)
     with Session(ctx.engine) as session:
-        groups = compose_groups(ctx.inventory.live_rows(session))
-        names = {row.id: row.name for _, pairs in groups for row, _ in pairs}
+        groups = ctx.inventory.live_groups(session)
+        names = {row.id: row.name for group in groups for row, _ in group.members}
         rows = session.exec(
-            select(ContainerSample).where(
-                ContainerSample.tier == MetricTier.MINUTE,
-                col(ContainerSample.time) >= start,
-                col(ContainerSample.time) < end,
-                col(ContainerSample.container_id).in_(names),
+            select_samples(ContainerSample, MetricTier.MINUTE, start, end).where(
+                col(ContainerSample.container_id).in_(names)
             )
         ).all()
     lines = {
@@ -316,8 +304,8 @@ def get_sparklines(ctx: Ctx) -> SparklinesOut:
     return SparklinesOut(
         start=start,
         groups={
-            group_label(project): _slot_sum([lines[row.name] for row, _ in pairs])
-            for project, pairs in groups
+            group.label: _slot_sum([lines[row.name] for row, _ in group.members])
+            for group in groups
         },
         containers=lines,
     )
@@ -419,53 +407,40 @@ def _series[T: (VmSample, ContainerSample)](
     return SeriesOut(key=key, label=label, values=values)
 
 
-@router.get("/vm/history")
-def get_vm_history(range_key: RangeQuery, ctx: Ctx) -> HistoryOut:
-    """The VM charts of a range: CPU, memory, disk I/O, network and load."""
-    slots = _Slots(range_key)
-    with Session(ctx.engine) as session:
-        rows = session.exec(
-            select(VmSample)
-            .where(
-                VmSample.host_id == LOCAL_HOST_ID,
-                VmSample.tier == slots.tier,
-                col(VmSample.time) >= slots.start,
-                col(VmSample.time) < slots.end,
-            )
-            .order_by(col(VmSample.time))
-        ).all()
+@dataclass(frozen=True)
+class _SharedCharts:
+    """The charts that the VM and each container have."""
 
-    def series(
-        key: str, label: str, value: Callable[[VmSample], float | None]
-    ) -> SeriesOut:
+    cpu: ChartOut
+    memory: ChartOut
+    network: ChartOut
+    disk_io: ChartOut
+
+
+def _shared_charts[T: (VmSample, ContainerSample)](
+    slots: _Slots, rows: Sequence[T], memory_max: float | None
+) -> _SharedCharts:
+    """CPU, memory, network and disk I/O. `memory_max`: the memory total or limit."""
+
+    def series(key: str, label: str, value: Callable[[T], float | None]) -> SeriesOut:
         return _series(slots, rows, key, label, value)
 
-    charts = [
-        ChartOut(
+    return _SharedCharts(
+        cpu=ChartOut(
             key="cpu",
             title="CPU",
             unit="percent",
             max=100,
             series=[series("cpu", "CPU", lambda r: r.cpu_percent)],
         ),
-        ChartOut(
+        memory=ChartOut(
             key="memory",
             title="Memory",
             unit="bytes",
-            max=rows[-1].mem_total if rows else None,
+            max=memory_max,
             series=[series("used", "Used", lambda r: r.mem_used)],
         ),
-        ChartOut(
-            key="disk_io",
-            title="Disk I/O",
-            unit="bytes_per_second",
-            max=None,
-            series=[
-                series("read", "Read", lambda r: r.disk_read_bps),
-                series("write", "Write", lambda r: r.disk_write_bps),
-            ],
-        ),
-        ChartOut(
+        network=ChartOut(
             key="network",
             title="Network",
             unit="bytes_per_second",
@@ -475,25 +450,65 @@ def get_vm_history(range_key: RangeQuery, ctx: Ctx) -> HistoryOut:
                 series("tx", "Out", lambda r: r.net_tx_bps),
             ],
         ),
-        ChartOut(
-            key="load",
-            title="Load",
-            unit="load",
+        disk_io=ChartOut(
+            key="disk_io",
+            title="Disk I/O",
+            unit="bytes_per_second",
             max=None,
             series=[
-                series("load_1", "1 min", lambda r: r.load_1),
-                series("load_5", "5 min", lambda r: r.load_5),
-                series("load_15", "15 min", lambda r: r.load_15),
+                series("read", "Read", lambda r: r.disk_read_bps),
+                series("write", "Write", lambda r: r.disk_write_bps),
             ],
         ),
-    ]
+    )
+
+
+def _load_chart(slots: _Slots, rows: Sequence[VmSample]) -> ChartOut:
+    """The VM load average of 1, 5 and 15 minutes."""
+    return ChartOut(
+        key="load",
+        title="Load",
+        unit="load",
+        max=None,
+        series=[
+            _series(slots, rows, "load_1", "1 min", lambda r: r.load_1),
+            _series(slots, rows, "load_5", "5 min", lambda r: r.load_5),
+            _series(slots, rows, "load_15", "15 min", lambda r: r.load_15),
+        ],
+    )
+
+
+def _history_out(
+    range_key: RangeKey, slots: _Slots, has_rows: bool, charts: list[ChartOut]
+) -> HistoryOut:
     return HistoryOut(
         range=range_key,
         step_seconds=int(slots.step.total_seconds()),
         times=slots.times(),
         charts=charts,
-        empty_label=None if rows else EMPTY_LABELS[slots.tier],
+        empty_label=None if has_rows else EMPTY_LABELS[slots.tier],
     )
+
+
+@router.get("/vm/history")
+def get_vm_history(range_key: RangeQuery, ctx: Ctx) -> HistoryOut:
+    """The VM charts of a range: CPU, memory, disk I/O, network and load."""
+    slots = _Slots(range_key)
+    with Session(ctx.engine) as session:
+        rows = session.exec(
+            select_samples(VmSample, slots.tier, slots.start, slots.end).where(
+                VmSample.host_id == LOCAL_HOST_ID
+            )
+        ).all()
+    shared = _shared_charts(slots, rows, rows[-1].mem_total if rows else None)
+    charts = [
+        shared.cpu,
+        shared.memory,
+        shared.disk_io,
+        shared.network,
+        _load_chart(slots, rows),
+    ]
+    return _history_out(range_key, slots, bool(rows), charts)
 
 
 @router.get("/containers/{name}/history")
@@ -505,61 +520,10 @@ def get_container_history(name: str, range_key: RangeQuery, ctx: Ctx) -> History
     with Session(ctx.engine) as session:
         row, _ = get_live(session, ctx.inventory, name)
         rows = session.exec(
-            select(ContainerSample)
-            .where(
-                ContainerSample.container_id == row.id,
-                ContainerSample.tier == slots.tier,
-                col(ContainerSample.time) >= slots.start,
-                col(ContainerSample.time) < slots.end,
+            select_samples(ContainerSample, slots.tier, slots.start, slots.end).where(
+                ContainerSample.container_id == row.id
             )
-            .order_by(col(ContainerSample.time))
         ).all()
-
-    def series(
-        key: str, label: str, value: Callable[[ContainerSample], float | None]
-    ) -> SeriesOut:
-        return _series(slots, rows, key, label, value)
-
-    charts = [
-        ChartOut(
-            key="cpu",
-            title="CPU",
-            unit="percent",
-            max=100,
-            series=[series("cpu", "CPU", lambda r: r.cpu_percent)],
-        ),
-        ChartOut(
-            key="memory",
-            title="Memory",
-            unit="bytes",
-            max=rows[-1].mem_limit if rows else None,
-            series=[series("used", "Used", lambda r: r.mem_used)],
-        ),
-        ChartOut(
-            key="network",
-            title="Network",
-            unit="bytes_per_second",
-            max=None,
-            series=[
-                series("rx", "In", lambda r: r.net_rx_bps),
-                series("tx", "Out", lambda r: r.net_tx_bps),
-            ],
-        ),
-        ChartOut(
-            key="disk_io",
-            title="Disk I/O",
-            unit="bytes_per_second",
-            max=None,
-            series=[
-                series("read", "Read", lambda r: r.disk_read_bps),
-                series("write", "Write", lambda r: r.disk_write_bps),
-            ],
-        ),
-    ]
-    return HistoryOut(
-        range=range_key,
-        step_seconds=int(slots.step.total_seconds()),
-        times=slots.times(),
-        charts=charts,
-        empty_label=None if rows else EMPTY_LABELS[slots.tier],
-    )
+    shared = _shared_charts(slots, rows, rows[-1].mem_limit if rows else None)
+    charts = [shared.cpu, shared.memory, shared.network, shared.disk_io]
+    return _history_out(range_key, slots, bool(rows), charts)

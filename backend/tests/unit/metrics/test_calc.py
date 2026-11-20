@@ -12,9 +12,12 @@ from wt.metrics.calc import (
     ContainerValues,
     container_values,
     cores_used,
+    mean,
+    mean_int,
     memory_used,
     rate,
     share_percent,
+    total,
 )
 
 T0 = datetime(2026, 11, 20, 12, 0, tzinfo=UTC)
@@ -137,3 +140,23 @@ def test_cpu_percent_and_cores_stay_in_range(cpu: int, system: int, cpus: int) -
     cores = cores_used(percent, cpus)
     assert cores is not None
     assert 0 <= cores <= cpus
+
+
+def test_mean_skips_the_values_that_are_none() -> None:
+    assert mean([1.0, None, 3.0]) == 2.0
+    assert mean([None, None]) is None
+    assert mean([]) is None
+
+
+def test_mean_int_rounds_the_average() -> None:
+    assert mean_int([1, 2]) == 2
+    assert mean_int([10, 11, 11]) == 11
+
+
+def test_total_skips_the_values_that_are_none() -> None:
+    assert total([1.5, None, 2.5]) == 4.0
+    assert total([100, None, 200]) == 300
+    assert total([None, None]) is None
+    assert total([]) is None
+    # 0 is a value: the sum of zeros is 0, not None.
+    assert total([0, None]) == 0

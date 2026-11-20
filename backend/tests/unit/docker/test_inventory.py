@@ -228,3 +228,46 @@ async def test_live_rows_gives_live_enabled_containers_by_name(
         ("db", "id-db"),
         ("web", "id-web"),
     ]
+
+
+async def test_live_groups_sorts_by_project_with_other_last(db_engine: Engine) -> None:
+    inventory = Inventory(db_engine)
+    for item in [
+        make_info("solo"),
+        make_info("web", project="site"),
+        make_info("api", project="site"),
+        make_info("db", project="data"),
+        make_info("tool"),
+        make_info("hidden", project="data", excluded=True),
+    ]:
+        await inventory.update(item)
+
+    with Session(db_engine) as session:
+        groups = inventory.live_groups(session)
+
+    assert [
+        (group.project, group.label, [row.name for row, _ in group.members])
+        for group in groups
+    ] == [
+        ("data", "data", ["db"]),
+        ("site", "site", ["api", "web"]),
+        (None, "Other", ["solo", "tool"]),
+    ]
+    assert groups[1].members[0][1] == inventory.get("api")
+
+
+async def test_live_groups_has_no_other_group_when_all_have_a_project(
+    db_engine: Engine,
+) -> None:
+    inventory = Inventory(db_engine)
+    await inventory.update(make_info("web", project="site"))
+
+    with Session(db_engine) as session:
+        groups = inventory.live_groups(session)
+
+    assert [group.label for group in groups] == ["site"]
+
+
+async def test_live_groups_is_empty_with_no_containers(db_engine: Engine) -> None:
+    with Session(db_engine) as session:
+        assert Inventory(db_engine).live_groups(session) == []

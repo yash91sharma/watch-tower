@@ -9,7 +9,7 @@ from sqlalchemy import Engine
 from tests.factories import make_info
 from tests.fake_docker import FakeDocker
 from wt.bus import Bus, Message, Topic
-from wt.docker.client import ContainerInfo, DockerEvent
+from wt.docker.client import ContainerInfo, DockerEvent, EventAction
 from wt.docker.events import follow_events, handle_event
 from wt.docker.inventory import Inventory
 
@@ -20,7 +20,7 @@ WEB = make_info(docker_id="id-1", health="healthy")
 
 
 def event(
-    action: str, docker_id: str = "id-1", health: str | None = None
+    action: EventAction, docker_id: str = "id-1", health: str | None = None
 ) -> DockerEvent:
     return DockerEvent(action, docker_id, "web", T0, health)
 

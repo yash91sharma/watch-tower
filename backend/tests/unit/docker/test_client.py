@@ -17,6 +17,7 @@ from wt.docker.client import (
     ContainerStats,
     DockerEvent,
     DockerUnavailableError,
+    EventAction,
     container_info,
     container_stats,
     docker_event,
@@ -171,7 +172,9 @@ def test_container_with_no_healthcheck_and_no_labels() -> None:
         ("health_status: healthy", "health_status", "healthy"),
     ],
 )
-def test_docker_event(action: str, expected_action: str, health: str | None) -> None:
+def test_docker_event(
+    action: str, expected_action: EventAction, health: str | None
+) -> None:
     data = {
         "Type": "container",
         "Action": action,

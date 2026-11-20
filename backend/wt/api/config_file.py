@@ -11,14 +11,14 @@ from pydantic import (
     ValidationError,
     model_validator,
 )
-from sqlmodel import Session, col, select
+from sqlmodel import Session
 
 from wt import clock
 from wt.api.deps import Ctx
 from wt.api.errors import FieldError, field_errors
 from wt.bus import Topic
 from wt.config import Settings, load_settings, write_settings
-from wt.db import LOCAL_HOST_ID
+from wt.db import LOCAL_HOST_ID, local_containers
 from wt.db.models import Container
 from wt.docker.parse import REPO_PATTERN
 
@@ -53,11 +53,7 @@ class ConfigFile(BaseModel):
 def export_config(ctx: Ctx, response: Response) -> ConfigFile:
     """The config as a JSON file download."""
     with Session(ctx.engine) as session:
-        rows = session.exec(
-            select(Container)
-            .where(Container.host_id == LOCAL_HOST_ID)
-            .order_by(col(Container.name))
-        ).all()
+        rows = local_containers(session)
     filename = f"wt-config-{clock.now().date().isoformat()}.json"
     response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     return ConfigFile(
@@ -108,12 +104,7 @@ def import_config(
         )
 
     with Session(ctx.engine) as session:
-        known = {
-            row.name: row
-            for row in session.exec(
-                select(Container).where(Container.host_id == LOCAL_HOST_ID)
-            )
-        }
+        known = {row.name: row for row in local_containers(session)}
         added = [item for item in config.containers if item.name not in known]
         result = ImportResult(
             dry_run=dry_run,

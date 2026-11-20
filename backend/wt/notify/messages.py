@@ -1,11 +1,15 @@
 """Notification texts (pure). Messages are short and link to WT."""
 
 from dataclasses import dataclass
+from typing import Literal
 from urllib.parse import quote
 
 from wt.db.models import EventKind, Severity
 
 MAX_BODY = 500
+
+# The ntfy priorities that WT uses.
+Priority = Literal["high", "default"]
 
 HEALTH_TITLES = {
     EventKind.BECAME_UNHEALTHY: "{name} is unhealthy",
@@ -34,8 +38,7 @@ class Message:
     tags: tuple[str, ...]
     # The link that opens WT. None if the public URL is not set.
     click: str | None
-    # ntfy priority: "high" or "default".
-    priority: str = "default"
+    priority: Priority = "default"
 
 
 def update_message(update: UpdateInfo, public_url: str | None) -> Message:

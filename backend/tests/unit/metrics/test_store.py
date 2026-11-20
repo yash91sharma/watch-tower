@@ -8,7 +8,9 @@ from sqlmodel import Session, col, select
 
 from wt.db import LOCAL_HOST_ID, cleanup
 from wt.db.models import Container, ContainerSample, MetricTier, VmSample
-from wt.metrics.store import roll_up
+from wt.metrics.calc import ContainerValues
+from wt.metrics.store import container_average, roll_up, select_samples, vm_average
+from wt.metrics.vm import VmValues
 
 T0 = datetime(2026, 1, 1, tzinfo=UTC)
 
@@ -209,3 +211,121 @@ def test_cleanup_keeps_each_tier_for_its_time(db_engine: Engine, clock: object) 
             kept
         )
         assert {(r.tier, r.time) for r in session.exec(select(VmSample))} == set(kept)
+
+
+def test_vm_average_of_samples() -> None:
+    rows = [vm(MetricTier.MINUTE, T0, cpu=1.0), vm(MetricTier.MINUTE, T0, cpu=None)]
+    rows[1].mem_total, rows[1].mem_used, rows[1].load_5 = 2000, 301, 3.0
+    rows[1].disk_read_bps, rows[1].net_tx_bps = 8.0, 4.0
+    net = [(row.net_rx_bps, row.net_tx_bps) for row in rows]
+
+    row = vm_average(rows, net, MetricTier.QUARTER, T0)
+
+    assert row.model_dump() == {
+        "host_id": LOCAL_HOST_ID,
+        "tier": MetricTier.QUARTER,
+        "time": T0,
+        # The average skips None. Totals take the last value.
+        "cpu_percent": 1.0,
+        "mem_used": 200,
+        "mem_total": 2000,
+        "swap_used": 0,
+        "swap_total": 10,
+        "load_1": 1.0,
+        "load_5": 2.0,
+        "load_15": 1.0,
+        "disk_used": 5,
+        "disk_total": 10,
+        "disk_read_bps": 8.0,
+        "disk_write_bps": None,
+        "net_rx_bps": None,
+        "net_tx_bps": 4.0,
+    }
+
+
+def test_vm_average_of_poll_values() -> None:
+    polls = [
+        VmValues(
+            cpu_percent=cpu,
+            cores=2,
+            mem_used=100,
+            mem_total=1000,
+            swap_used=0,
+            swap_total=0,
+            load_1=1.0,
+            load_5=1.0,
+            load_15=1.0,
+            uptime_seconds=60.0,
+            disk_used=1,
+            disk_total=2,
+            disk_read_bps=None,
+            disk_write_bps=None,
+        )
+        for cpu in (2.0, 4.0)
+    ]
+
+    row = vm_average(polls, [(10.0, None), (20.0, None)], MetricTier.MINUTE, T0)
+
+    assert (row.cpu_percent, row.net_rx_bps, row.net_tx_bps) == (3.0, 15.0, None)
+
+
+def test_container_average_of_samples_and_of_poll_values() -> None:
+    rows = [
+        sample(7, MetricTier.MINUTE, T0, cpu, mem)
+        for cpu, mem in ((1.0, 10), (None, 20))
+    ]
+    rows[1].mem_limit = 5000
+    polls = [
+        ContainerValues(
+            cpu_percent=row.cpu_percent,
+            cpus=2,
+            mem_used=row.mem_used,
+            mem_limit=row.mem_limit,
+            net_rx_bps=row.net_rx_bps,
+            net_tx_bps=row.net_tx_bps,
+            disk_read_bps=row.disk_read_bps,
+            disk_write_bps=row.disk_write_bps,
+        )
+        for row in rows
+    ]
+
+    from_rows = container_average(7, rows, MetricTier.HOUR, T0)
+    from_polls = container_average(7, polls, MetricTier.HOUR, T0)
+
+    assert from_rows == from_polls
+    assert from_rows.model_dump() == {
+        "container_id": 7,
+        "tier": MetricTier.HOUR,
+        "time": T0,
+        "cpu_percent": 1.0,
+        "mem_used": 15,
+        "mem_limit": 5000,
+        "net_rx_bps": None,
+        "net_tx_bps": 10.0,
+        "disk_read_bps": None,
+        "disk_write_bps": None,
+    }
+
+
+def test_select_samples_gives_the_rows_of_a_tier_in_the_range(
+    db_engine: Engine,
+) -> None:
+    container_id = container_row(db_engine)
+    add(
+        db_engine,
+        sample(container_id, MetricTier.MINUTE, T0 + timedelta(minutes=2), 2.0, 1),
+        sample(container_id, MetricTier.MINUTE, T0, 1.0, 1),
+        # Not in [T0, T0 + 3 min) or not the tier.
+        sample(container_id, MetricTier.MINUTE, T0 + timedelta(minutes=3), 9.0, 1),
+        sample(container_id, MetricTier.MINUTE, T0 - timedelta(minutes=1), 9.0, 1),
+        sample(container_id, MetricTier.QUARTER, T0, 9.0, 1),
+    )
+
+    with Session(db_engine) as session:
+        found = session.exec(
+            select_samples(
+                ContainerSample, MetricTier.MINUTE, T0, T0 + timedelta(minutes=3)
+            )
+        ).all()
+
+    assert [row.cpu_percent for row in found] == [1.0, 2.0]

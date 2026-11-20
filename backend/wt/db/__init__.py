@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from sqlalchemy import Engine
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from wt.db.engine import create_db_engine
 from wt.db.migrate import upgrade
@@ -31,6 +31,17 @@ def find_container(session: Session, name: str) -> Container | None:
             Container.host_id == LOCAL_HOST_ID, Container.name == name
         )
     ).first()
+
+
+def local_containers(session: Session) -> list[Container]:
+    """All container rows of the local host (also the excluded ones), by name."""
+    return list(
+        session.exec(
+            select(Container)
+            .where(Container.host_id == LOCAL_HOST_ID)
+            .order_by(col(Container.name))
+        )
+    )
 
 
 def has_admin(engine: Engine) -> bool:

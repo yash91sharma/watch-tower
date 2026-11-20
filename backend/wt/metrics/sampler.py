@@ -3,8 +3,8 @@
 In memory: the last counters (for the next delta) and the current values, which the API
 shows. Each poll also adds its values to the current minute. At the first poll of a new
 minute, WT saves the average of the last minute as `1m` rows and does the rollup that is due
-(wt.metrics.store). After each poll WT
-publishes `metrics {kind: current}`, after each save `metrics {kind: history}`.
+(wt.metrics.store). After each poll WT publishes `metrics {kind: current}`, after each
+save `metrics {kind: history}`.
 """
 
 import asyncio
@@ -12,15 +12,14 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from statistics import fmean
 
 from sqlalchemy import Engine
 from sqlmodel import Session
 
 from wt import clock
 from wt.bus import Bus, Topic
-from wt.db import LOCAL_HOST_ID, find_container
-from wt.db.models import ContainerSample, MetricTier, VmSample
+from wt.db import find_container
+from wt.db.models import MetricTier
 from wt.docker.client import (
     ContainerNotFoundError,
     ContainerStats,
@@ -28,8 +27,8 @@ from wt.docker.client import (
     DockerUnavailableError,
 )
 from wt.docker.inventory import Inventory
-from wt.metrics.calc import ContainerValues, container_values, mean, mean_int
-from wt.metrics.store import roll_up
+from wt.metrics.calc import ContainerValues, container_values, total
+from wt.metrics.store import Network, container_average, roll_up, vm_average
 from wt.metrics.vm import VmCounters, VmReadError, VmValues, read_vm, vm_values
 
 log = logging.getLogger(__name__)
@@ -45,9 +44,7 @@ class _Minute:
     start: datetime
     vm: list[VmValues] = field(default_factory=list[VmValues])
     # The VM network (sum of the containers) of each poll.
-    net: list[tuple[float | None, float | None]] = field(
-        default_factory=list[tuple[float | None, float | None]]
-    )
+    net: list[Network] = field(default_factory=list[Network])
     containers: dict[str, list[ContainerValues]] = field(
         default_factory=dict[str, list[ContainerValues]]
     )
@@ -76,15 +73,13 @@ class Sampler:
         self.vm: VmValues | None = None
         self.sampled_at: datetime | None = None
 
-    def vm_network(self) -> tuple[float | None, float | None]:
+    def vm_network(self) -> Network:
         """The VM network in and out (bytes/s): the sum of the containers."""
-        rx = [
-            v.net_rx_bps for v in self.containers.values() if v.net_rx_bps is not None
-        ]
-        tx = [
-            v.net_tx_bps for v in self.containers.values() if v.net_tx_bps is not None
-        ]
-        return (sum(rx) if rx else None, sum(tx) if tx else None)
+        values = self.containers.values()
+        return (
+            total(v.net_rx_bps for v in values),
+            total(v.net_tx_bps for v in values),
+        )
 
     async def poll(self, docker: DockerApi) -> bool:
         """Get all values once. False if Docker is not available (the VM values stay)."""
@@ -161,45 +156,15 @@ def _save(engine: Engine, minute: _Minute, now: datetime) -> None:
     """
     with Session(engine) as session:
         if minute.vm:
-            vm = minute.vm
             session.merge(
-                VmSample(
-                    host_id=LOCAL_HOST_ID,
-                    tier=MetricTier.MINUTE,
-                    time=minute.start,
-                    cpu_percent=mean([v.cpu_percent for v in vm]),
-                    mem_used=mean_int([v.mem_used for v in vm]),
-                    mem_total=vm[-1].mem_total,
-                    swap_used=mean_int([v.swap_used for v in vm]),
-                    swap_total=vm[-1].swap_total,
-                    load_1=fmean(v.load_1 for v in vm),
-                    load_5=fmean(v.load_5 for v in vm),
-                    load_15=fmean(v.load_15 for v in vm),
-                    disk_used=vm[-1].disk_used,
-                    disk_total=vm[-1].disk_total,
-                    disk_read_bps=mean([v.disk_read_bps for v in vm]),
-                    disk_write_bps=mean([v.disk_write_bps for v in vm]),
-                    net_rx_bps=mean([rx for rx, _ in minute.net]),
-                    net_tx_bps=mean([tx for _, tx in minute.net]),
-                )
+                vm_average(minute.vm, minute.net, MetricTier.MINUTE, minute.start)
             )
         for name, polls in minute.containers.items():
             row = find_container(session, name)
             if row is None or row.id is None:
                 continue  # The row is gone (for example a config import).
             session.merge(
-                ContainerSample(
-                    container_id=row.id,
-                    tier=MetricTier.MINUTE,
-                    time=minute.start,
-                    cpu_percent=mean([p.cpu_percent for p in polls]),
-                    mem_used=mean_int([p.mem_used for p in polls]),
-                    mem_limit=polls[-1].mem_limit,
-                    net_rx_bps=mean([p.net_rx_bps for p in polls]),
-                    net_tx_bps=mean([p.net_tx_bps for p in polls]),
-                    disk_read_bps=mean([p.disk_read_bps for p in polls]),
-                    disk_write_bps=mean([p.disk_write_bps for p in polls]),
-                )
+                container_average(row.id, polls, MetricTier.MINUTE, minute.start)
             )
         session.commit()
     roll_up(engine, now)

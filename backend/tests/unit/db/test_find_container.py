@@ -1,9 +1,9 @@
-"""Tests for wt.db.find_container."""
+"""Tests for wt.db.find_container and wt.db.local_containers."""
 
 from sqlalchemy import Engine
 from sqlmodel import Session
 
-from wt.db import LOCAL_HOST_ID, find_container
+from wt.db import LOCAL_HOST_ID, find_container, local_containers
 from wt.db.models import Container, Host
 
 
@@ -24,3 +24,20 @@ def test_find_container_gives_the_local_row_by_name(db_engine: Engine) -> None:
 def test_find_container_gives_none_for_an_unknown_name(db_engine: Engine) -> None:
     with Session(db_engine) as session:
         assert find_container(session, "nothing") is None
+
+
+def test_local_containers_gives_the_local_rows_by_name(db_engine: Engine) -> None:
+    with Session(db_engine) as session:
+        session.add(Host(id=2, name="other"))
+        session.commit()
+        session.add(Container(host_id=2, name="api"))
+        session.add(Container(host_id=LOCAL_HOST_ID, name="web"))
+        session.add(Container(host_id=LOCAL_HOST_ID, name="db", enabled=False))
+        session.commit()
+
+        rows = local_containers(session)
+
+        assert [(row.host_id, row.name) for row in rows] == [
+            (LOCAL_HOST_ID, "db"),
+            (LOCAL_HOST_ID, "web"),
+        ]

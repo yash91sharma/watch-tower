@@ -58,10 +58,11 @@ function SettingsForm({ values }: { values: Settings }) {
   const [form, setForm] = useState(() =>
     Object.fromEntries(FIELDS.map(({ key }) => [key, String(values[key] ?? "")])),
   );
+  // The form sends the text of each input. The backend validates and converts the
+  // values (for example "24" to 24, "" to null) and gives an error per field.
+  const body = form as unknown as Settings;
   const save = useMutation({
-    // The form sends the text of each input. The backend validates and converts the
-    // values (for example "24" to 24, "" to null) and gives an error per field.
-    mutationFn: async () => unwrap(await api.PUT("/api/settings", { body: form as unknown as Settings })),
+    mutationFn: async () => unwrap(await api.PUT("/api/settings", { body })),
     onSuccess: (result) => {
       queryClient.setQueryData(settingsQuery.queryKey, result);
     },
@@ -69,7 +70,7 @@ function SettingsForm({ values }: { values: Settings }) {
   // Sends a test message with the form values. It does not save them.
   const sendTest = useMutation({
     mutationFn: async () => {
-      unwrap(await api.POST("/api/settings/ntfy-test", { body: form as unknown as Settings }));
+      unwrap(await api.POST("/api/settings/ntfy-test", { body }));
     },
   });
 

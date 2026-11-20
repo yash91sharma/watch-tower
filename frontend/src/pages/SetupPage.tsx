@@ -6,7 +6,7 @@ import { useState, type SubmitEvent } from "react";
 import { authStateQuery } from "@/api/queries";
 import { api, unwrap } from "@/api/client";
 import type { SetupBegin } from "@/api/types";
-import { Field } from "@/components/Field";
+import { Field, TotpCodeField } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
 import { isTotpCode, TOTP_CODE_ERROR } from "@/lib/totp";
@@ -117,16 +117,7 @@ function FinishStep({ token, totp }: Started) {
           setPassword2(event.target.value);
         }}
       />
-      <Field
-        label="TOTP code"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        required
-        value={code}
-        onChange={(event) => {
-          setCode(event.target.value);
-        }}
-      />
+      <TotpCodeField value={code} onChange={setCode} />
       <FormError error={formError ?? finish.error} />
       <Button type="submit" disabled={finish.isPending}>
         Set up

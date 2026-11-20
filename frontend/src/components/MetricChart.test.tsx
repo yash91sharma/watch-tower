@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type uPlot from "uplot";
 import { expect, test } from "vitest";
 
-import { MetricChart } from "@/components/MetricChart";
+import { ChartGrid, MetricChart } from "@/components/MetricChart";
 import { history, overview } from "@/test/fixtures";
 import { plots, resizeCallbacks } from "@/test/uplot";
 
@@ -111,4 +111,22 @@ test("a resize of the box sets the chart size", () => {
   resizeCallbacks[0]?.();
 
   expect(plots[0]?.sizes).toEqual([{ width: 0, height: 160 }]);
+});
+
+test("a chart with no max scales the y axis to its values", () => {
+  if (!cpu) throw new Error("no chart");
+  render(<MetricChart chart={{ ...cpu, max: null }} times={[1, 2]} ranges={ranges} />);
+
+  const range = plots[0]?.options.scales?.y?.range as (u: uPlot, min: number, max: number) => [number, number];
+  expect(range({} as uPlot, 0, 1000)).toEqual([0, 1100]);
+});
+
+test("the chart grid shows each chart of the history, with the times and the empty label", () => {
+  if (!cpu) throw new Error("no chart");
+  const memory = { ...cpu, key: "memory", title: "Memory", unit: "bytes" as const, max: null };
+  render(<ChartGrid history={history({ charts: [cpu, memory], empty_label: "No values." })} ranges={ranges} />);
+
+  expect(screen.getAllByRole("heading").map((item) => item.textContent)).toEqual(["CPU", "Memory"]);
+  expect(screen.getAllByText("No values.")).toHaveLength(2);
+  expect(plots.map((plot) => plot.data[0])).toEqual([history().times, history().times]);
 });

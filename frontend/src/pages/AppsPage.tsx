@@ -11,12 +11,12 @@ import { containersQuery } from "@/api/queries";
 import type { Group } from "@/api/types";
 import { HealthBadge, SeverityBadge, StatusBadge } from "@/components/badges";
 import { CheckNow } from "@/components/CheckNow";
+import { NoContainers } from "@/components/NoContainers";
 import { QueryPending } from "@/components/QueryPending";
 import { Button } from "@/components/ui/button";
 import { UsageCell, useUsage } from "@/components/Usage";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn, plural } from "@/lib/utils";
-
 
 const collapsedKey = "wt.collapsedGroups";
 
@@ -48,10 +48,7 @@ export function AppsPage() {
       {data === undefined ? (
         <QueryPending error={error} text="Loading containers…" />
       ) : data.length === 0 ? (
-        <p className="text-muted-foreground">
-          No containers. WT shows all containers on this Docker host, except the containers with the label{" "}
-          <code>wt.enable=false</code>.
-        </p>
+        <NoContainers />
       ) : (
         data.map((group) => (
           <GroupTable

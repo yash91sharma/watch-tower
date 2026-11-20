@@ -13,7 +13,7 @@ from collections.abc import AsyncGenerator, AsyncIterator, Generator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol, get_args
 
 import aiodocker  # noqa: TID251  (the only module that uses aiodocker)
 import aiohttp
@@ -23,7 +23,8 @@ from wt.docker.logs import LogDecoder, LogLine
 from wt.docker.parse import container_name
 
 # The container events that WT uses.
-EVENT_ACTIONS = ("start", "die", "health_status", "destroy")
+EventAction = Literal["start", "die", "health_status", "destroy"]
+EVENT_ACTIONS: tuple[EventAction, ...] = get_args(EventAction)
 
 
 class DockerUnavailableError(Exception):
@@ -51,8 +52,7 @@ class ContainerInfo:
 
 @dataclass(frozen=True)
 class DockerEvent:
-    # start, die, health_status or destroy.
-    action: str
+    action: EventAction
     container_id: str
     name: str
     time: datetime

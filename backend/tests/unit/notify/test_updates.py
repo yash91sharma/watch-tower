@@ -140,3 +140,23 @@ async def test_a_stale_row_is_not_sent(db_engine: Engine, clock: FakeClock) -> N
 
     assert not route.called
     assert notified(db_engine) == {"web:1.1": False}
+
+
+async def test_an_excluded_container_gets_no_message(
+    db_engine: Engine, clock: FakeClock
+) -> None:
+    add_update(db_engine, clock, "web")
+    add_update(db_engine, clock, "secret")
+    with Session(db_engine) as session:
+        row = session.exec(select(Container).where(Container.name == "secret")).one()
+        row.enabled = False
+        session.add(row)
+        session.commit()
+    with respx.mock:
+        route = respx.post(f"{NTFY}/wt").mock(return_value=httpx.Response(200))
+
+        await notify_updates(db_engine, ENV)
+
+    assert route.call_count == 1
+    assert route.calls.last.request.headers["Title"] == "Update: web 1.0 -> 1.2"
+    assert notified(db_engine) == {"web:1.2": True, "secret:1.2": False}

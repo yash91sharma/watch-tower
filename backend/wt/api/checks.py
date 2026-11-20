@@ -9,7 +9,6 @@ from sqlmodel import Session
 
 from wt.api.deps import Ctx
 from wt.context import AppContext
-from wt.docker.parse import group_label
 from wt.versions.check import load_check_status
 
 router = APIRouter(prefix="/checks", tags=["checks"])
@@ -50,8 +49,9 @@ def _group_names(ctx: AppContext, label: str) -> list[str]:
     with Session(ctx.engine) as session:
         return [
             row.name
-            for row, _ in ctx.inventory.live_rows(session)
-            if group_label(row.compose_project) == label
+            for group in ctx.inventory.live_groups(session)
+            if group.label == label
+            for row, _ in group.members
         ]
 
 
