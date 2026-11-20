@@ -88,7 +88,10 @@ class ContainerUsage(BaseModel):
     mem_used: int | None
     # % of the memory limit (or of the VM memory if the container has no limit).
     mem_percent: float | None
+    # Used of the limit, for example "18.4 MiB / 7.8 GiB".
     mem_label: str
+    # Only the used memory, for example "18.4 MiB" (for narrow table columns).
+    mem_used_label: str
     net_rx_label: str
     net_tx_label: str
     disk_read_label: str
@@ -174,6 +177,7 @@ def _container_usage(
             mem_used=None,
             mem_percent=None,
             mem_label=used_of_label(None, 0),
+            mem_used_label=bytes_label(None),
             net_rx_label=rate_label(None),
             net_tx_label=rate_label(None),
             disk_read_label=rate_label(None),
@@ -188,6 +192,7 @@ def _container_usage(
         mem_used=values.mem_used,
         mem_percent=_percent(values.mem_used, values.mem_limit),
         mem_label=used_of_label(values.mem_used, values.mem_limit),
+        mem_used_label=bytes_label(values.mem_used),
         net_rx_label=rate_label(values.net_rx_bps),
         net_tx_label=rate_label(values.net_tx_bps),
         disk_read_label=rate_label(values.disk_read_bps),

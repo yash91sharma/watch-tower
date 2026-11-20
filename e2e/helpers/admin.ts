@@ -71,7 +71,7 @@ export async function setUp(page: Page): Promise<void> {
   await page.getByLabel("Password again").fill(PASSWORD);
   await page.getByLabel("TOTP code").fill(await freshTotp(secret));
   await page.getByRole("button", { name: "Set up" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Containers" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
 }
 
 /** Log in on the login page with the admin password and a fresh TOTP code. */
@@ -82,10 +82,10 @@ export async function logIn(page: Page, password = PASSWORD): Promise<void> {
   await page.getByRole("button", { name: "Log in" }).click();
 }
 
-/** Log in and wait for the container list. */
+/** Log in and wait for the Overview (the home page). */
 export async function logInOk(page: Page): Promise<void> {
   await logIn(page);
-  await expect(page.getByRole("heading", { level: 1, name: "Containers" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
 }
 
 /** A saved login (cookies). useSession() puts it in each test. */

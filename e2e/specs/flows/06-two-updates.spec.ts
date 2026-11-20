@@ -23,14 +23,14 @@ test("two updates give one digest with high priority", async ({ page }) => {
   await addRelease("wt-e2e/old-a", "1.2.0", "## 1.2.0\n- Fix CVE-2026-1234");
   await addRelease("wt-e2e/old-b", "2.1.0", "## 2.1.0\n- New API");
 
-  await page.goto("/");
+  await page.goto("/apps");
   await page.getByRole("button", { name: "Check now", exact: true }).click();
 
   await expect.poll(() => ntfyMessages(TOPIC), { timeout: 60_000 }).toHaveLength(1);
   const [digest] = await ntfyMessages(TOPIC);
   expect(digest?.title).toBe("2 updates");
   expect(digest?.priority).toBe(HIGH);
-  expect(digest?.click).toBe("https://wt.test/");
+  expect(digest?.click).toBe("https://wt.test/apps");
 
   // The list shows both updates, the CVE one as critical.
   await page.reload();
@@ -40,10 +40,13 @@ test("two updates give one digest with high priority", async ({ page }) => {
     "wt_test_e2e_old_a",
     "running",
     "healthy",
+    // CPU and memory change at each poll.
+    /./,
+    /./,
     "1.0.0",
     "1.2.0",
     "update available",
     "critical",
   ]);
-  await expect(row("wt_test_e2e_old_b").getByRole("cell").nth(6)).toHaveText("normal");
+  await expect(row("wt_test_e2e_old_b").getByRole("cell").nth(8)).toHaveText("normal");
 });

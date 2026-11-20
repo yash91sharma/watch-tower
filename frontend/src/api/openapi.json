@@ -1956,6 +1956,10 @@
             "type": "string",
             "title": "Mem Label"
           },
+          "mem_used_label": {
+            "type": "string",
+            "title": "Mem Used Label"
+          },
           "net_rx_label": {
             "type": "string",
             "title": "Net Rx Label"
@@ -1982,6 +1986,7 @@
           "mem_used",
           "mem_percent",
           "mem_label",
+          "mem_used_label",
           "net_rx_label",
           "net_tx_label",
           "disk_read_label",

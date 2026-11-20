@@ -19,12 +19,15 @@ test("export, a new install and an import give the same file", async ({ page }) 
   await page.goto("/settings");
   await page.getByLabel("Check interval (hours)").fill("12");
   await page.getByLabel("ntfy topic").fill("wt-e2e-flow10");
+  // 5 s: the metrics flow (14) then gets its values fast.
+  await page.getByLabel("Metrics interval (seconds)").selectOption("5");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
 
   const first = await exportFile(page);
   expect(first.name).toMatch(/^wt-config-\d{4}-\d{2}-\d{2}\.json$/);
   expect(first.text).toContain('"check_interval_hours":12');
+  expect(first.text).toContain('"metrics_interval_seconds":5');
   expect(first.text).not.toMatch(/token|api_key|password/i);
 
   await deleteWtData();

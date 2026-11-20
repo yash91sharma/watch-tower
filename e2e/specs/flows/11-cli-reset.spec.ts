@@ -9,7 +9,7 @@ useSession();
 
 test("reset-admin and a restart open the setup page", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1, name: "Containers" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
 
   const output = docker("exec", WT, "wt", "reset-admin");
   expect(output).toContain("Restart WT (docker restart wt)");

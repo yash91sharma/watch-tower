@@ -24,7 +24,7 @@ test("groups show in API order with their containers", async () => {
   const media = screen.getByRole("region", { name: "media" });
   const names = within(media)
     .getAllByRole("link")
-    .filter((link) => !link.hasAttribute("target") && !link.textContent.startsWith("Logs"));
+    .filter((link) => !link.hasAttribute("target") && !link.getAttribute("href")?.endsWith("/logs"));
   expect(names.map((link) => link.textContent)).toEqual(["plex", "sonarr"]);
   expect(within(media).getByRole("link", { name: "plex" })).toHaveAttribute("href", "/containers/plex");
 });
@@ -93,7 +93,7 @@ test("a row shows the container fields", async () => {
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
   // The overview has no values for "app": CPU and memory show "-".
-  expect(cells).toEqual(["app", "running", "unhealthy", "-", "-", "2.1.0", "2.3.0", "update available", "critical", "Logs"]);
+  expect(cells).toEqual(["app", "running", "unhealthy", "-", "-", "2.1.0", "2.3.0", "update available", "critical"]);
   expect(within(row).getByText("update available")).toHaveAttribute("data-variant", "info");
 });
 
@@ -121,7 +121,7 @@ test("the row shows the labels from the API, and empty values show a dash", asyn
   const row = (await screen.findByRole("link", { name: "db" })).closest("tr");
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
-  expect(cells).toEqual(["db", "running", "no healthcheck", "-", "-", "-", "-", "no check", "", "Logs"]);
+  expect(cells).toEqual(["db", "running", "no healthcheck", "-", "-", "-", "-", "no check", ""]);
 });
 
 test("the page shows a loading text", async () => {
@@ -170,7 +170,6 @@ test("the table has clear column names", async () => {
     "Latest version",
     "Version status",
     "Update severity",
-    "Logs",
   ]);
 });
 
@@ -237,14 +236,15 @@ test("a row shows the CPU and memory of the container with a sparkline", async (
   renderRoute("/apps");
 
   const site = await screen.findByRole("region", { name: "site" });
-  const row = (await within(site).findByText("1.0 / 8.0 GiB")).closest("tr");
+  // App details shows only the used memory (a narrow column).
+  const row = (await within(site).findByText("1.0 GiB")).closest("tr");
   if (!row) throw new Error("no row");
   expect(within(row).getByText("9.1% (1.0 core)")).toBeInTheDocument();
   expect(await within(row).findByRole("img", { name: "CPU of web, last hour" })).toBeInTheDocument();
   expect(within(row).getByRole("img", { name: "Memory of web, last hour" })).toBeInTheDocument();
 });
 
-test("a row has a Logs link", async () => {
+test("the name cell has a Logs link", async () => {
   answer([{ project: "site", label: "site", update: "none", containers: [container({ name: "web" })] }]);
   renderRoute("/apps");
 

@@ -18,16 +18,16 @@ test.afterAll(() => {
 
 test("the banner shows while Docker is not connected, then the UI recovers", async ({ page }) => {
   await changeSettings(page.request, { ntfy_url: NTFY_URL, ntfy_topic: TOPIC, public_url: "https://wt.test" });
-  await page.goto("/");
+  await page.goto("/apps");
   const group = page.getByRole("region", { name: "wt_test_e2e" });
-  await expect(group.getByRole("link", { name: "wt_test_e2e_healthy" })).toBeVisible();
+  await expect(group.getByRole("link", { name: "wt_test_e2e_healthy", exact: true })).toBeVisible();
 
   docker("stop", PROXY);
   await expect(page.getByRole("status")).toHaveText(BANNER, { timeout: 30_000 });
 
   docker("start", PROXY);
   await expect(page.getByRole("status")).toHaveCount(0, { timeout: 60_000 });
-  await expect(group.getByRole("link", { name: "wt_test_e2e_healthy" })).toBeVisible();
+  await expect(group.getByRole("link", { name: "wt_test_e2e_healthy", exact: true })).toBeVisible();
 
   // Give WT time to send a (false) message after the new container list.
   await page.waitForTimeout(5000);

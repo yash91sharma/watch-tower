@@ -589,6 +589,8 @@ export interface components {
             mem_percent: number | null;
             /** Mem Label */
             mem_label: string;
+            /** Mem Used Label */
+            mem_used_label: string;
             /** Net Rx Label */
             net_rx_label: string;
             /** Net Tx Label */

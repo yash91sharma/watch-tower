@@ -18,11 +18,11 @@ const E2E_CONTAINERS = [
 ];
 
 test("the E2E group shows its containers by name, not the excluded one", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/apps");
 
   const group = page.getByRole("region", { name: "wt_test_e2e" });
-  // Only the name links: the latest version is a link too.
-  await expect(group.locator(`a[href^="/containers/"]`)).toHaveText(E2E_CONTAINERS);
+  // Only the name links: the latest version and the Logs link are links too.
+  await expect(group.locator(`a[href^="/containers/"]:not([href$="/logs"])`)).toHaveText(E2E_CONTAINERS);
   // wt.enable=false: the excluded test container, WT and the support services.
   for (const name of ["wt_test_e2e_excluded", "wt_test_e2e_wt", "wt_test_e2e_traefik", "wt_test_e2e_github"]) {
     await expect(page.getByRole("link", { name, exact: true })).toHaveCount(0);
@@ -30,19 +30,30 @@ test("the E2E group shows its containers by name, not the excluded one", async (
 });
 
 test("a row shows the state, the health and the status", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/apps");
   const group = page.getByRole("region", { name: "wt_test_e2e" });
 
   const healthy = group.getByRole("row").filter({ has: page.getByRole("link", { name: "wt_test_e2e_healthy" }) });
-  await expect(healthy.getByRole("cell")).toHaveText(["wt_test_e2e_healthy", "running", "healthy", "1.0.0", "-", "no source", ""]);
+  // CPU and memory change at each poll.
+  await expect(healthy.getByRole("cell")).toHaveText([
+    "wt_test_e2e_healthy",
+    "running",
+    "healthy",
+    /./,
+    /./,
+    "1.0.0",
+    "-",
+    "no source",
+    "",
+  ]);
 
   // The tag "latest" is not a version: WT does no check.
   const latest = group.getByRole("row").filter({ has: page.getByRole("link", { name: "wt_test_e2e_latest" }) });
-  await expect(latest.getByRole("cell").nth(5)).toHaveText("no check");
+  await expect(latest.getByRole("cell").nth(7)).toHaveText("no check");
 });
 
 test("the latest version links to its GitHub release in a new tab", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/apps");
   const group = page.getByRole("region", { name: "wt_test_e2e" });
 
   const link = group.getByRole("link", { name: "1.0.0", exact: true }).first();

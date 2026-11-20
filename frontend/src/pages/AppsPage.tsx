@@ -1,9 +1,9 @@
 // App details: the container list. Compose groups in API order, one row per container,
-// with the CPU and memory of each container and a Logs link.
+// with the CPU and memory of each container and a Logs link (an icon next to the name).
 // The admin can collapse a group. The browser keeps the collapsed groups in localStorage.
 // ?group=<label> (a link from the Overview) opens that group and scrolls to it.
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronRight, ExternalLink, ScrollText } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
@@ -119,18 +119,22 @@ function GroupTable({ group, open, focus, onToggle }: { group: Group; open: bool
               <TableHead>Latest version</TableHead>
               <TableHead>Version status</TableHead>
               <TableHead>Update severity</TableHead>
-              <TableHead>
-                <span className="sr-only">Logs</span>
-              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {group.containers.map((item) => (
               <TableRow key={item.name} className="even:bg-muted/30">
                 <TableCell>
-                  <Link className="font-medium underline underline-offset-4" to={`/containers/${item.name}`}>
-                    {item.name}
-                  </Link>
+                  <div className="flex items-center gap-1">
+                    <Link className="font-medium underline underline-offset-4" to={`/containers/${item.name}`}>
+                      {item.name}
+                    </Link>
+                    <Button asChild variant="ghost" size="icon-xs">
+                      <Link to={`/containers/${item.name}/logs`} aria-label={`Logs of ${item.name}`} title="Logs">
+                        <ScrollText aria-hidden />
+                      </Link>
+                    </Button>
+                  </div>
                 </TableCell>
                 <TableCell>{item.state}</TableCell>
                 <TableCell>
@@ -145,7 +149,7 @@ function GroupTable({ group, open, focus, onToggle }: { group: Group; open: bool
                 </TableCell>
                 <TableCell>
                   <UsageCell
-                    label={usage.container(item.name)?.mem_label}
+                    label={usage.container(item.name)?.mem_used_label}
                     values={usage.containerLine(item.name)?.mem}
                     title={`Memory of ${item.name}, last hour`}
                   />
@@ -172,13 +176,7 @@ function GroupTable({ group, open, focus, onToggle }: { group: Group; open: bool
                 <TableCell>
                   <SeverityBadge severity={item.severity} />
                 </TableCell>
-                <TableCell>
-                  <Button asChild variant="outline" size="xs">
-                    <Link to={`/containers/${item.name}/logs`} aria-label={`Logs of ${item.name}`}>
-                      Logs
-                    </Link>
-                  </Button>
-                </TableCell>
+
               </TableRow>
             ))}
           </TableBody>

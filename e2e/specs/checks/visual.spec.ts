@@ -1,9 +1,10 @@
 // Visual (task 16.19): screenshots of the main pages in light and dark mode, at desktop and
 // phone width (the iphone project; pixel has the same width class, so it skips them).
 // The baselines come from the Playwright image: bash e2e/run.sh --update-snapshots
-// The containers screenshot covers only the E2E group. Times are masked. The sidebar list is
+// The apps screenshot covers only the E2E group. Times are masked. The sidebar list is
 // masked: it shows all containers on the host Docker, and they change from host to host.
-// The footer (the version) is masked.
+// The footer (the version) is masked. The metric values and charts change at each poll, and
+// the Overview counts and app list show all host containers: they are masked too.
 import { expect, type Page, test } from "@playwright/test";
 
 import { useSession } from "../../helpers/admin";
@@ -38,17 +39,38 @@ test.describe("logged in", () => {
   useSession();
 
   for (const colorScheme of MODES) {
-    test(`containers, ${colorScheme}`, async ({ page }) => {
-      await open(page, "/", "Containers", colorScheme);
+    test(`overview, ${colorScheme}`, async ({ page }) => {
+      await open(page, "/", "Overview", colorScheme);
+      const mask = [
+        page.getByRole("region", { name: "Docker VM" }),
+        page.getByRole("region", { name: "Apps" }),
+        page.getByRole("main").getByRole("link", { name: /app|containers/ }),
+        sidebar(page),
+        footer(page),
+      ];
 
-      await expect(page.getByRole("region", { name: "wt_test_e2e" })).toHaveScreenshot(`containers-${colorScheme}.png`);
+      await expect(page).toHaveScreenshot(`overview-${colorScheme}.png`, { fullPage: true, mask });
+    });
+
+    test(`apps, ${colorScheme}`, async ({ page }) => {
+      await open(page, "/apps", "Apps", colorScheme);
+      const group = page.getByRole("region", { name: "wt_test_e2e" });
+      // The CPU and Memory columns (4 and 5) and the sums in the group header.
+      const mask = [group.locator("td:nth-child(4), td:nth-child(5)"), group.getByText(/^(CPU|Memory) /)];
+
+      await expect(group).toHaveScreenshot(`apps-${colorScheme}.png`, { mask });
     });
 
     test(`container page, ${colorScheme}`, async ({ page }) => {
       await open(page, "/containers/wt_test_e2e_healthy", "wt_test_e2e_healthy", colorScheme);
       const events = page.getByRole("region", { name: "Events (last 7 days)" });
+      const resources = page.getByRole("region", { name: "Resources" });
+      await expect(resources.getByRole("heading", { name: "CPU" })).toBeVisible();
 
-      await expect(page).toHaveScreenshot(`container-${colorScheme}.png`, { fullPage: true, mask: [events, sidebar(page), footer(page)] });
+      await expect(page).toHaveScreenshot(`container-${colorScheme}.png`, {
+        fullPage: true,
+        mask: [events, resources, sidebar(page), footer(page)],
+      });
     });
 
     test(`settings, ${colorScheme}`, async ({ page }) => {

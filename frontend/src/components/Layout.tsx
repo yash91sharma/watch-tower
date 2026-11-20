@@ -33,7 +33,7 @@ export function Layout() {
   return (
     <div className="flex min-h-svh flex-col">
       <header className="border-b bg-header">
-        <div className="flex items-center justify-between gap-2 px-4 py-3">
+        <div className="flex items-center justify-between gap-2 px-2 py-3 sm:px-4">
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -47,7 +47,8 @@ export function Layout() {
             </Button>
             <Link to="/" className="flex items-center gap-2 rounded-md px-1 font-semibold">
               <Logo className="size-7" />
-              WT
+              {/* On a phone only the logo shows, so that the nav fits. */}
+              <span className="max-sm:sr-only">WT</span>
             </Link>
           </div>
           <nav aria-label="Main" className="flex items-center gap-1">

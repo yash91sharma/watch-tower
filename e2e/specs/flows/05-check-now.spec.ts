@@ -12,7 +12,7 @@ useSession();
 const TOPIC = "wt-e2e-flow5";
 
 async function checkNow(page: Page) {
-  await page.goto("/");
+  await page.goto("/apps");
   const button = page.getByRole("button", { name: "Check now", exact: true });
   await expect(button).toBeEnabled();
   await button.click();
@@ -55,7 +55,7 @@ test("a second run sends nothing", async ({ page }) => {
 });
 
 test("the Check now button of one app runs a check", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/apps");
   const button = page.getByRole("button", { name: "Check now: wt_test_e2e", exact: true });
   await expect(button).toBeEnabled();
   const before = await page.getByText(/^Last check: /).textContent();

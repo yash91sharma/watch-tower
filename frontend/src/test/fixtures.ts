@@ -64,6 +64,7 @@ export function containerUsage(fields: Partial<ContainerUsage> = {}): ContainerU
     mem_used: 1073741824,
     mem_percent: 12.5,
     mem_label: "1.0 / 8.0 GiB",
+    mem_used_label: "1.0 GiB",
     net_rx_label: "1.2 KiB/s",
     net_tx_label: "300 B/s",
     disk_read_label: "0 B/s",

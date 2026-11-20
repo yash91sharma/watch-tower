@@ -123,7 +123,7 @@ async def test_current_values_with_labels_and_group_sums(
     assert body["sampled_at"] == "2026-01-01T00:00:00Z"
     site = body["groups"][1]
     assert site["cpu_percent"] == pytest.approx(9.09)
-    assert site["cpu_label"] == "9.1% (0.9 core)"
+    assert site["cpu_label"] == "9.1% (0.91 core)"
     assert site["mem_used"] == GIB + GIB // 2
     assert site["mem_label"] == "1.5 GiB"
     web = site["containers"][1]
@@ -131,10 +131,11 @@ async def test_current_values_with_labels_and_group_sums(
         "name": "web",
         "state": "running",
         "cpu_percent": pytest.approx(9.09),
-        "cpu_label": "9.1% (0.9 core)",
+        "cpu_label": "9.1% (0.91 core)",
         "mem_used": GIB,
         "mem_percent": 12.5,
         "mem_label": "1.0 / 8.0 GiB",
+        "mem_used_label": "1.0 GiB",
         "net_rx_label": "100 B/s",
         "net_tx_label": "-",
         "disk_read_label": "0 B/s",
@@ -146,6 +147,7 @@ async def test_current_values_with_labels_and_group_sums(
     assert db["cpu_label"] == "-"
     assert db["mem_label"] == "-"
     assert db["containers"][0]["mem_label"] == "-"
+    assert db["containers"][0]["mem_used_label"] == "-"
 
 
 async def test_the_vm_values(
@@ -168,7 +170,7 @@ async def test_the_vm_values(
         "mem_label": "2.0 / 8.0 GiB",
         "containers_mem_label": "2.0 GiB",
         "swap_percent": 0.0,
-        "swap_label": "0.0 / 1.0 GiB",
+        "swap_label": "0 B / 1.0 GiB",
         "disk_percent": 50.0,
         "disk_label": "50.0 / 100.0 GiB",
         "disk_read_label": "1.0 KiB/s",

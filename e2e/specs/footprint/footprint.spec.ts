@@ -20,7 +20,7 @@ function ramMib(container: string): number {
 }
 
 test("with 50 more containers, WT uses less than 200 MB RAM when idle", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/apps");
   const group = page.getByRole("region", { name: "wt_test_e2e" });
   await expect(group.getByRole("link", { name: /^wt_test_e2e-filler-\d+$/ })).toHaveCount(50);
   // No open stream: WT is idle. Give it time to finish its start work.

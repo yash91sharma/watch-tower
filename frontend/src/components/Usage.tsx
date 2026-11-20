@@ -22,12 +22,12 @@ export function useUsage() {
   };
 }
 
-/** A sparkline of the last hour and the current value. */
+/** The current value, with the sparkline of the last hour under it (narrow table columns). */
 export function UsageCell({ label, values, title }: { label: string | undefined; values: (number | null)[] | undefined; title: string }) {
   return (
-    <div className="flex items-center gap-2 whitespace-nowrap">
-      <Sparkline values={values ?? []} label={title} />
+    <div className="flex flex-col items-start gap-1 whitespace-nowrap">
       <span>{label ?? "-"}</span>
+      <Sparkline values={values ?? []} label={title} />
     </div>
   );
 }

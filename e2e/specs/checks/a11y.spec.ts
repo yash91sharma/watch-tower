@@ -32,7 +32,8 @@ test.describe("logged in", () => {
   useSession();
 
   const PAGES = [
-    ["/", "Containers"],
+    ["/", "Overview"],
+    ["/apps", "Apps"],
     ["/containers/wt_test_e2e_old_a", "wt_test_e2e_old_a"],
     ["/containers/wt_test_e2e_json/logs", "Logs: wt_test_e2e_json"],
     ["/settings", "Settings"],

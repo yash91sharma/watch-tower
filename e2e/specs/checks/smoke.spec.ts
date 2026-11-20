@@ -37,16 +37,16 @@ test.describe("logged in", () => {
   useSession();
 
   test("the list shows the E2E group", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/apps");
 
     const group = page.getByRole("region", { name: "wt_test_e2e" });
-    await expect(group.getByRole("link", { name: "wt_test_e2e_healthy" })).toBeVisible();
+    await expect(group.getByRole("link", { name: "wt_test_e2e_healthy", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Check now", exact: true })).toBeVisible();
   });
 
   test("a container page shows its parts", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("main").getByRole("link", { name: "wt_test_e2e_old_a" }).click();
+    await page.goto("/apps");
+    await page.getByRole("main").getByRole("link", { name: "wt_test_e2e_old_a", exact: true }).click();
 
     await expect(page.getByRole("heading", { level: 1, name: "wt_test_e2e_old_a" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Release source" })).toBeVisible();
@@ -74,16 +74,16 @@ test.describe("logged in", () => {
   });
 
   test("the latest tag shows 'no check'", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/apps");
 
     const row = page.getByRole("row").filter({ has: page.getByRole("link", { name: "wt_test_e2e_latest" }) });
     await expect(row.getByText("no check")).toBeVisible();
   });
 
   test("the excluded container is not in the list", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/apps");
 
-    await expect(page.getByRole("main").getByRole("link", { name: "wt_test_e2e_healthy" })).toBeVisible();
+    await expect(page.getByRole("main").getByRole("link", { name: "wt_test_e2e_healthy", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "wt_test_e2e_excluded" })).toHaveCount(0);
   });
 
@@ -108,7 +108,7 @@ test.describe("logged in", () => {
     await page.goto("/no/such/page");
 
     await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
-    await page.getByRole("link", { name: "Open the container list" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Containers" })).toBeVisible();
+    await page.getByRole("link", { name: "Open the home page" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
   });
 });

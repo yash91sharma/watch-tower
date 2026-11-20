@@ -29,12 +29,14 @@ def bytes_label(value: int | None) -> str:
 
 
 def used_of_label(used: int | None, total: int) -> str:
-    """For example "3.1 / 8.0 GiB". Both values use the unit of the total."""
+    """For example "3.1 / 8.0 GiB", or "18.4 MiB / 7.8 GiB" when the units are different."""
     if used is None:
         return NO_VALUE
+    used_number, used_unit = _unit(used)
     number, unit = _unit(total)
-    used_number = used / 1024 ** UNITS.index(unit)
-    return f"{_number(used_number, unit)} / {_number(number, unit)} {unit}"
+    if used_unit == unit:
+        return f"{_number(used_number, unit)} / {_number(number, unit)} {unit}"
+    return f"{bytes_label(used)} / {bytes_label(total)}"
 
 
 def rate_label(value: float | None) -> str:
@@ -46,12 +48,15 @@ def rate_label(value: float | None) -> str:
 
 
 def cpu_label(percent: float | None, cores: float | None) -> str:
-    """For example "9.1% (1.0 core)". Below 10% the percent has one decimal."""
+    """For example "9.1% (1.0 core)". Below 10% the percent has one decimal. Below 1
+    core the cores have 2 decimals, so that a small value does not show as 0.0.
+    """
     if percent is None or cores is None:
         return NO_VALUE
     text = f"{percent:.1f}%" if percent < 10 else f"{percent:.0f}%"
+    number = f"{cores:.2f}" if cores < 1 else f"{cores:.1f}"
     word = "core" if cores <= 1 else "cores"
-    return f"{text} ({cores:.1f} {word})"
+    return f"{text} ({number} {word})"
 
 
 def load_label(load_1: float, load_5: float, load_15: float) -> str:
