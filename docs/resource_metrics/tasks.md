@@ -69,4 +69,4 @@ Rules:
 ## 5. Docs and release
 
 - [x] **5.1** README: the Overview page, the meaning of the numbers (CPU % of the VM, memory, OrbStack memory limit, VM network = sum of containers), the interval setting, the DB size.
-- [ ] **5.2** At the release: add the DB dump of the new version in `backend/tests/fixtures/db/` (the release adds migration `0002`).
+- [x] **5.2** Add the DB dump of the new version in `backend/tests/fixtures/db/` (the release adds migration `0002`). Made from fake data: the 0.0.0 dump, upgraded, plus fake metric rows. Name `0.5.0.sql`: rename it if the release has another version.
