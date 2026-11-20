@@ -378,8 +378,8 @@ export interface paths {
         };
         /**
          * Get Sparklines
-         * @description CPU and memory of the last 60 full minutes (the `1m` rows) for each group and
-         *     container. The current minute is not in it: WT saves it at the next minute.
+         * @description CPU and memory of the last 60 full minutes (the `1m` rows) for each container.
+         *     The current minute is not in it: WT saves it at the next minute.
          */
         get: operations["get_sparklines_api_metrics_sparklines_get"];
         put?: never;
@@ -878,10 +878,6 @@ export interface components {
              * Format: date-time
              */
             start: string;
-            /** Groups */
-            groups: {
-                [key: string]: components["schemas"]["Sparkline"];
-            };
             /** Containers */
             containers: {
                 [key: string]: components["schemas"]["Sparkline"];

@@ -129,10 +129,10 @@ export function overview(fields: Partial<Overview> = {}): Overview {
   };
 }
 
-/** Sparklines of the group "site" and the container "web": 60 slots, values in the last 2. */
+/** Sparklines of the container "web": 60 slots, values in the last 2. */
 export function sparklines(): Sparklines {
   const line = { cpu: [...Array<null>(58).fill(null), 1, 2], mem: [...Array<null>(58).fill(null), 100, 200] };
-  return { start: "2026-01-01T00:00:00Z", groups: { site: line }, containers: { web: line } };
+  return { start: "2026-01-01T00:00:00Z", containers: { web: line } };
 }
 
 /** A history with 2 slots and one CPU chart. */

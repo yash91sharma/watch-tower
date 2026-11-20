@@ -20,7 +20,6 @@ export function useUsage() {
     overview,
     group: (label: string) => groups.get(label),
     container: (name: string) => containers.get(name),
-    groupLine: (label: string): SparklineData | undefined => lines?.groups[label],
     containerLine: (name: string): SparklineData | undefined => lines?.containers[name],
   };
 }

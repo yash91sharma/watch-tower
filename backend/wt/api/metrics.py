@@ -262,31 +262,19 @@ class Sparkline(BaseModel):
 class SparklinesOut(BaseModel):
     # The start of the first slot. Slot i starts i minutes later.
     start: datetime
-    # By group label.
-    groups: dict[str, Sparkline]
     # By container name: all shown containers, also the stopped ones.
     containers: dict[str, Sparkline]
 
 
-def _slot_sum(lines: list[Sparkline]) -> Sparkline:
-    """The sum of the lines in each slot. Null if no line has a value in the slot."""
-    slots = range(SPARKLINE_SLOTS)
-    return Sparkline(
-        cpu=[total(line.cpu[i] for line in lines) for i in slots],
-        mem=[total(line.mem[i] for line in lines) for i in slots],
-    )
-
-
 @router.get("/sparklines")
 def get_sparklines(ctx: Ctx) -> SparklinesOut:
-    """CPU and memory of the last 60 full minutes (the `1m` rows) for each group and
-    container. The current minute is not in it: WT saves it at the next minute.
+    """CPU and memory of the last 60 full minutes (the `1m` rows) for each container.
+    The current minute is not in it: WT saves it at the next minute.
     """
     end = clock.now().replace(second=0, microsecond=0)
     start = end - timedelta(minutes=SPARKLINE_SLOTS)
     with Session(ctx.engine) as session:
-        groups = ctx.inventory.live_groups(session)
-        names = {row.id: row.name for group in groups for row, _ in group.members}
+        names = {row.id: row.name for row, _ in ctx.inventory.live_rows(session)}
         rows = session.exec(
             select_samples(ContainerSample, MetricTier.MINUTE, start, end).where(
                 col(ContainerSample.container_id).in_(names)
@@ -301,14 +289,7 @@ def get_sparklines(ctx: Ctx) -> SparklinesOut:
         line = lines[names[row.container_id]]
         line.cpu[slot] = row.cpu_percent
         line.mem[slot] = row.mem_used
-    return SparklinesOut(
-        start=start,
-        groups={
-            group.label: _slot_sum([lines[row.name] for row, _ in group.members])
-            for group in groups
-        },
-        containers=lines,
-    )
+    return SparklinesOut(start=start, containers=lines)
 
 
 # Each range: its length and the tier that it reads (see the tiers in METRIC_MAX_AGE).

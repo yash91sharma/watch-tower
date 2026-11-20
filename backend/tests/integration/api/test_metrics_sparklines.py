@@ -91,22 +91,13 @@ async def test_60_minute_slots_with_null_for_a_gap(
     assert web["mem"][30] is None
 
 
-async def test_a_group_value_is_the_sum_of_its_containers(
+async def test_all_shown_containers_and_no_group_lines(
     user_client: httpx.AsyncClient, ctx: AppContext
 ) -> None:
-    add(ctx, "web", 10, cpu=1.0, mem=100)
-    add(ctx, "api", 10, cpu=None, mem=50)
-    add(ctx, "api", 11, cpu=2.0, mem=60)
-
     body = await get(user_client)
 
-    site = body["groups"]["site"]
-    assert site["cpu"][10] == 1.0
-    assert site["cpu"][11] == 2.0
-    assert site["cpu"][12] is None
-    assert site["mem"][10] == 150
-    assert site["mem"][11] == 60
-    assert set(body["groups"]) == {"site", "Other"}
+    # The UI shows no group sparklines, so the API sends none.
+    assert set(body) == {"start", "containers"}
     # All shown containers, also a stopped one. Not the excluded one.
     assert set(body["containers"]) == {"web", "api", "tool"}
     assert body["containers"]["tool"]["cpu"] == [None] * 60

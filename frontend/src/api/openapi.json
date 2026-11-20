@@ -1218,7 +1218,7 @@
           "metrics"
         ],
         "summary": "Get Sparklines",
-        "description": "CPU and memory of the last 60 full minutes (the `1m` rows) for each group and\ncontainer. The current minute is not in it: WT saves it at the next minute.",
+        "description": "CPU and memory of the last 60 full minutes (the `1m` rows) for each container.\nThe current minute is not in it: WT saves it at the next minute.",
         "operationId": "get_sparklines_api_metrics_sparklines_get",
         "parameters": [
           {
@@ -2786,13 +2786,6 @@
             "format": "date-time",
             "title": "Start"
           },
-          "groups": {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/Sparkline"
-            },
-            "type": "object",
-            "title": "Groups"
-          },
           "containers": {
             "additionalProperties": {
               "$ref": "#/components/schemas/Sparkline"
@@ -2804,7 +2797,6 @@
         "type": "object",
         "required": [
           "start",
-          "groups",
           "containers"
         ],
         "title": "SparklinesOut"
