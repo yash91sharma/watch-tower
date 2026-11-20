@@ -6,6 +6,9 @@ import { overviewQuery, sparklinesQuery } from "@/api/queries";
 import type { ContainerUsage, GroupUsage, Sparkline as SparklineData } from "@/api/types";
 import { Sparkline } from "@/components/Sparkline";
 
+/** The lookups of a page. Call useUsage once per page and give the result to the rows. */
+export type Usage = ReturnType<typeof useUsage>;
+
 export function useUsage() {
   const { data: overview } = useQuery(overviewQuery);
   const { data: lines } = useQuery(sparklinesQuery);

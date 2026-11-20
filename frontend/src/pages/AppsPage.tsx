@@ -14,7 +14,7 @@ import { CheckNow } from "@/components/CheckNow";
 import { NoContainers } from "@/components/NoContainers";
 import { QueryPending } from "@/components/QueryPending";
 import { Button } from "@/components/ui/button";
-import { UsageCell, useUsage } from "@/components/Usage";
+import { type Usage, UsageCell, useUsage } from "@/components/Usage";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCollapsed } from "@/lib/collapsed";
 
@@ -23,6 +23,7 @@ export function AppsPage() {
   const focus = useSearchParams()[0].get("group");
   // The group of ?group= is open, also if it was collapsed.
   const groups = useCollapsed("wt.collapsedGroups", focus);
+  const usage = useUsage();
 
   return (
     <div className="space-y-6">
@@ -39,6 +40,7 @@ export function AppsPage() {
           <GroupTable
             key={group.label}
             group={group}
+            usage={usage}
             open={groups.isOpen(group.label)}
             focus={group.label === focus}
             onToggle={() => {
@@ -55,8 +57,19 @@ export function AppsPage() {
 // name, the health and the update fit with no side scroll.
 const PHONE_HIDDEN = "max-sm:hidden";
 
-function GroupTable({ group, open, focus, onToggle }: { group: Group; open: boolean; focus: boolean; onToggle: () => void }) {
-  const usage = useUsage();
+function GroupTable({
+  group,
+  usage,
+  open,
+  focus,
+  onToggle,
+}: {
+  group: Group;
+  usage: Usage;
+  open: boolean;
+  focus: boolean;
+  onToggle: () => void;
+}) {
   return (
     <AppGroup
       label={group.label}

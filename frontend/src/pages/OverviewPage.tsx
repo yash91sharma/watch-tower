@@ -16,7 +16,7 @@ import { QueryPending } from "@/components/QueryPending";
 import { Section } from "@/components/Section";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UsageCell, useUsage } from "@/components/Usage";
+import { type Usage, UsageCell, useUsage } from "@/components/Usage";
 import { useCollapsed } from "@/lib/collapsed";
 import { useMetricsRange } from "@/lib/metricsRange";
 
@@ -108,6 +108,7 @@ function VmCharts({ ranges }: { ranges: Overview["ranges"] }) {
 
 function AppList({ overview }: { overview: Overview }) {
   const groups = useCollapsed("wt.overviewCollapsedGroups");
+  const usage = useUsage();
   return (
     <Section title="Apps">
       {overview.groups.length === 0 ? (
@@ -118,6 +119,7 @@ function AppList({ overview }: { overview: Overview }) {
             <GroupCard
               key={group.label}
               group={group}
+              usage={usage}
               open={groups.isOpen(group.label)}
               onToggle={() => {
                 groups.toggle(group.label);
@@ -131,8 +133,17 @@ function AppList({ overview }: { overview: Overview }) {
 }
 
 /** An app group: the shared card with the sums, a link to the group on Apps and one row per container. */
-function GroupCard({ group, open, onToggle }: { group: GroupUsage; open: boolean; onToggle: () => void }) {
-  const usage = useUsage();
+function GroupCard({
+  group,
+  usage,
+  open,
+  onToggle,
+}: {
+  group: GroupUsage;
+  usage: Usage;
+  open: boolean;
+  onToggle: () => void;
+}) {
   return (
     <AppGroup
       label={group.label}
