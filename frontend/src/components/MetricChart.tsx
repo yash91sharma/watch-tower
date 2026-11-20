@@ -3,12 +3,14 @@
 // The legend under the chart shows the series labels and, on hover, the values.
 // The colors come from the CSS variables when WT draws the chart. The page draws the
 // charts again at each new minute, so a change of the light or dark theme shows then.
-// ChartGrid shows all charts of a history response.
+// HistoryCharts gets a history response for the shared range and shows all its charts.
+import { type QueryKey, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useEffect, useId, useRef } from "react";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 
 import type { Chart, History, Range, RangeKey } from "@/api/types";
+import { QueryPending } from "@/components/QueryPending";
 import { useMetricsRange } from "@/lib/metricsRange";
 import { axisSize, BYTE_STEPS, formatTick, formatTicks } from "@/lib/ticks";
 
@@ -121,12 +123,24 @@ export function MetricChart({
   );
 }
 
-/** The charts of a history response, two per row on a large screen. */
-export function ChartGrid({ history, ranges }: { history: History; ranges: Range[] }) {
+/**
+ * The charts of the history of the shared range, two per row on a large screen.
+ * `query` gives the history query of a range (for example vmHistoryQuery).
+ */
+export function HistoryCharts<Key extends QueryKey>({
+  ranges,
+  query,
+}: {
+  ranges: Range[];
+  query: (range: RangeKey) => UseQueryOptions<History, Error, History, Key>;
+}) {
+  const [range] = useMetricsRange(ranges);
+  const { data, error } = useQuery(query(range));
+  if (data === undefined) return <QueryPending error={error} text="Loading charts…" />;
   return (
     <div className="grid gap-3 lg:grid-cols-2">
-      {history.charts.map((chart) => (
-        <MetricChart key={chart.key} chart={chart} times={history.times} ranges={ranges} emptyLabel={history.empty_label} />
+      {data.charts.map((chart) => (
+        <MetricChart key={chart.key} chart={chart} times={data.times} ranges={ranges} emptyLabel={data.empty_label} />
       ))}
     </div>
   );

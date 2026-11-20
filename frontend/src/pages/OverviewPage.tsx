@@ -9,7 +9,7 @@ import { Link } from "react-router";
 import { overviewQuery, vmHistoryQuery } from "@/api/queries";
 import type { GroupUsage, Overview, VmOut } from "@/api/types";
 import { AppGroup } from "@/components/AppGroup";
-import { ChartGrid } from "@/components/MetricChart";
+import { HistoryCharts } from "@/components/MetricChart";
 import { MetricsHelp } from "@/components/MetricsHelp";
 import { NoContainers } from "@/components/NoContainers";
 import { QueryPending } from "@/components/QueryPending";
@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type Usage, UsageCell, useUsage } from "@/components/Usage";
 import { useCollapsed } from "@/lib/collapsed";
-import { useMetricsRange } from "@/lib/metricsRange";
 
 export function OverviewPage() {
   const { data, error } = useQuery(overviewQuery);
@@ -46,7 +45,7 @@ function OverviewBody({ overview }: { overview: Overview }) {
         ) : (
           <p className="text-sm text-muted-foreground">No VM values yet. WT gets them at the next poll.</p>
         )}
-        <VmCharts ranges={overview.ranges} />
+        <HistoryCharts ranges={overview.ranges} query={vmHistoryQuery} />
       </Section>
       <AppList overview={overview} />
     </>
@@ -97,13 +96,6 @@ function Tile({ title, value, percent, detail }: { title: string; value: string;
       {detail && <p className="text-xs text-muted-foreground">{detail}</p>}
     </div>
   );
-}
-
-function VmCharts({ ranges }: { ranges: Overview["ranges"] }) {
-  const [range] = useMetricsRange(ranges);
-  const { data, error } = useQuery(vmHistoryQuery(range));
-  if (data === undefined) return <QueryPending error={error} text="Loading charts…" />;
-  return <ChartGrid history={data} ranges={ranges} />;
 }
 
 function AppList({ overview }: { overview: Overview }) {

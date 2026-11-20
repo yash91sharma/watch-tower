@@ -1,9 +1,11 @@
+import { QueryClient, QueryClientProvider, queryOptions } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type uPlot from "uplot";
 import { expect, test } from "vitest";
 
-import { ChartGrid, MetricChart } from "@/components/MetricChart";
+import type { RangeKey } from "@/api/types";
+import { HistoryCharts, MetricChart } from "@/components/MetricChart";
 import { history, overview } from "@/test/fixtures";
 import { plots, resizeCallbacks } from "@/test/uplot";
 
@@ -121,12 +123,28 @@ test("a chart with no max scales the y axis to its values", () => {
   expect(range({} as uPlot, 0, 1000)).toEqual([0, 1100]);
 });
 
-test("the chart grid shows each chart of the history, with the times and the empty label", () => {
+test("the history charts get the history of the shared range and show each chart, with the times and the empty label", async () => {
   if (!cpu) throw new Error("no chart");
   const memory = { ...cpu, key: "memory", title: "Memory", unit: "bytes" as const, max: null };
-  render(<ChartGrid history={history({ charts: [cpu, memory], empty_label: "No values." })} ranges={ranges} />);
+  localStorage.setItem("wt.metricsRange", "7d");
+  const asked: RangeKey[] = [];
+  const query = (range: RangeKey) =>
+    queryOptions({
+      queryKey: ["history", range],
+      queryFn: () => {
+        asked.push(range);
+        return history({ charts: [cpu, memory], empty_label: "No values." });
+      },
+    });
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <HistoryCharts ranges={ranges} query={query} />
+    </QueryClientProvider>,
+  );
 
-  expect(screen.getAllByRole("heading").map((item) => item.textContent)).toEqual(["CPU", "Memory"]);
+  expect(screen.getByText("Loading charts…")).toBeInTheDocument();
+  expect((await screen.findAllByRole("heading")).map((item) => item.textContent)).toEqual(["CPU", "Memory"]);
+  expect(asked).toEqual(["7d"]);
   expect(screen.getAllByText("No values.")).toHaveLength(2);
   expect(plots.map((plot) => plot.data[0])).toEqual([history().times, history().times]);
 });

@@ -7,14 +7,13 @@ import type { ContainerDetail } from "@/api/types";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DetailList } from "@/components/DetailList";
 import { HealthBadge } from "@/components/badges";
-import { ChartGrid } from "@/components/MetricChart";
+import { HistoryCharts } from "@/components/MetricChart";
 import { QueryPending } from "@/components/QueryPending";
 import { ReleaseSource } from "@/components/ReleaseSource";
 import { Section } from "@/components/Section";
 import { UpdateBlock } from "@/components/UpdateBlock";
 import { useUsage } from "@/components/Usage";
 import { Button } from "@/components/ui/button";
-import { useMetricsRange } from "@/lib/metricsRange";
 import { formatTime } from "@/lib/time";
 
 export function ContainerPage() {
@@ -70,9 +69,6 @@ function Details({ container }: { container: ContainerDetail }) {
 function Resources({ name }: { name: string }) {
   const usage = useUsage();
   const current = usage.container(name);
-  const ranges = usage.overview?.ranges ?? [];
-  const [range] = useMetricsRange(ranges);
-  const { data, error } = useQuery(containerHistoryQuery(name, range));
   return (
     <Section title="Resources">
       <DetailList
@@ -83,11 +79,7 @@ function Resources({ name }: { name: string }) {
           { term: "Disk I/O", value: current ? `Read ${current.disk_read_label}, write ${current.disk_write_label}` : "-" },
         ]}
       />
-      {data === undefined ? (
-        <QueryPending error={error} text="Loading charts…" />
-      ) : (
-        <ChartGrid history={data} ranges={ranges} />
-      )}
+      <HistoryCharts ranges={usage.overview?.ranges ?? []} query={(range) => containerHistoryQuery(name, range)} />
     </Section>
   );
 }
