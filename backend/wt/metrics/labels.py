@@ -47,6 +47,16 @@ def rate_label(value: float | None) -> str:
     return f"{_number(number, unit)} {unit}/s"
 
 
+def network_label(rx: float | None, tx: float | None) -> str:
+    """The network in and out, for example "In 1.2 KiB/s, out 300 B/s"."""
+    return f"In {rate_label(rx)}, out {rate_label(tx)}"
+
+
+def disk_io_label(read: float | None, write: float | None) -> str:
+    """The disk read and write, for example "Read 0 B/s, write 4.0 KiB/s"."""
+    return f"Read {rate_label(read)}, write {rate_label(write)}"
+
+
 def cpu_label(percent: float | None, cores: float | None) -> str:
     """For example "9.1% (1.0 core)". Below 10% the percent has one decimal. Below 1
     core the cores have 2 decimals, so that a small value does not show as 0.0.

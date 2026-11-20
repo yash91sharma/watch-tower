@@ -1927,21 +1927,13 @@
             "type": "string",
             "title": "Mem Used Label"
           },
-          "net_rx_label": {
+          "network_label": {
             "type": "string",
-            "title": "Net Rx Label"
+            "title": "Network Label"
           },
-          "net_tx_label": {
+          "disk_io_label": {
             "type": "string",
-            "title": "Net Tx Label"
-          },
-          "disk_read_label": {
-            "type": "string",
-            "title": "Disk Read Label"
-          },
-          "disk_write_label": {
-            "type": "string",
-            "title": "Disk Write Label"
+            "title": "Disk Io Label"
           }
         },
         "type": "object",
@@ -1951,10 +1943,8 @@
           "cpu_label",
           "mem_label",
           "mem_used_label",
-          "net_rx_label",
-          "net_tx_label",
-          "disk_read_label",
-          "disk_write_label"
+          "network_label",
+          "disk_io_label"
         ],
         "title": "ContainerUsage",
         "description": "The current values of a container. \"-\" labels: the container does not run, or WT\nhas no value yet."
@@ -2789,21 +2779,13 @@
             "type": "string",
             "title": "Disk Label"
           },
-          "disk_read_label": {
+          "disk_io_label": {
             "type": "string",
-            "title": "Disk Read Label"
+            "title": "Disk Io Label"
           },
-          "disk_write_label": {
+          "network_label": {
             "type": "string",
-            "title": "Disk Write Label"
-          },
-          "net_rx_label": {
-            "type": "string",
-            "title": "Net Rx Label"
-          },
-          "net_tx_label": {
-            "type": "string",
-            "title": "Net Tx Label"
+            "title": "Network Label"
           },
           "load_label": {
             "type": "string",
@@ -2825,10 +2807,8 @@
           "swap_label",
           "disk_percent",
           "disk_label",
-          "disk_read_label",
-          "disk_write_label",
-          "net_rx_label",
-          "net_tx_label",
+          "disk_io_label",
+          "network_label",
           "load_label",
           "uptime_label"
         ],

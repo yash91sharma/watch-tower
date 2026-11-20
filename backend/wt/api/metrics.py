@@ -23,8 +23,9 @@ from wt.metrics.calc import ContainerValues, cores_used, total
 from wt.metrics.labels import (
     bytes_label,
     cpu_label,
+    disk_io_label,
     load_label,
-    rate_label,
+    network_label,
     uptime_label,
     used_of_label,
 )
@@ -69,10 +70,8 @@ class VmOut(BaseModel):
     swap_label: str
     disk_percent: float
     disk_label: str
-    disk_read_label: str
-    disk_write_label: str
-    net_rx_label: str
-    net_tx_label: str
+    disk_io_label: str
+    network_label: str
     load_label: str
     uptime_label: str
 
@@ -89,10 +88,8 @@ class ContainerUsage(BaseModel):
     mem_label: str
     # Only the used memory, for example "18.4 MiB" (for narrow table columns).
     mem_used_label: str
-    net_rx_label: str
-    net_tx_label: str
-    disk_read_label: str
-    disk_write_label: str
+    network_label: str
+    disk_io_label: str
 
 
 class GroupUsage(BaseModel):
@@ -138,10 +135,8 @@ def _vm_out(sampler: Sampler) -> VmOut | None:
         swap_label=used_of_label(vm.swap_used, vm.swap_total),
         disk_percent=_percent(vm.disk_used, vm.disk_total) or 0.0,
         disk_label=used_of_label(vm.disk_used, vm.disk_total),
-        disk_read_label=rate_label(vm.disk_read_bps),
-        disk_write_label=rate_label(vm.disk_write_bps),
-        net_rx_label=rate_label(rx),
-        net_tx_label=rate_label(tx),
+        disk_io_label=disk_io_label(vm.disk_read_bps, vm.disk_write_bps),
+        network_label=network_label(rx, tx),
         load_label=load_label(vm.load_1, vm.load_5, vm.load_15),
         uptime_label=uptime_label(vm.uptime_seconds),
     )
@@ -157,10 +152,8 @@ def _container_usage(
             cpu_label=cpu_label(None, None),
             mem_label=used_of_label(None, 0),
             mem_used_label=bytes_label(None),
-            net_rx_label=rate_label(None),
-            net_tx_label=rate_label(None),
-            disk_read_label=rate_label(None),
-            disk_write_label=rate_label(None),
+            network_label=network_label(None, None),
+            disk_io_label=disk_io_label(None, None),
         )
     cpu = values.cpu_percent
     return ContainerUsage(
@@ -169,10 +162,8 @@ def _container_usage(
         cpu_label=cpu_label(cpu, cores_used(cpu, values.cpus)),
         mem_label=used_of_label(values.mem_used, values.mem_limit),
         mem_used_label=bytes_label(values.mem_used),
-        net_rx_label=rate_label(values.net_rx_bps),
-        net_tx_label=rate_label(values.net_tx_bps),
-        disk_read_label=rate_label(values.disk_read_bps),
-        disk_write_label=rate_label(values.disk_write_bps),
+        network_label=network_label(values.net_rx_bps, values.net_tx_bps),
+        disk_io_label=disk_io_label(values.disk_read_bps, values.disk_write_bps),
     )
 
 

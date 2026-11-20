@@ -585,14 +585,10 @@ export interface components {
             mem_label: string;
             /** Mem Used Label */
             mem_used_label: string;
-            /** Net Rx Label */
-            net_rx_label: string;
-            /** Net Tx Label */
-            net_tx_label: string;
-            /** Disk Read Label */
-            disk_read_label: string;
-            /** Disk Write Label */
-            disk_write_label: string;
+            /** Network Label */
+            network_label: string;
+            /** Disk Io Label */
+            disk_io_label: string;
         };
         /** CountsOut */
         CountsOut: {
@@ -896,14 +892,10 @@ export interface components {
             disk_percent: number;
             /** Disk Label */
             disk_label: string;
-            /** Disk Read Label */
-            disk_read_label: string;
-            /** Disk Write Label */
-            disk_write_label: string;
-            /** Net Rx Label */
-            net_rx_label: string;
-            /** Net Tx Label */
-            net_tx_label: string;
+            /** Disk Io Label */
+            disk_io_label: string;
+            /** Network Label */
+            network_label: string;
             /** Load Label */
             load_label: string;
             /** Uptime Label */

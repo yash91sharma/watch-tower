@@ -5,7 +5,9 @@ import pytest
 from wt.metrics.labels import (
     bytes_label,
     cpu_label,
+    disk_io_label,
     load_label,
+    network_label,
     rate_label,
     uptime_label,
     used_of_label,
@@ -50,6 +52,11 @@ def test_used_of_label_gives_each_unit_when_they_are_different() -> None:
 )
 def test_rate_label(value: float | None, label: str) -> None:
     assert rate_label(value) == label
+
+
+def test_network_and_disk_io_labels_give_both_rates() -> None:
+    assert network_label(1536.0, None) == "In 1.5 KiB/s, out -"
+    assert disk_io_label(0.0, 1.2 * MIB) == "Read 0 B/s, write 1.2 MiB/s"
 
 
 @pytest.mark.parametrize(

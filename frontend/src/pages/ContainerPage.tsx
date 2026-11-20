@@ -75,8 +75,8 @@ function Resources({ name }: { name: string }) {
         items={[
           { term: "CPU", value: current?.cpu_label ?? "-" },
           { term: "Memory", value: current?.mem_label ?? "-" },
-          { term: "Network", value: current ? `In ${current.net_rx_label}, out ${current.net_tx_label}` : "-" },
-          { term: "Disk I/O", value: current ? `Read ${current.disk_read_label}, write ${current.disk_write_label}` : "-" },
+          { term: "Network", value: current?.network_label ?? "-" },
+          { term: "Disk I/O", value: current?.disk_io_label ?? "-" },
         ]}
       />
       <HistoryCharts ranges={usage.overview?.ranges ?? []} query={(range) => containerHistoryQuery(name, range)} />

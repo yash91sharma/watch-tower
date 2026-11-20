@@ -67,8 +67,8 @@ function VmTiles({ vm }: { vm: VmOut }) {
       <Tile title="Memory" value={vm.mem_label} percent={vm.mem_percent} detail={`Containers: ${vm.containers_mem_label}`} />
       <Tile title="Swap" value={vm.swap_label} percent={vm.swap_percent} />
       <Tile title="Disk" value={vm.disk_label} percent={vm.disk_percent} />
-      <Tile title="Disk I/O" value={`Read ${vm.disk_read_label}, write ${vm.disk_write_label}`} />
-      <Tile title="Network" value={`In ${vm.net_rx_label}, out ${vm.net_tx_label}`} />
+      <Tile title="Disk I/O" value={vm.disk_io_label} />
+      <Tile title="Network" value={vm.network_label} />
       <Tile title="Load (1, 5, 15 min)" value={vm.load_label} />
       <Tile title="Uptime" value={vm.uptime_label} />
     </div>

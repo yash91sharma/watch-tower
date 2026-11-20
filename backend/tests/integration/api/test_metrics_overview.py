@@ -120,10 +120,8 @@ async def test_current_values_with_labels_and_group_sums(
         "cpu_label": "9.1% (0.91 core)",
         "mem_label": "1.0 / 8.0 GiB",
         "mem_used_label": "1.0 GiB",
-        "net_rx_label": "100 B/s",
-        "net_tx_label": "-",
-        "disk_read_label": "0 B/s",
-        "disk_write_label": "-",
+        "network_label": "In 100 B/s, out -",
+        "disk_io_label": "Read 0 B/s, write -",
     }
     # A stopped container has no values.
     db = body["groups"][0]
@@ -152,10 +150,8 @@ async def test_the_vm_values(user_client: httpx.AsyncClient, ctx: AppContext) ->
         "swap_label": "0 B / 1.0 GiB",
         "disk_percent": 50.0,
         "disk_label": "50.0 / 100.0 GiB",
-        "disk_read_label": "1.0 KiB/s",
-        "disk_write_label": "-",
-        "net_rx_label": "200 B/s",
-        "net_tx_label": "-",
+        "disk_io_label": "Read 1.0 KiB/s, write -",
+        "network_label": "In 200 B/s, out -",
         "load_label": "0.50 / 0.40 / 0.30",
         "uptime_label": "1 h 1 min",
     }
