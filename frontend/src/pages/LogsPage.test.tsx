@@ -112,7 +112,10 @@ test("only matches shows only the lines with a match", async () => {
   const user = await openWithLines(["get 1", "x", "get 2"]);
   await user.type(screen.getByLabelText("Search"), "get");
 
-  await user.click(screen.getByLabelText("Only matches"));
+  const only = screen.getByRole("button", { name: "Only matches" });
+  expect(only).toHaveAttribute("aria-pressed", "false");
+  await user.click(only);
+  expect(only).toHaveAttribute("aria-pressed", "true");
 
   await waitFor(() => {
     expect(rows()).toEqual(["get 1", "get 2"]);
@@ -123,7 +126,7 @@ test("the JSON toggle formats JSON object lines only", async () => {
   const user = await openWithLines(['{"level":"info"}', "plain"]);
   expect(rows()).toEqual(['{"level":"info"}', "plain"]);
 
-  await user.click(screen.getByLabelText("Format JSON"));
+  await user.click(screen.getByRole("button", { name: "Format JSON" }));
 
   expect(rows()).toEqual(['{\n  "level": "info"\n}', "plain"]);
 });
@@ -147,4 +150,29 @@ test("the breadcrumb goes back to the container page", async () => {
   await user.click(within(crumbs).getByRole("link", { name: "web" }));
 
   expect(router.state.location.pathname).toBe("/containers/web");
+});
+
+test("in the search, Enter goes to the next match, Shift+Enter to the previous match, and Escape clears it", async () => {
+  const user = await openWithLines(["get 1", "x", "get 2"]);
+  const search = screen.getByLabelText("Search");
+  await user.type(search, "get");
+
+  await user.keyboard("{Enter}");
+  expect(screen.getByText("2 of 2")).toBeInTheDocument();
+  await user.keyboard("{Shift>}{Enter}{/Shift}");
+  expect(screen.getByText("1 of 2")).toBeInTheDocument();
+  await user.keyboard("{Escape}");
+  expect(search).toHaveValue("");
+});
+
+test("all log controls are in one toolbar", async () => {
+  renderRoute("/containers/web/logs");
+
+  const toolbar = await screen.findByRole("toolbar", { name: "Log controls" });
+  for (const name of ["Previous match", "Next match", "Only matches", "Format JSON"]) {
+    expect(within(toolbar).getByRole("button", { name })).toBeInTheDocument();
+  }
+  expect(within(toolbar).getByLabelText("Search")).toBeInTheDocument();
+  expect(within(toolbar).getByLabelText("Tail")).toBeInTheDocument();
+  expect(within(toolbar).getByRole("link", { name: "Download" })).toBeInTheDocument();
 });

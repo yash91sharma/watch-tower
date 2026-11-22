@@ -1,6 +1,8 @@
 // The live log of a container, with search and JSON pretty-print (in the browser) and a tail size.
+// All controls are in one toolbar above the log.
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, Download } from "lucide-react";
 import { useParams } from "react-router";
 
 import { containerQuery } from "@/api/queries";
@@ -31,20 +33,33 @@ export function LogsPage() {
   // The buffer can drop old lines, so keep the position in the range.
   const current = matches.length > 0 ? Math.min(position, matches.length - 1) : 0;
 
+  const move = (step: number) => {
+    if (matches.length > 0) setPosition((current + step + matches.length) % matches.length);
+  };
+
   return (
     <div className="space-y-3">
       <Breadcrumb
         crumbs={[{ label: "Apps", to: "/apps" }, { label: name, to: `/containers/${name}` }, { label: "Logs" }]}
       />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold break-all">Logs: {name}</h1>
-        <div className="flex items-center gap-2">
-          <Button asChild size="sm" variant="outline">
-            <a href={`/api/containers/${encodeURIComponent(name)}/logs.txt`} download>
-              Download
-            </a>
-          </Button>
-          <label className="flex items-center gap-2 text-sm">
+      <h1 className="text-xl font-semibold break-all">Logs: {name}</h1>
+      {/* One row: search, the view toggles, then the tail size and the download at the end. */}
+      <div role="toolbar" aria-label="Log controls" className="flex flex-wrap items-center gap-2 text-sm">
+        <LogSearch
+          query={query}
+          onQueryChange={(value) => {
+            setQuery(value);
+            setPosition(0);
+          }}
+          matchCount={matches.length}
+          current={current}
+          onMove={move}
+        />
+        <span aria-hidden className="mx-1 h-5 w-px bg-border max-sm:hidden" />
+        <Toggle label="Only matches" pressed={onlyMatches} onChange={setOnlyMatches} />
+        <Toggle label="Format JSON" pressed={pretty} onChange={setPretty} />
+        <div className="ml-auto flex items-center gap-2">
+          <label className="flex items-center gap-2">
             Tail
             <select
               className="h-8 rounded-lg border bg-transparent px-2"
@@ -60,23 +75,13 @@ export function LogsPage() {
               ))}
             </select>
           </label>
+          <Button asChild size="sm" variant="outline">
+            <a href={`/api/containers/${encodeURIComponent(name)}/logs.txt`} download>
+              <Download aria-hidden />
+              Download
+            </a>
+          </Button>
         </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <LogSearch
-          query={query}
-          onQueryChange={(value) => {
-            setQuery(value);
-            setPosition(0);
-          }}
-          matchCount={matches.length}
-          current={current}
-          onMove={(step) => {
-            setPosition((current + step + matches.length) % matches.length);
-          }}
-        />
-        <Checkbox label="Only matches" checked={onlyMatches} onChange={setOnlyMatches} />
-        <Checkbox label="Format JSON" checked={pretty} onChange={setPretty} />
       </div>
       <FormError error={containerError ?? error} />
       <LogView
@@ -90,6 +95,7 @@ export function LogsPage() {
 }
 
 // The search input, the match count and the buttons to go to the previous or next match.
+// Keys in the input: Enter = next match, Shift+Enter = previous match, Escape = clear.
 function LogSearch({
   query,
   onQueryChange,
@@ -114,6 +120,15 @@ function LogSearch({
         onChange={(event) => {
           onQueryChange(event.target.value);
         }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            onMove(event.shiftKey ? -1 : 1);
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            onQueryChange("");
+          }
+        }}
       />
       {query && (
         <span aria-live="polite" className="text-muted-foreground">
@@ -121,42 +136,46 @@ function LogSearch({
         </span>
       )}
       <Button
-        size="sm"
+        size="icon-sm"
         variant="outline"
         aria-label="Previous match"
+        title="Previous match (Shift+Enter)"
         disabled={matchCount === 0}
         onClick={() => {
           onMove(-1);
         }}
       >
-        ↑
+        <ChevronUp aria-hidden />
       </Button>
       <Button
-        size="sm"
+        size="icon-sm"
         variant="outline"
         aria-label="Next match"
+        title="Next match (Enter)"
         disabled={matchCount === 0}
         onClick={() => {
           onMove(1);
         }}
       >
-        ↓
+        <ChevronDown aria-hidden />
       </Button>
     </>
   );
 }
 
-function Checkbox({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+/** An on/off button. It has the filled look when it is on. */
+function Toggle({ label, pressed, onChange }: { label: string; pressed: boolean; onChange: (pressed: boolean) => void }) {
   return (
-    <label className="flex items-center gap-1.5">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => {
-          onChange(event.target.checked);
-        }}
-      />
+    <Button
+      size="sm"
+      variant={pressed ? "secondary" : "outline"}
+      aria-pressed={pressed}
+      className="aria-pressed:border-primary/40"
+      onClick={() => {
+        onChange(!pressed);
+      }}
+    >
       {label}
-    </label>
+    </Button>
   );
 }

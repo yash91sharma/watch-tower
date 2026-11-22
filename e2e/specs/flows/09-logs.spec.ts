@@ -31,12 +31,13 @@ test("search marks the matches, counts them and can show only them", async ({ pa
   await expect(page.getByText(/^\d+ of \d+$/)).toBeVisible();
   await expect(page.getByRole("log").locator("mark").first()).toHaveText("error line");
 
-  await page.getByLabel("Only matches").check();
+  await page.getByRole("button", { name: "Only matches" }).click();
+  await expect(page.getByRole("button", { name: "Only matches" })).toHaveAttribute("aria-pressed", "true");
   for (const text of await rows(page).allTextContents()) expect(text).toMatch(/^error line \d+$/);
 });
 
 test("the JSON toggle formats the JSON lines only", async ({ page }) => {
-  await page.getByLabel("Format JSON").check();
+  await page.getByRole("button", { name: "Format JSON" }).click();
 
   await expect(rows(page).filter({ hasText: '"level": "info"' }).first()).toBeVisible();
   const json = (await rows(page).filter({ hasText: '"level": "info"' }).first().textContent()) ?? "";
