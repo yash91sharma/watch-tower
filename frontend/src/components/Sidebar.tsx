@@ -2,11 +2,14 @@
 // can see and change the open container from each page.
 // On a large screen the sidebar is open by default, and the browser keeps the choice of the
 // admin in localStorage. On a small screen it is closed by default and closes when a page opens.
+// The admin can collapse a group. The browser keeps the collapsed groups in localStorage.
 import { useQuery } from "@tanstack/react-query";
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, useMatch } from "react-router";
 
 import { containersQuery } from "@/api/queries";
+import { useCollapsed } from "@/lib/collapsed";
 import { cn } from "@/lib/utils";
 
 const openKey = "wt.sidebar";
@@ -38,6 +41,7 @@ export function Sidebar({ id, onNavigate }: { id: string; onNavigate: () => void
   const { data } = useQuery(containersQuery);
   // The container of the open page (its details or its logs), if there is one.
   const current = useMatch("/containers/:name/*")?.params.name;
+  const groups = useCollapsed("wt.sidebarCollapsedGroups");
 
   return (
     <aside id={id} className="border-b bg-card md:w-60 md:shrink-0 md:border-r md:border-b-0">
@@ -45,8 +49,21 @@ export function Sidebar({ id, onNavigate }: { id: string; onNavigate: () => void
         {data?.length === 0 && <p className="px-2 text-muted-foreground">No containers.</p>}
         {data?.map((group) => (
           <div key={group.label}>
-            <p className="px-2 pb-1 text-xs font-medium text-muted-foreground uppercase">{group.label}</p>
-            <ul>
+            <button
+              type="button"
+              aria-expanded={groups.isOpen(group.label)}
+              onClick={() => {
+                groups.toggle(group.label);
+              }}
+              className="flex w-full items-center gap-1 rounded-md px-2 pb-1 text-left text-xs font-medium text-muted-foreground uppercase hover:text-foreground"
+            >
+              <ChevronRight
+                aria-hidden
+                className={cn("size-3.5 shrink-0 transition-transform", groups.isOpen(group.label) && "rotate-90")}
+              />
+              {group.label}
+            </button>
+            <ul hidden={!groups.isOpen(group.label)}>
               {group.containers.map((item) => (
                 <li key={item.name}>
                   <Link

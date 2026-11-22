@@ -99,3 +99,24 @@ test("on a large screen the sidebar stays open when a page opens", async () => {
   expect(router.state.location.pathname).toBe("/containers/adhoc");
   expect(await sidebar()).toBeInTheDocument();
 });
+
+test("a click on a group name collapses its containers, and the browser keeps the choice", async () => {
+  setDesktop(true);
+  const user = userEvent.setup();
+  const { unmount } = renderRoute("/settings");
+  const nav = await sidebar();
+
+  const media = await within(nav).findByRole("button", { name: "media" });
+  expect(media).toHaveAttribute("aria-expanded", "true");
+  await user.click(media);
+
+  expect(media).toHaveAttribute("aria-expanded", "false");
+  expect(within(nav).getAllByRole("link").map((link) => link.textContent)).toEqual(["adhoc"]);
+  unmount();
+
+  renderRoute("/settings");
+  const again = await within(await sidebar()).findByRole("button", { name: "media" });
+  expect(again).toHaveAttribute("aria-expanded", "false");
+  // The sidebar keeps its collapsed groups apart from the pages.
+  expect(localStorage.getItem("wt.sidebarCollapsedGroups")).toBe('["media"]');
+});
