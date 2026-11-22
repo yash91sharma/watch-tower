@@ -1,4 +1,5 @@
 // A virtual list of log lines. Follow mode keeps the end in view. Scroll up or Pause stops it.
+// The bar above the log shows "Live", or "Paused" and the number of new lines since the pause.
 // Search: the matches of the query are marked, and the current match line is shown.
 // Pretty: JSON object lines show formatted (rows have their own height).
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -6,7 +7,7 @@ import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "re
 
 import { Button } from "@/components/ui/button";
 import { highlight, type LogLine, prettyJson } from "@/lib/logs";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 
 const ROW_HEIGHT = 20;
 
@@ -22,7 +23,14 @@ export function LogView({
   pretty?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [follow, setFollow] = useState(true);
+  // null: follow. Else the id of the last line when the view paused, to count the new lines.
+  const [pausedAfter, setPausedAfter] = useState<number | null>(null);
+  const follow = pausedAfter === null;
+  function setFollow(on: boolean) {
+    if (on) setPausedAfter(null);
+    else if (follow) setPausedAfter(lines.at(-1)?.id ?? -1);
+  }
+  const newLines = pausedAfter === null ? 0 : lines.filter((line) => line.id > pausedAfter).length;
   // The build has no React Compiler, so its memoization warning does not apply.
   // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
@@ -58,7 +66,29 @@ export function LogView({
   }
 
   return (
-    <div>
+    <div className="overflow-hidden rounded-lg border">
+      {/* A bar above the log, not on it: a button on the log covers the newest line. */}
+      <div className="flex items-center justify-between gap-2 border-b bg-card px-2 py-1 text-xs">
+        {follow ? (
+          <span className="inline-flex items-center gap-1.5 font-medium text-success">
+            <span aria-hidden className="size-2 animate-pulse rounded-full bg-success motion-reduce:animate-none" />
+            Live
+          </span>
+        ) : (
+          <span className="text-muted-foreground">
+            {newLines > 0 ? `Paused · ${plural(newLines, "new line", "new lines")}` : "Paused"}
+          </span>
+        )}
+        <Button
+          size="xs"
+          variant={follow ? "outline" : "default"}
+          onClick={() => {
+            setFollow(!follow);
+          }}
+        >
+          {follow ? "Pause" : "Follow"}
+        </Button>
+      </div>
       <div
         ref={scrollRef}
         role="log"
@@ -67,7 +97,7 @@ export function LogView({
         aria-live="off"
         tabIndex={0}
         onScroll={onScroll}
-        className="h-[65svh] overflow-auto rounded-lg border bg-muted/30 font-mono text-xs"
+        className="h-[65svh] overflow-auto bg-muted/30 font-mono text-xs"
       >
         <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
           {virtualizer.getVirtualItems().map((item) => {
@@ -99,18 +129,6 @@ export function LogView({
             );
           })}
         </div>
-      </div>
-      {/* Under the log, not on it: a button on the log covers the newest line. */}
-      <div className="mt-2 flex justify-end">
-        <Button
-          size="sm"
-          variant={follow ? "outline" : "default"}
-          onClick={() => {
-            setFollow(!follow);
-          }}
-        >
-          {follow ? "Pause" : "Follow"}
-        </Button>
       </div>
     </div>
   );

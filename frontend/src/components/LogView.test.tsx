@@ -129,3 +129,23 @@ test("pretty shows JSON object lines formatted", () => {
   rerender(<LogView lines={[json]} pretty />);
   expect(screen.getByRole("log").textContent).toContain('{\n  "level": "info"\n}');
 });
+
+test("the bar on the log shows Live while it follows", () => {
+  render(<LogView lines={lines(2)} />);
+
+  expect(screen.getByText("Live")).toBeInTheDocument();
+});
+
+test("when paused, the bar shows the number of new lines", async () => {
+  const user = userEvent.setup();
+  const { rerender } = render(<LogView lines={lines(2)} />);
+  fakeScroll(screen.getByRole("log"));
+
+  await user.click(screen.getByRole("button", { name: "Pause" }));
+  expect(screen.getByText("Paused")).toBeInTheDocument();
+  rerender(<LogView lines={lines(5)} />);
+
+  expect(screen.getByText("Paused · 3 new lines")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Follow" }));
+  expect(screen.getByText("Live")).toBeInTheDocument();
+});
