@@ -57,6 +57,8 @@ test("save sends the values and says so", async () => {
   await user.click(screen.getByRole("button", { name: "Save" }));
 
   expect(await screen.findByText("Saved.")).toBeInTheDocument();
+  // The form now has the saved values, so there is nothing to save.
+  expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   // The backend validates and converts the values.
   expect(body).toEqual({
     check_interval_hours: "12",
@@ -110,8 +112,9 @@ test("save shows the backend field errors", async () => {
   );
   const user = userEvent.setup();
   renderRoute("/settings");
+  await user.type(await screen.findByLabelText("Check interval (hours)"), "0");
 
-  await user.click(await screen.findByRole("button", { name: "Save" }));
+  await user.click(screen.getByRole("button", { name: "Save" }));
 
   // The field labels of the form, not the API keys. No HTTP status text.
   const alert = await screen.findByRole("alert");
@@ -178,4 +181,78 @@ test("a settings load error shows the API error", async () => {
   renderRoute("/settings");
 
   expect(await screen.findByRole("alert")).toHaveTextContent("An error occurred. See the WT log.");
+});
+
+test("Save is off until a value changes, and the sticky bar then says that there are unsaved changes", async () => {
+  const user = userEvent.setup();
+  renderRoute("/settings");
+  const save = await screen.findByRole("button", { name: "Save" });
+
+  expect(save).toBeDisabled();
+  expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
+  expect(save.closest(".sticky")).not.toBeNull();
+  await user.type(screen.getByLabelText("ntfy topic"), "2");
+
+  expect(save).toBeEnabled();
+  expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+});
+
+test("Discard puts back the saved values", async () => {
+  const user = userEvent.setup();
+  renderRoute("/settings");
+  const topic = await screen.findByLabelText("ntfy topic");
+  await user.type(topic, "2");
+
+  await user.click(screen.getByRole("button", { name: "Discard" }));
+
+  expect(topic).toHaveValue("wt");
+  expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  expect(screen.queryByRole("button", { name: "Discard" })).not.toBeInTheDocument();
+});
+
+test("a link to another page with unsaved changes asks first", async () => {
+  const user = userEvent.setup();
+  const { router } = renderRoute("/settings");
+  const topic = await screen.findByLabelText("ntfy topic");
+  await user.type(topic, "2");
+  const apps = within(screen.getByRole("navigation", { name: "Main" })).getByRole("link", { name: "Apps" });
+
+  await user.click(apps);
+  const dialog = await screen.findByRole("alertdialog", { name: "Leave without saving?" });
+  await user.click(within(dialog).getByRole("button", { name: "Stay" }));
+
+  expect(router.state.location.pathname).toBe("/settings");
+  expect(topic).toHaveValue("wt2");
+
+  await user.click(apps);
+  await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Leave" }));
+
+  expect(router.state.location.pathname).toBe("/apps");
+});
+
+test("a link to another page with no changes does not ask", async () => {
+  const user = userEvent.setup();
+  const { router } = renderRoute("/settings");
+  await screen.findByLabelText("ntfy topic");
+
+  await user.click(within(screen.getByRole("navigation", { name: "Main" })).getByRole("link", { name: "Apps" }));
+
+  expect(router.state.location.pathname).toBe("/apps");
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+});
+
+test("a reload or a tab close with unsaved changes opens the dialog of the browser", async () => {
+  const user = userEvent.setup();
+  renderRoute("/settings");
+  const unload = () => {
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  };
+  await screen.findByLabelText("ntfy topic");
+  expect(unload()).toBe(false);
+
+  await user.type(screen.getByLabelText("ntfy topic"), "2");
+
+  expect(unload()).toBe(true);
 });

@@ -1,4 +1,5 @@
 // Settings: the UI settings form, a test ntfy message, the secret state (env vars set the secrets), export and import.
+// Save is on only when the form has changes. The page asks before the admin leaves with unsaved changes.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useId, useState, type SubmitEvent } from "react";
 
@@ -8,6 +9,7 @@ import type { SecretState, Settings } from "@/api/types";
 import { ConfigFile } from "@/components/ConfigFile";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
+import { LeaveGuard } from "@/components/LeaveGuard";
 import { QueryPending } from "@/components/QueryPending";
 import { Section } from "@/components/Section";
 import { Badge } from "@/components/ui/badge";
@@ -57,11 +59,17 @@ export function SettingsPage() {
   );
 }
 
+/** The text of each input. No value is an empty text. */
+function formValues(values: Settings): Record<string, string> {
+  return Object.fromEntries(FIELDS.map(({ key }) => [key, String(values[key] ?? "")]));
+}
+
 function SettingsForm({ values, intervals }: { values: Settings; intervals: number[] }) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState(() =>
-    Object.fromEntries(FIELDS.map(({ key }) => [key, String(values[key] ?? "")])),
-  );
+  // The saved values, to tell if the form has changes. A save gives the new saved values.
+  const [saved, setSaved] = useState(() => formValues(values));
+  const [form, setForm] = useState(saved);
+  const changed = FIELDS.some(({ key }) => form[key] !== saved[key]);
   // The form sends the text of each input. The backend validates and converts the
   // values (for example "24" to 24, "" to null) and gives an error per field.
   const body = form as unknown as Settings;
@@ -69,6 +77,10 @@ function SettingsForm({ values, intervals }: { values: Settings; intervals: numb
     mutationFn: async () => unwrap(await api.PUT("/api/settings", { body })),
     onSuccess: (result) => {
       queryClient.setQueryData(settingsQuery.queryKey, result);
+      // The form shows the values as the backend saved them (for example "024" as "24").
+      const next = formValues(result.values);
+      setSaved(next);
+      setForm(next);
     },
   });
   // Sends a test message with the form values. It does not save them.
@@ -99,10 +111,25 @@ function SettingsForm({ values, intervals }: { values: Settings; intervals: numb
       })}
       <FormError error={save.error} labels={LABELS} />
       <FormError error={sendTest.error} labels={LABELS} />
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={save.isPending}>
+      <LeaveGuard when={changed} />
+      {/* The buttons stay at the bottom of the window, so that Save is always in view. */}
+      <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur">
+        <Button type="submit" disabled={!changed || save.isPending}>
           Save
         </Button>
+        {changed && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setForm(saved);
+              save.reset();
+              sendTest.reset();
+            }}
+          >
+            Discard
+          </Button>
+        )}
         <Button
           type="button"
           variant="outline"
@@ -113,6 +140,7 @@ function SettingsForm({ values, intervals }: { values: Settings; intervals: numb
         >
           Send test notification
         </Button>
+        {changed && <span className="text-sm font-medium text-warning">Unsaved changes</span>}
         {save.isSuccess && (
           <span role="status" className="text-sm text-muted-foreground">
             Saved.
