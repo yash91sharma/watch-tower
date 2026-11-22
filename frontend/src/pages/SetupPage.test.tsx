@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, expect, test } from "vitest";
@@ -125,3 +125,26 @@ test("the setup form is in the center card with the product name", async () => {
   expect(screen.getByText("Watch Tower")).toBeInTheDocument();
   expect(title.parentElement).toContainElement(screen.getByRole("button", { name: "Next" }));
 });
+
+test("the step list shows the current step, and the token step is done after Next", async () => {
+  renderRoute("/setup");
+  const steps = await screen.findByRole("list", { name: "Setup steps" });
+  const [token, account] = within(steps).getAllByRole("listitem");
+
+  expect(token).toHaveAttribute("aria-current", "step");
+  expect(account).not.toHaveAttribute("aria-current");
+
+  await enterTokenOnOpenPage(TOKEN);
+
+  expect(await within(steps).findByText(/Authenticator and password/)).toHaveAttribute("aria-current", "step");
+  expect(within(steps).getAllByRole("listitem")[0]).toHaveTextContent("Setup token (done)");
+  // Step 2 has a part for the authenticator app and a part for the password.
+  expect(screen.getByRole("heading", { level: 2, name: "Authenticator app" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 2, name: "Password" })).toBeInTheDocument();
+});
+
+async function enterTokenOnOpenPage(token: string) {
+  const user = userEvent.setup();
+  await user.type(await screen.findByLabelText("Setup token"), token);
+  await user.click(screen.getByRole("button", { name: "Next" }));
+}
