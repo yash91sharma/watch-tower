@@ -173,17 +173,15 @@ test("the page shows the error of the API", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("An error occurred. See the WT log.");
 });
 
-test("the (i) button opens the help that explains each metric, and Close closes it", async () => {
+test("the (i) button opens the help: What, Read and Why for each VM tile, and the X at the top closes it", async () => {
   const user = userEvent.setup();
   renderRoute("/");
 
   await user.click(await screen.findByRole("button", { name: "What the metrics mean" }));
 
   const help = screen.getByRole("dialog", { name: "How to read the metrics" });
-  const titles = within(help)
-    .getAllByRole("heading", { level: 3 })
-    .map((heading) => heading.textContent);
-  expect(titles).toEqual([
+  const headings = within(help).getAllByRole("heading", { level: 3 });
+  expect(headings.map((heading) => heading.textContent)).toEqual([
     "CPU",
     "Memory",
     "Swap",
@@ -192,15 +190,17 @@ test("the (i) button opens the help that explains each metric, and Close closes 
     "Network",
     "Load",
     "Uptime",
-    "Apps and containers",
-    "Graphs and sparklines",
   ]);
-  expect(within(help).getAllByText("How to read it")).toHaveLength(titles.length);
-  // One thread uses at most 1 core. An app with more threads can use more.
-  expect(help).not.toHaveTextContent("One app process can use at most 1 core");
-  expect(help).toHaveTextContent("A single-thread app can use at most 1 core");
+  const terms = within(help)
+    .getAllByRole("term")
+    .map((term) => term.textContent);
+  expect(terms).toEqual(headings.flatMap(() => ["What", "Read", "Why"]));
 
-  await user.click(within(help).getByRole("button", { name: "Close" }));
+  // The only close control is above the list, so the admin does not scroll to it.
+  const close = within(help).getByRole("button", { name: "Close" });
+  const cpu = within(help).getByRole("heading", { name: "CPU" });
+  expect(close.compareDocumentPosition(cpu) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  await user.click(close);
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 

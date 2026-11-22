@@ -1,68 +1,70 @@
-// The (i) button of the Overview: a dialog that tells what each metric is (how WT gets it)
-// and how an admin reads it. Static help text: the values and labels come from the API.
-import { Info } from "lucide-react";
+// The (i) button of the Overview: a dialog that tells, for each VM tile, what the value is,
+// how to read it and why it matters on a home-lab server. Static help text: the values and
+// labels come from the API. The header with the X stays at the top; only the list scrolls.
+import { Info, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 
 import { Button } from "@/components/ui/button";
 
 interface HelpItem {
+  // The tile title on the Overview.
   title: string;
-  // What the value is, and how WT gets it.
+  // One sentence: what the value is.
   what: string;
-  // What a normal value is, and when to look closer.
+  // One sentence: what a normal value is, and when to look closer.
   read: string;
+  // One sentence: why it is important to monitor on a home-lab server.
+  why: string;
 }
 
 const HELP: HelpItem[] = [
   {
     title: "CPU",
-    what: "The part of all VM cores that is busy (not idle and not waiting for the disk), as an average over the poll interval. 100% means that all cores are busy. The cores in the label are the same value in cores: \"25% (2.5 cores)\" on 10 cores. For a container, the value is its part of all VM cores, from the Docker stats.",
-    read: "Short peaks are normal. A VM that stays above about 80% for a long time has too little CPU: find the busy app in the list, or give OrbStack more cores. A single-thread app can use at most 1 core, so its container at \"1.0 core\" can be at its limit even when the VM is not.",
+    what: "How busy the VM CPU cores are, as a percent of all cores.",
+    read: "Short peaks are normal; above 80% for a long time means that an app uses too much CPU or the VM needs more cores.",
+    why: "A CPU that is always full makes every app on the server slow.",
   },
   {
     title: "Memory",
-    what: "VM: MemTotal minus MemAvailable from /proc/meminfo. On OrbStack, the total is the memory limit in the OrbStack settings, and OrbStack gives the free memory back to macOS. \"Containers\" is the sum of the shown containers. A container uses its memory minus the inactive file cache (the same as docker stats), of its memory limit or of the VM total if it has no limit.",
-    read: "The Linux cache uses free memory, but MemAvailable does not count the cache that Linux can free, so the value is the memory that is really in use. A VM near its total, with swap that increases, needs more memory or an app that uses less. A container near its own limit can be stopped by the kernel (out of memory).",
+    what: "The memory that apps use in the VM, without the cache that Linux can free.",
+    read: "Near 100%, with swap that goes up, means that the VM needs more memory.",
+    why: "When memory is full, Linux stops (kills) apps with no warning.",
   },
   {
     title: "Swap",
-    what: "The swap space of the VM that is in use, of its total (/proc/meminfo).",
-    read: "A small, steady value is normal: Linux moves unused memory to swap. Swap that increases, together with high disk I/O, shows that the VM has too little memory.",
+    what: "The disk space that Linux uses for memory that does not fit in RAM.",
+    read: "A small, steady value is normal; a value that goes up means that the VM has too little memory.",
+    why: "Apps that use swap become slow, because a disk is much slower than RAM.",
   },
   {
     title: "Disk",
-    what: "The used space of the VM disk that holds the Docker data (images, containers, volumes, the WT data).",
-    read: "Above about 85%, free some space: remove old images and build cache (docker system prune), or check the log size of the apps. A full disk stops apps and can damage their data.",
+    what: "The used space on the VM disk that holds the images, containers and volumes.",
+    read: "Above 85%, remove old images and build cache (docker system prune).",
+    why: "A full disk stops apps and can corrupt databases.",
   },
   {
     title: "Disk I/O",
-    what: "The bytes per second that the VM reads from and writes to its disks (all virtual disks, also swap), from /proc/diskstats.",
-    read: "Peaks at a start, a backup or an update are normal. A high write rate that does not stop can be an app that writes too many logs, or swap. Compare it with the Swap value.",
+    what: "The data that the VM reads from and writes to its disks, per second.",
+    read: "Peaks during starts, backups and updates are normal; a high write rate that does not stop is often an app that writes too many logs.",
+    why: "Too much disk I/O makes all apps slow and wears out SSDs.",
   },
   {
     title: "Network",
-    what: "The bytes per second that the containers get (in) and send (out): the sum of the shown containers. WT has its own network, so it cannot see the full VM network. Containers with host networking are not in the sum.",
-    read: "Downloads and streams give high values for a short time. A high \"out\" value that you do not expect can be an app that uploads data: find it in the list.",
+    what: "The data that all containers receive (in) and send (out), per second.",
+    read: "Short peaks from downloads and streams are normal; a high out value that you do not expect means that an app sends data.",
+    why: "An upload that you do not expect can be a bad backup job or an app that an attacker controls.",
   },
   {
     title: "Load",
-    what: "The average number of processes that run or wait for the CPU or the disk, over the last 1, 5 and 15 minutes (/proc/loadavg).",
-    read: "Compare it with the number of cores (in the CPU label). A load below the number of cores is OK. A load above it for a long time means that processes wait. If the 1-minute value is higher than the 15-minute value, the load increases.",
+    what: "The number of processes that run or wait, as an average over 1, 5 and 15 minutes.",
+    read: "A value above the number of cores means that processes wait.",
+    why: "High load with low CPU often points to a slow or failing disk.",
   },
   {
     title: "Uptime",
-    what: "The time since the VM started.",
-    read: "It starts again at 0 when OrbStack or the Mac restarts. A short uptime that you do not expect shows a restart.",
-  },
-  {
-    title: "Apps and containers",
-    what: "An app is a Compose project, or a container with no project. The counts and the list have the containers that WT shows (not the ones with the label wt.enable=false). A stopped container has no values (\"-\"). The group values are the sums of their containers.",
-    read: "Fewer running containers than you expect: open App details and look at the state and the health.",
-  },
-  {
-    title: "Graphs and sparklines",
-    what: "WT gets the values at the metrics interval on the Settings page and saves one average for each minute. The 1 hour to 24 hours ranges show minutes, 7 days shows 15-minute averages, and 30 days shows 1-hour averages. The sparklines show the last hour. A gap is a time with no value (WT did not run, or the container did not run).",
-    read: "An average makes short peaks smaller, so the longer ranges show trends, not peaks. Move the pointer on a graph to see its values. A range change in one graph changes all graphs.",
+    what: "The time since the VM last started.",
+    read: "A low value that you do not expect means that the VM or the Mac restarted.",
+    why: "Restarts that you did not plan can show power, crash or update problems.",
   },
 ];
 
@@ -76,24 +78,34 @@ export function MetricsHelp() {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 max-h-[85svh] w-[min(42rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 space-y-4 overflow-y-auto rounded-xl border bg-card p-5 shadow-lg">
-          <Dialog.Title className="text-lg font-semibold">How to read the metrics</Dialog.Title>
-          <Dialog.Description className="text-sm text-muted-foreground">
-            The Docker VM is the Linux VM that runs the containers (on OrbStack, the OrbStack VM), not the Mac.
-          </Dialog.Description>
-          {HELP.map((item) => (
-            <section key={item.title} className="space-y-1 text-sm">
-              <h3 className="font-medium">{item.title}</h3>
-              <p>{item.what}</p>
-              <p>
-                <span className="font-medium">How to read it</span>: {item.read}
-              </p>
-            </section>
-          ))}
-          <div className="flex justify-end">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 flex max-h-[85svh] w-[min(42rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border bg-card shadow-lg">
+          <div className="flex items-start gap-3 border-b p-5 pb-4">
+            <div className="flex-1 space-y-1">
+              <Dialog.Title className="text-lg font-semibold">How to read the metrics</Dialog.Title>
+              <Dialog.Description className="text-sm text-muted-foreground">
+                The values are for the Docker VM (on OrbStack, the OrbStack VM), not the Mac.
+              </Dialog.Description>
+            </div>
             <Dialog.Close asChild>
-              <Button variant="outline">Close</Button>
+              <Button variant="ghost" size="icon-sm" aria-label="Close" title="Close">
+                <X aria-hidden />
+              </Button>
             </Dialog.Close>
+          </div>
+          <div className="space-y-4 overflow-y-auto p-5 pt-4">
+            {HELP.map((item) => (
+              <section key={item.title} className="space-y-1 text-sm">
+                <h3 className="font-medium">{item.title}</h3>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                  <dt className="text-muted-foreground">What</dt>
+                  <dd>{item.what}</dd>
+                  <dt className="text-muted-foreground">Read</dt>
+                  <dd>{item.read}</dd>
+                  <dt className="text-muted-foreground">Why</dt>
+                  <dd>{item.why}</dd>
+                </dl>
+              </section>
+            ))}
           </div>
         </Dialog.Content>
       </Dialog.Portal>
