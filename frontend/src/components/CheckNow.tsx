@@ -6,8 +6,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "@/api/client";
 import { checkStatusQuery } from "@/api/queries";
 import { FormError } from "@/components/FormError";
+import { RelativeTime } from "@/components/RelativeTime";
 import { Button } from "@/components/ui/button";
-import { formatTime } from "@/lib/time";
 
 export function CheckNow({ group }: { group?: string }) {
   const queryClient = useQueryClient();
@@ -46,7 +46,11 @@ export function CheckNow({ group }: { group?: string }) {
     <div className="space-y-1">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <span className="text-muted-foreground">
-          {running ? "Checking…" : `Last check: ${data?.last_run ? formatTime(data.last_run) : "never"}`}
+          {running ? (
+            "Checking…"
+          ) : (
+            <>Last check: {data?.last_run ? <RelativeTime iso={data.last_run} /> : "never"}</>
+          )}
         </span>
         {button}
       </div>

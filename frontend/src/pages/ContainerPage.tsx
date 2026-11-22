@@ -9,12 +9,12 @@ import { DetailList } from "@/components/DetailList";
 import { HealthBadge, StateLabel } from "@/components/badges";
 import { HistoryCharts } from "@/components/MetricChart";
 import { QueryPending } from "@/components/QueryPending";
+import { RelativeTime } from "@/components/RelativeTime";
 import { ReleaseSource } from "@/components/ReleaseSource";
 import { Section } from "@/components/Section";
 import { UpdateBlock } from "@/components/UpdateBlock";
 import { useUsage } from "@/components/Usage";
 import { Button } from "@/components/ui/button";
-import { formatTime } from "@/lib/time";
 import { usePageTitle } from "@/lib/pageTitle";
 
 export function ContainerPage() {
@@ -57,7 +57,7 @@ function Details({ container }: { container: ContainerDetail }) {
           <ul className="space-y-1 text-sm">
             {container.events.map((event) => (
               <li key={`${event.time}-${event.kind}`}>
-                {formatTime(event.time)}: {event.label}
+                <RelativeTime iso={event.time} />: {event.label}
               </li>
             ))}
           </ul>

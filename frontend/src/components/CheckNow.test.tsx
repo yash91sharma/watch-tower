@@ -18,8 +18,18 @@ test("the bar shows the last check time", async () => {
   server.use(http.get("*/api/checks/status", () => HttpResponse.json(status(false))));
   renderRoute("/apps");
 
-  expect(await screen.findByText(`Last check: ${formatTime(LAST_RUN)}`)).toBeInTheDocument();
+  // A check of more than 7 days ago shows the date.
+  expect((await screen.findByText(formatTime(LAST_RUN))).parentElement).toHaveTextContent(`Last check: ${formatTime(LAST_RUN)}`);
   expect(screen.getByRole("button", { name: "Check now" })).toBeEnabled();
+});
+
+test("a recent check shows how long ago it was", async () => {
+  const lastRun = new Date(Date.now() - 3 * 60_000).toISOString();
+  server.use(http.get("*/api/checks/status", () => HttpResponse.json(status(false, lastRun))));
+  renderRoute("/apps");
+
+  expect(await screen.findByText("3 minutes ago")).toHaveAttribute("title", formatTime(lastRun));
+  expect(screen.getByText(/^Last check:/)).toHaveTextContent("Last check: 3 minutes ago");
 });
 
 test("with no check yet, the bar shows never", async () => {
@@ -48,7 +58,7 @@ test("Check now starts a run. The end of the run turns the button on", async () 
   );
   const user = userEvent.setup();
   renderRoute("/apps");
-  await screen.findByText(`Last check: ${formatTime(LAST_RUN)}`);
+  expect((await screen.findByText(formatTime(LAST_RUN))).parentElement).toHaveTextContent(`Last check: ${formatTime(LAST_RUN)}`);
 
   await user.click(screen.getByRole("button", { name: "Check now" }));
 

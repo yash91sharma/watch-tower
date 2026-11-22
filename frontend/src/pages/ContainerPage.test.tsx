@@ -23,8 +23,8 @@ test("the page shows the state, the health and the link to the logs", async () =
 });
 
 test("the page shows the events of the last 7 days, newest first", async () => {
-  const unhealthy = "2026-11-01T10:00:00Z";
-  const recovered = "2026-11-01T10:05:00Z";
+  const unhealthy = new Date(Date.now() - 2 * 3600_000).toISOString();
+  const recovered = new Date(Date.now() - 5 * 60_000).toISOString();
   answer(
     containerDetail({
       events: [
@@ -37,7 +37,9 @@ test("the page shows the events of the last 7 days, newest first", async () => {
 
   const events = within(await screen.findByRole("region", { name: "Events (last 7 days)" }));
   const items = events.getAllByRole("listitem").map((item) => item.textContent);
-  expect(items).toEqual([`${formatTime(recovered)}: Healthy again`, `${formatTime(unhealthy)}: Unhealthy`]);
+  // A recent time shows how long ago it was. The full time is on hover.
+  expect(items).toEqual(["5 minutes ago: Healthy again", "2 hours ago: Unhealthy"]);
+  expect(events.getByText("5 minutes ago")).toHaveAttribute("title", formatTime(recovered));
 });
 
 test("with no events, the page says so", async () => {
