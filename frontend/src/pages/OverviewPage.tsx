@@ -1,7 +1,8 @@
 // Overview (the home page): the resources of the Docker VM, the counts and the app list.
 // The backend gives all values and labels. The VM charts use the shared range.
 // The (i) button next to the title explains each metric.
-// The admin can collapse an app group. The browser keeps the collapsed groups in localStorage.
+// The admin can collapse an app group, or expand or collapse all groups. The browser keeps
+// the collapsed groups in localStorage.
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router";
@@ -9,6 +10,7 @@ import { Link } from "react-router";
 import { overviewQuery, vmHistoryQuery } from "@/api/queries";
 import type { GroupUsage, Overview, VmOut } from "@/api/types";
 import { AppGroup } from "@/components/AppGroup";
+import { ExpandCollapseAll } from "@/components/ExpandCollapseAll";
 import { HistoryCharts } from "@/components/MetricChart";
 import { MetricsHelp } from "@/components/MetricsHelp";
 import { NoContainers } from "@/components/NoContainers";
@@ -102,7 +104,19 @@ function AppList({ overview }: { overview: Overview }) {
   const groups = useCollapsed("wt.overviewCollapsedGroups");
   const usage = useUsage();
   return (
-    <Section title="Apps">
+    <Section
+      title="Apps"
+      actions={
+        overview.groups.length > 0 && (
+          <ExpandCollapseAll
+            onExpand={groups.expandAll}
+            onCollapse={() => {
+              groups.collapseAll(overview.groups.map((group) => group.label));
+            }}
+          />
+        )
+      }
+    >
       {overview.groups.length === 0 ? (
         <NoContainers className="text-sm" />
       ) : (

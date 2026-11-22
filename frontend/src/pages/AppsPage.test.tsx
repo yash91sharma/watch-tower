@@ -292,3 +292,35 @@ test("?group= opens that group and scrolls to it", async () => {
   expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "false");
   expect(scroll).toHaveBeenCalledTimes(1);
 });
+
+test("Collapse all and Expand all change all groups, and the change stays", async () => {
+  const user = userEvent.setup();
+  answer([
+    { project: "media", label: "media", update: "none", containers: [container({ name: "plex" })] },
+    { project: null, label: "Other", update: "none", containers: [container({ name: "adhoc" })] },
+  ]);
+  const first = renderRoute("/apps");
+
+  await user.click(await screen.findByRole("button", { name: "Collapse all" }));
+  expect(screen.getByRole("button", { name: "media" })).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "false");
+  first.unmount();
+
+  renderRoute("/apps");
+  expect(await screen.findByRole("button", { name: "media" })).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "false");
+
+  await user.click(screen.getByRole("button", { name: "Expand all" }));
+  expect(screen.getByRole("button", { name: "media" })).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByRole("link", { name: "plex" })).toBeInTheDocument();
+});
+
+test("with no containers, the page has no Collapse all and Expand all buttons", async () => {
+  answer([]);
+  renderRoute("/apps");
+
+  expect(await screen.findByText(/no containers/i)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Collapse all" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Expand all" })).not.toBeInTheDocument();
+});

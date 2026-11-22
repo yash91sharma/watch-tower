@@ -203,3 +203,24 @@ test("the (i) button opens the help that explains each metric, and Close closes 
   await user.click(within(help).getByRole("button", { name: "Close" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
+
+test("Collapse all and Expand all change all groups of the app list, and the change stays", async () => {
+  const user = userEvent.setup();
+  answerGroups();
+  const first = renderRoute("/");
+  const apps = await screen.findByRole("region", { name: "Apps" });
+
+  await user.click(within(apps).getByRole("button", { name: "Collapse all" }));
+  expect(screen.getByRole("button", { name: "site" })).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "false");
+  first.unmount();
+
+  renderRoute("/");
+  expect(await screen.findByRole("button", { name: "site" })).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "false");
+
+  await user.click(screen.getByRole("button", { name: "Expand all" }));
+  expect(screen.getByRole("button", { name: "site" })).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByRole("link", { name: "web" })).toBeInTheDocument();
+});

@@ -1,6 +1,7 @@
 // App details: the container list. Compose groups in API order, one row per container,
 // with the CPU and memory of each container and a Logs link (an icon next to the name).
-// The admin can collapse a group. The browser keeps the collapsed groups in localStorage.
+// The admin can collapse a group, or expand or collapse all groups. The browser keeps the
+// collapsed groups in localStorage.
 // ?group=<label> (a link from the Overview) opens that group and scrolls to it.
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, ScrollText } from "lucide-react";
@@ -11,6 +12,7 @@ import type { Group } from "@/api/types";
 import { AppGroup } from "@/components/AppGroup";
 import { HealthBadge, SeverityBadge, StatusBadge } from "@/components/badges";
 import { CheckNow } from "@/components/CheckNow";
+import { ExpandCollapseAll } from "@/components/ExpandCollapseAll";
 import { NoContainers } from "@/components/NoContainers";
 import { QueryPending } from "@/components/QueryPending";
 import { Button } from "@/components/ui/button";
@@ -29,7 +31,17 @@ export function AppsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">Apps</h1>
-        <CheckNow />
+        <div className="flex flex-wrap items-center gap-3">
+          {data !== undefined && data.length > 0 && (
+            <ExpandCollapseAll
+              onExpand={groups.expandAll}
+              onCollapse={() => {
+                groups.collapseAll(data.map((group) => group.label));
+              }}
+            />
+          )}
+          <CheckNow />
+        </div>
       </div>
       {data === undefined ? (
         <QueryPending error={error} text="Loading containers…" />
