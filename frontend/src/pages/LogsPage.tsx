@@ -11,11 +11,13 @@ import { LogView } from "@/components/LogView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { matchingLines } from "@/lib/logs";
+import { usePageTitle } from "@/lib/pageTitle";
 
 const TAIL_SIZES = [100, 500, 1000, 5000, 10000];
 
 export function LogsPage() {
   const { name = "" } = useParams();
+  usePageTitle("Logs", name);
   const [tail, setTail] = useState(500);
   const { lines, error } = useLogStream(name, tail);
   // The container: its API error (for example "No container") says why the log stops.

@@ -1,7 +1,10 @@
 // The page for an error while a route renders (the router error boundary).
 import { Link, useRouteError } from "react-router";
 
+import { usePageTitle } from "@/lib/pageTitle";
+
 export function ErrorPage() {
+  usePageTitle("Error");
   const error = useRouteError();
   const message = error instanceof Error ? error.message : "Unknown error";
   return (

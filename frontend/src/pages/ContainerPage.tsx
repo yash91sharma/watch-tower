@@ -15,9 +15,11 @@ import { UpdateBlock } from "@/components/UpdateBlock";
 import { useUsage } from "@/components/Usage";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/time";
+import { usePageTitle } from "@/lib/pageTitle";
 
 export function ContainerPage() {
   const { name = "" } = useParams();
+  usePageTitle(name);
   const { data, error } = useQuery(containerQuery(name));
 
   return (

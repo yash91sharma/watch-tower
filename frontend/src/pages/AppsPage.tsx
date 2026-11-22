@@ -19,8 +19,10 @@ import { Button } from "@/components/ui/button";
 import { type Usage, UsageCell, useUsage } from "@/components/Usage";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCollapsed } from "@/lib/collapsed";
+import { usePageTitle } from "@/lib/pageTitle";
 
 export function AppsPage() {
+  usePageTitle("Apps");
   const { data, error } = useQuery(containersQuery);
   const focus = useSearchParams()[0].get("group");
   // The group of ?group= is open, also if it was collapsed.

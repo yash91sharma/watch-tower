@@ -13,6 +13,7 @@ import { QueryPending } from "@/components/QueryPending";
 import { Section } from "@/components/Section";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { usePageTitle } from "@/lib/pageTitle";
 
 // A `select` field shows the values that the API gives for it (metrics_intervals).
 const FIELDS: { key: keyof Settings; label: string; numeric?: boolean; select?: boolean }[] = [
@@ -37,6 +38,7 @@ const SECRETS: { key: keyof SecretState; label: string }[] = [
 ];
 
 export function SettingsPage() {
+  usePageTitle("Settings");
   const { data, error } = useQuery(settingsQuery);
   return (
     <div className="max-w-xl space-y-6">

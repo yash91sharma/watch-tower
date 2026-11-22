@@ -21,8 +21,10 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type Usage, UsageCell, useUsage } from "@/components/Usage";
 import { useCollapsed } from "@/lib/collapsed";
+import { usePageTitle } from "@/lib/pageTitle";
 
 export function OverviewPage() {
+  usePageTitle("Overview");
   const { data, error } = useQuery(overviewQuery);
   return (
     <div className="space-y-6">

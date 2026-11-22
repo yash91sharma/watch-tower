@@ -9,6 +9,7 @@ import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
 import { isTotpCode, TOTP_CODE_ERROR } from "@/lib/totp";
 import { plural } from "@/lib/utils";
+import { usePageTitle } from "@/lib/pageTitle";
 
 /** The error text. After the login limit (429), the wait time from Retry-After. */
 function loginError(error: Error | null): Error | string | null {
@@ -20,6 +21,7 @@ function loginError(error: Error | null): Error | string | null {
 }
 
 export function LoginPage() {
+  usePageTitle("Log in");
   const queryClient = useQueryClient();
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");

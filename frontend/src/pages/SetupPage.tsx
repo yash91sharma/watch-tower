@@ -10,6 +10,7 @@ import { Field, TotpCodeField } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
 import { isTotpCode, TOTP_CODE_ERROR } from "@/lib/totp";
+import { usePageTitle } from "@/lib/pageTitle";
 
 /** The result of step 1: the token (step 2 sends it again) and the new TOTP key. */
 interface Started {
@@ -18,6 +19,7 @@ interface Started {
 }
 
 export function SetupPage() {
+  usePageTitle("Set up");
   const [started, setStarted] = useState<Started | null>(null);
   return (
     <main className="mx-auto max-w-md space-y-4 px-4 py-8">

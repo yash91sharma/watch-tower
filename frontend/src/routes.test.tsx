@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
@@ -59,4 +59,31 @@ test("a click on the logo opens the overview", async () => {
 
   expect(router.state.location.pathname).toBe("/");
   expect(await screen.findByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
+});
+
+test.each([
+  ["/", "Overview · WT"],
+  ["/apps", "Apps · WT"],
+  ["/containers/web", "web · WT"],
+  ["/containers/web/logs", "Logs · web · WT"],
+  ["/settings", "Settings · WT"],
+  ["/no/such/page", "Page not found · WT"],
+])("route %s sets the browser tab title %s", async (path, title) => {
+  renderRoute(path);
+
+  await waitFor(() => {
+    expect(document.title).toBe(title);
+  });
+});
+
+test.each([
+  ["/setup", "Set up · WT", { setup_required: true, logged_in: false }],
+  ["/login", "Log in · WT", { setup_required: false, logged_in: false }],
+])("route %s sets the browser tab title %s", async (path, title, state) => {
+  server.use(http.get("*/api/auth/state", () => HttpResponse.json(state)));
+  renderRoute(path);
+
+  await waitFor(() => {
+    expect(document.title).toBe(title);
+  });
 });
