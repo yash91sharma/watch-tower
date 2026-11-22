@@ -43,10 +43,9 @@ test("two updates give one digest with high priority", async ({ page }) => {
     // CPU and memory change at each poll.
     /./,
     /./,
-    "1.0.0",
-    "1.2.0",
-    // The update status and the severity are in one column.
-    "update availablecritical",
+    "1.0.0 → 1.2.0",
+    // One badge shows the update and its severity.
+    "critical update",
   ]);
-  await expect(row("wt_test_e2e_old_b").getByRole("cell").nth(7)).toHaveText("update availablenormal");
+  await expect(row("wt_test_e2e_old_b").getByRole("cell").nth(6)).toHaveText("update available");
 });

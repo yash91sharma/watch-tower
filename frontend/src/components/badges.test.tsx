@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 
-import { HealthBadge, SeverityBadge, StatusBadge } from "@/components/badges";
+import { HealthBadge, SeverityBadge, StateLabel, StatusBadge } from "@/components/badges";
 
 test.each([
   ["healthy", "healthy", "success"],
@@ -52,4 +52,29 @@ test("the badges show the label text from the API", () => {
 
   expect(screen.getByText("API health text")).toHaveAttribute("data-variant", "outline");
   expect(screen.getByText("API status text")).toHaveAttribute("data-variant", "info");
+});
+
+test("a critical update has the destructive color", () => {
+  render(<StatusBadge status="update" label="critical update" severity="critical" />);
+
+  expect(screen.getByText("critical update")).toHaveAttribute("data-variant", "destructive");
+});
+
+test("a normal update has the info color", () => {
+  render(<StatusBadge status="update" label="update available" severity="normal" />);
+
+  expect(screen.getByText("update available")).toHaveAttribute("data-variant", "info");
+});
+
+test.each([
+  ["running", "success"],
+  ["restarting", "warning"],
+  ["exited", "destructive"],
+  ["dead", "destructive"],
+  ["paused", "outline"],
+  ["created", "outline"],
+])("state %s shows a dot with the %s color", (state, variant) => {
+  render(<StateLabel state={state} />);
+
+  expect(screen.getByText(state)).toHaveAttribute("data-variant", variant);
 });

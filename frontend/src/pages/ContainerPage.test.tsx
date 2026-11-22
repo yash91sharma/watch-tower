@@ -17,7 +17,7 @@ test("the page shows the state, the health and the link to the logs", async () =
   renderRoute("/containers/web");
 
   expect(await screen.findByRole("heading", { level: 1, name: "web" })).toBeInTheDocument();
-  expect(await screen.findByText("restarting")).toBeInTheDocument();
+  expect(await screen.findByText("restarting")).toHaveAttribute("data-variant", "warning");
   expect(screen.getByText("unhealthy")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Logs" })).toHaveAttribute("href", "/containers/web/logs");
 });

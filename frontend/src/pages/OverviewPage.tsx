@@ -10,6 +10,7 @@ import { Link } from "react-router";
 import { overviewQuery, vmHistoryQuery } from "@/api/queries";
 import type { GroupUsage, Overview, VmOut } from "@/api/types";
 import { AppGroup } from "@/components/AppGroup";
+import { StateLabel } from "@/components/badges";
 import { ExpandCollapseAll } from "@/components/ExpandCollapseAll";
 import { HistoryCharts } from "@/components/MetricChart";
 import { MetricsHelp } from "@/components/MetricsHelp";
@@ -185,7 +186,9 @@ function GroupCard({
                   {item.name}
                 </Link>
               </TableCell>
-              <TableCell>{item.state}</TableCell>
+              <TableCell>
+                <StateLabel state={item.state} />
+              </TableCell>
               <TableCell>
                 <UsageCell label={item.cpu_label} values={usage.containerLine(item.name)?.cpu} title={`CPU of ${item.name}, last hour`} />
               </TableCell>

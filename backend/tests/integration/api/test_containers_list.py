@@ -115,7 +115,7 @@ async def test_fields_per_status(
         "image": "nginx",
         "tag": "1.26",
         "status": "update",
-        "status_label": "update available",
+        "status_label": "critical update",
         "latest_version": "1.27",
         "latest_url": "https://github.com/nginx/nginx/releases/tag/1.27",
         "severity": "critical",

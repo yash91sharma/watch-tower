@@ -8,9 +8,9 @@ import { ExternalLink, ScrollText } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { containersQuery } from "@/api/queries";
-import type { Group } from "@/api/types";
+import type { ContainerOut, Group } from "@/api/types";
 import { AppGroup } from "@/components/AppGroup";
-import { HealthBadge, SeverityBadge, StatusBadge } from "@/components/badges";
+import { HealthBadge, StateLabel, StatusBadge } from "@/components/badges";
 import { CheckNow } from "@/components/CheckNow";
 import { ExpandCollapseAll } from "@/components/ExpandCollapseAll";
 import { NoContainers } from "@/components/NoContainers";
@@ -101,8 +101,7 @@ function GroupTable({
             <TableHead>Health</TableHead>
             <TableHead className={PHONE_HIDDEN}>CPU</TableHead>
             <TableHead className={PHONE_HIDDEN}>Memory</TableHead>
-            <TableHead className={PHONE_HIDDEN}>Current version</TableHead>
-            <TableHead className={PHONE_HIDDEN}>Latest version</TableHead>
+            <TableHead className={PHONE_HIDDEN}>Version</TableHead>
             <TableHead>Update</TableHead>
           </TableRow>
         </TableHeader>
@@ -121,7 +120,9 @@ function GroupTable({
                   </Button>
                 </div>
               </TableCell>
-              <TableCell className={PHONE_HIDDEN}>{item.state}</TableCell>
+              <TableCell className={PHONE_HIDDEN}>
+                <StateLabel state={item.state} />
+              </TableCell>
               <TableCell>
                 <HealthBadge health={item.health} label={item.health_label} />
               </TableCell>
@@ -139,32 +140,36 @@ function GroupTable({
                   title={`Memory of ${item.name}, last hour`}
                 />
               </TableCell>
-              <TableCell className={PHONE_HIDDEN}>{item.tag ?? "-"}</TableCell>
               <TableCell className={PHONE_HIDDEN}>
-                {item.latest_url ? (
-                  <a
-                    className="inline-flex items-center gap-1 underline underline-offset-4"
-                    href={item.latest_url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {item.latest_version}
-                    <ExternalLink aria-hidden className="size-3.5 shrink-0" />
-                  </a>
-                ) : (
-                  (item.latest_version ?? "-")
-                )}
+                <Version item={item} />
               </TableCell>
               <TableCell>
-                <div className="flex flex-wrap items-center gap-1">
-                  <StatusBadge status={item.status} label={item.status_label} />
-                  <SeverityBadge severity={item.severity} />
-                </div>
+                <StatusBadge status={item.status} label={item.status_label} severity={item.severity} />
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </AppGroup>
+  );
+}
+
+/**
+ * The version: "running → latest" when the API status is "update", else the running version.
+ * The latest version links to its GitHub release (with no update, it is the running version).
+ */
+function Version({ item }: { item: ContainerOut }) {
+  if (!item.latest_url) return item.tag ?? "-";
+  const latest = (
+    <a className="inline-flex items-center gap-1 underline underline-offset-4" href={item.latest_url} target="_blank" rel="noreferrer">
+      {item.latest_version}
+      <ExternalLink aria-hidden className="size-3.5 shrink-0" />
+    </a>
+  );
+  if (item.status !== "update") return latest;
+  return (
+    <span className="inline-flex items-center gap-1">
+      {item.tag ?? "-"} → {latest}
+    </span>
   );
 }

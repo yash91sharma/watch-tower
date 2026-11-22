@@ -42,13 +42,12 @@ test("a row shows the state, the health and the status", async ({ page }) => {
     /./,
     /./,
     "1.0.0",
-    "-",
     "no source",
   ]);
 
   // The tag "latest" is not a version: WT does no check.
   const latest = group.getByRole("row").filter({ has: page.getByRole("link", { name: "wt_test_e2e_latest" }) });
-  await expect(latest.getByRole("cell").nth(7)).toHaveText("no check");
+  await expect(latest.getByRole("cell").nth(6)).toHaveText("no check");
 });
 
 test("the latest version links to its GitHub release in a new tab", async ({ page }) => {

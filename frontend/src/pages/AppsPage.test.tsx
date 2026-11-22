@@ -81,7 +81,7 @@ test("a row shows the container fields", async () => {
           tag: "2.1.0",
           latest_version: "2.3.0",
           status: "update",
-          status_label: "update available",
+          status_label: "critical update",
           severity: "critical",
         }),
       ],
@@ -93,9 +93,23 @@ test("a row shows the container fields", async () => {
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
   // The overview has no values for "app": CPU and memory show "-".
-  // The update status and the severity are in one column.
-  expect(cells).toEqual(["app", "running", "unhealthy", "-", "-", "2.1.0", "2.3.0", "update availablecritical"]);
-  expect(within(row).getByText("update available")).toHaveAttribute("data-variant", "info");
+  // The running and the latest version are in one column. One badge shows the update and its severity.
+  expect(cells).toEqual(["app", "running", "unhealthy", "-", "-", "2.1.0 → 2.3.0", "critical update"]);
+  expect(within(row).getByText("critical update")).toHaveAttribute("data-variant", "destructive");
+  expect(within(row).getByText("running")).toHaveAttribute("data-variant", "success");
+  expect(within(row).getByRole("link", { name: "2.3.0" })).toHaveAttribute(
+    "href",
+    "https://github.com/nginx/nginx/releases/tag/1.27.0",
+  );
+});
+
+test("a container with no update shows only its running version", async () => {
+  answer([{ project: "web", label: "web", update: "none", containers: [container({ name: "app", tag: "1.27.0" })] }]);
+  renderRoute("/apps");
+
+  const row = (await screen.findByRole("link", { name: "app" })).closest("tr");
+  if (!row) throw new Error("No row");
+  expect(within(row).getAllByRole("cell")[5]).toHaveTextContent(/^1\.27\.0$/);
 });
 
 test("the row shows the labels from the API, and empty values show a dash", async () => {
@@ -122,7 +136,7 @@ test("the row shows the labels from the API, and empty values show a dash", asyn
   const row = (await screen.findByRole("link", { name: "db" })).closest("tr");
   if (!row) throw new Error("No row");
   const cells = within(row).getAllByRole("cell").map((cell) => cell.textContent);
-  expect(cells).toEqual(["db", "running", "no healthcheck", "-", "-", "-", "-", "no check"]);
+  expect(cells).toEqual(["db", "running", "no healthcheck", "-", "-", "-", "no check"]);
 });
 
 test("the page shows a loading text", async () => {
@@ -167,8 +181,7 @@ test("the table has clear column names", async () => {
     "Health",
     "CPU",
     "Memory",
-    "Current version",
-    "Latest version",
+    "Version",
     "Update",
   ]);
 });

@@ -132,7 +132,7 @@ def container_out(
         image=row.image,
         tag=row.tag,
         status=status,
-        status_label="update available" if status is Status.UPDATE else status.value,
+        status_label=status_label(status, update.severity if update else None),
         latest_version=latest,
         latest_url=(
             f"https://github.com/{row.release_source}/releases/tag/{quote(latest)}"
@@ -143,6 +143,13 @@ def container_out(
         release_source=row.release_source,
         source_confirmed=row.source_confirmed,
     )
+
+
+def status_label(status: Status, severity: Severity | None) -> str:
+    """The update status text. A critical update has its own text, so the UI shows one badge."""
+    if status is not Status.UPDATE:
+        return status.value
+    return "critical update" if severity is Severity.CRITICAL else "update available"
 
 
 def health_label(running: bool, health: str) -> str:

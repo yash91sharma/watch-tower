@@ -68,7 +68,7 @@ test("the app list links to the containers and to the groups on App details", as
   expect(within(apps).getByRole("link", { name: "Open Other on the Apps page" })).toHaveAttribute("href", "/apps?group=Other");
   const tool = within(apps).getByRole("link", { name: "tool" }).closest("tr");
   if (!tool) throw new Error("no row");
-  expect(within(tool).getByText("exited")).toBeInTheDocument();
+  expect(within(tool).getByText("exited")).toHaveAttribute("data-variant", "destructive");
   expect(within(within(apps).getByRole("region", { name: "site" })).getByText("CPU 9.1% (1.0 core)")).toBeInTheDocument();
   expect(await within(apps).findByRole("img", { name: "CPU of web, last hour" })).toBeInTheDocument();
   expect(within(apps).getByRole("img", { name: "Memory of web, last hour" })).toBeInTheDocument();

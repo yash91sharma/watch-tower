@@ -6,7 +6,7 @@ import { containerHistoryQuery, containerQuery } from "@/api/queries";
 import type { ContainerDetail } from "@/api/types";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DetailList } from "@/components/DetailList";
-import { HealthBadge } from "@/components/badges";
+import { HealthBadge, StateLabel } from "@/components/badges";
 import { HistoryCharts } from "@/components/MetricChart";
 import { QueryPending } from "@/components/QueryPending";
 import { ReleaseSource } from "@/components/ReleaseSource";
@@ -39,7 +39,7 @@ function Details({ container }: { container: ContainerDetail }) {
     <>
       <DetailList
         items={[
-          { term: "State", value: container.state },
+          { term: "State", value: <StateLabel state={container.state} /> },
           { term: "Health", value: <HealthBadge health={container.health} label={container.health_label} /> },
           { term: "Image", value: container.image ?? "-", className: "break-all" },
           { term: "Running", value: container.tag ?? "-" },
