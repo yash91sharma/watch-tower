@@ -11,6 +11,8 @@ import { plots, resizeCallbacks } from "@/test/uplot";
 
 const ranges = overview().ranges;
 const [cpu] = history().charts;
+// The axis and legend callbacks do not read the plot.
+const noPlot = {} as unknown as uPlot;
 
 test("the chart has its title, the series labels and the data of the API", () => {
   if (!cpu) throw new Error("no chart");
@@ -31,9 +33,9 @@ test("the y axis stops at the max of the chart and starts at 0", () => {
   render(<MetricChart chart={cpu} times={[1, 2]} ranges={ranges} />);
 
   const range = plots[0]?.options.scales?.y?.range as (u: uPlot, min: number, max: number) => [number, number];
-  expect(range({} as uPlot, 2, 300)).toEqual([0, 100]);
-  expect(range({} as uPlot, 0, 4)).toEqual([0, 4.4]);
-  expect(range({} as uPlot, 0, 0)).toEqual([0, 1]);
+  expect(range(noPlot, 2, 300)).toEqual([0, 100]);
+  expect(range(noPlot, 0, 4)).toEqual([0, 4.4]);
+  expect(range(noPlot, 0, 0)).toEqual([0, 1]);
 });
 
 test("a range change in one chart changes the select of all charts", async () => {
@@ -58,14 +60,14 @@ test("the legend values use the unit of the chart", () => {
   render(<MetricChart chart={cpu} times={[1, 2]} ranges={ranges} />);
 
   const value = plots[0]?.options.series[1]?.value as (u: uPlot, v: number | null) => string;
-  expect(value({} as uPlot, 25)).toBe("25%");
-  expect(value({} as uPlot, null)).toBe("-");
+  expect(value(noPlot, 25)).toBe("25%");
+  expect(value(noPlot, null)).toBe("-");
   const ticks = plots[0]?.options.axes?.[1]?.values as (u: uPlot, t: number[]) => string[];
-  expect(ticks({} as uPlot, [0, 50])).toEqual(["0%", "50%"]);
+  expect(ticks(noPlot, [0, 50])).toEqual(["0%", "50%"]);
   // A small CPU value: the ticks keep the digits that make them different.
-  expect(ticks({} as uPlot, [0, 0.002, 0.004])).toEqual(["0.000%", "0.002%", "0.004%"]);
+  expect(ticks(noPlot, [0, 0.002, 0.004])).toEqual(["0.000%", "0.002%", "0.004%"]);
   const size = plots[0]?.options.axes?.[1]?.size as (u: uPlot, labels: string[]) => number;
-  expect(size({} as uPlot, ["0.000%", "0.002%"])).toBe(58);
+  expect(size(noPlot, ["0.000%", "0.002%"])).toBe(58);
 });
 
 test("a byte chart has binary tick steps, so that the ticks are round in KiB, MiB and GiB", () => {
@@ -120,7 +122,7 @@ test("a chart with no max scales the y axis to its values", () => {
   render(<MetricChart chart={{ ...cpu, max: null }} times={[1, 2]} ranges={ranges} />);
 
   const range = plots[0]?.options.scales?.y?.range as (u: uPlot, min: number, max: number) => [number, number];
-  expect(range({} as uPlot, 0, 1000)).toEqual([0, 1100]);
+  expect(range(noPlot, 0, 1000)).toEqual([0, 1100]);
 });
 
 test("the history charts get the history of the shared range and show each chart, with the times and the empty label", async () => {

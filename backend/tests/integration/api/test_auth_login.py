@@ -1,9 +1,9 @@
 """Tests for POST /api/auth/login (clock)."""
 
 import httpx
-import pyotp
 import pytest
 from fastapi import FastAPI
+from pyotp.totp import TOTP
 from sqlmodel import Session
 
 from wt.auth import totp
@@ -36,7 +36,7 @@ def admin(app: FastAPI) -> None:
 
 
 def code_now(clock: FakeClock) -> str:
-    return pyotp.TOTP(SECRET).at(clock.now())
+    return TOTP(SECRET).at(clock.now())
 
 
 def wrong_code(clock: FakeClock) -> str:
@@ -134,7 +134,7 @@ async def test_the_setup_code_fails_at_login(
     secret = (await client.post("/api/auth/setup/begin", json={"token": token})).json()[
         "totp_secret"
     ]
-    code = pyotp.TOTP(secret).at(clock.now())
+    code = TOTP(secret).at(clock.now())
     finish = await client.post(
         "/api/auth/setup/finish",
         json={"token": token, "password": PASSWORD, "totp_code": code},

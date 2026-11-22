@@ -2,15 +2,15 @@
 
 from urllib.parse import parse_qs, urlparse
 
-import pyotp
 import pytest
+from pyotp.totp import TOTP
 
 from wt.auth import totp
 from wt.clock import FakeClock
 
 
 def code_at(secret: str, clock: FakeClock, steps: int) -> str:
-    return pyotp.TOTP(secret).at(clock.now() + steps * totp.STEP)
+    return TOTP(secret).at(clock.now() + steps * totp.STEP)
 
 
 def current_step(clock: FakeClock) -> int:
@@ -22,18 +22,18 @@ def test_new_secret_is_base32_and_random() -> None:
 
     assert first != second
     assert len(first) >= 32
-    pyotp.TOTP(first).now()
+    TOTP(first).now()
 
 
 def test_provisioning_uri_has_the_issuer() -> None:
-    uri = totp.provisioning_uri("JBSWY3DPEHPK3PXP")
+    uri = totp.provisioning_uri("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP")
 
     parsed = urlparse(uri)
     query = parse_qs(parsed.query)
     assert parsed.scheme == "otpauth"
     assert parsed.netloc == "totp"
     assert query["issuer"] == ["Watch Tower"]
-    assert query["secret"] == ["JBSWY3DPEHPK3PXP"]
+    assert query["secret"] == ["JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP"]
 
 
 @pytest.mark.parametrize("steps", [-1, 0, 1])
@@ -89,7 +89,7 @@ def test_spaces_in_the_code_are_ignored(clock: FakeClock) -> None:
 def test_qr_svg_is_a_standalone_svg_document() -> None:
     # The UI shows it in <img src="data:image/svg+xml,...">. Browsers render that only
     # with the SVG namespace.
-    svg = totp.qr_svg(totp.provisioning_uri("JBSWY3DPEHPK3PXP"))
+    svg = totp.qr_svg(totp.provisioning_uri("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP"))
 
     assert svg.startswith("<svg")
     assert 'xmlns="http://www.w3.org/2000/svg"' in svg

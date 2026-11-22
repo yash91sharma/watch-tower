@@ -1,9 +1,9 @@
 """Tests for the setup API: /api/auth/state and /api/auth/setup/*."""
 
 import httpx
-import pyotp
 import pytest
 from fastapi import FastAPI
+from pyotp.totp import TOTP
 from sqlalchemy import Engine
 from sqlmodel import Session, select
 
@@ -40,7 +40,7 @@ async def finish(
 async def full_setup(app: FastAPI, client: httpx.AsyncClient) -> httpx.Response:
     token = token_of(app)
     secret = (await begin(client, token)).json()["totp_secret"]
-    return await finish(client, token, pyotp.TOTP(secret).now())
+    return await finish(client, token, TOTP(secret).now())
 
 
 @pytest.mark.anyio
@@ -85,7 +85,7 @@ async def test_setup_saves_the_admin_with_the_matched_step(
     token = token_of(app)
     secret = (await begin(client, token)).json()["totp_secret"]
     # The fake clock does not move, so the code stays in one TOTP step.
-    await finish(client, token, pyotp.TOTP(secret).at(clock.now()))
+    await finish(client, token, TOTP(secret).at(clock.now()))
 
     with Session(ctx_of(app).engine) as session:
         admin = session.exec(select(Admin)).one()
@@ -105,7 +105,7 @@ async def test_wrong_token_gives_403(client: httpx.AsyncClient) -> None:
 async def test_wrong_code_fails(app: FastAPI, client: httpx.AsyncClient) -> None:
     token = token_of(app)
     secret = (await begin(client, token)).json()["totp_secret"]
-    wrong = "000000" if pyotp.TOTP(secret).now() != "000000" else "111111"
+    wrong = "000000" if TOTP(secret).now() != "000000" else "111111"
 
     response = await finish(client, token, wrong)
 
@@ -129,7 +129,7 @@ async def test_short_password_gives_a_field_error(
     token = token_of(app)
     secret = (await begin(client, token)).json()["totp_secret"]
 
-    response = await finish(client, token, pyotp.TOTP(secret).now(), password="short")
+    response = await finish(client, token, TOTP(secret).now(), password="short")
 
     assert response.status_code == 422
     assert [item["field"] for item in response.json()["detail"]] == ["password"]
@@ -175,7 +175,7 @@ async def test_admin_saved_by_another_request_gives_409(
         )
         session.commit()
 
-    response = await finish(client, token, pyotp.TOTP(secret).now())
+    response = await finish(client, token, TOTP(secret).now())
 
     assert response.status_code == 409
     assert "set-cookie" not in response.headers

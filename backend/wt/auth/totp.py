@@ -10,6 +10,7 @@ from datetime import timedelta
 
 import pyotp
 import segno
+from pyotp.totp import TOTP
 
 from wt import clock
 
@@ -25,9 +26,8 @@ def new_secret() -> str:
 
 def provisioning_uri(secret: str, name: str = "admin") -> str:
     """The otpauth:// URI for an authenticator app (QR code)."""
-    totp = pyotp.TOTP(secret)
-    # pyotp has no type for its **kwargs.
-    return totp.provisioning_uri(name=name, issuer_name=ISSUER)  # pyright: ignore[reportUnknownMemberType]
+    totp = TOTP(secret)
+    return totp.provisioning_uri(name=name, issuer_name=ISSUER)
 
 
 def verify(secret: str, code: str, last_step: int | None) -> int | None:
@@ -38,7 +38,7 @@ def verify(secret: str, code: str, last_step: int | None) -> int | None:
     code = code.replace(" ", "")
     if len(code) != DIGITS or not (code.isascii() and code.isdigit()):
         return None
-    totp = pyotp.TOTP(secret)
+    totp = TOTP(secret)
     now_step = int(clock.now().timestamp()) // int(STEP.total_seconds())
     for step in (now_step - 1, now_step, now_step + 1):
         if last_step is not None and step <= last_step:

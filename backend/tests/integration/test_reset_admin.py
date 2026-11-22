@@ -5,9 +5,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-import pyotp
 import pytest
 from fastapi import APIRouter, Depends, FastAPI
+from pyotp.totp import TOTP
 from sqlmodel import Session, select
 
 from wt.api.deps import require_session
@@ -43,7 +43,7 @@ async def set_up_admin(app: FastAPI, client: httpx.AsyncClient) -> str:
     token = ctx.setup_token.value
     assert token is not None
     begin = await client.post("/api/auth/setup/begin", json={"token": token})
-    code = pyotp.TOTP(begin.json()["totp_secret"]).now()
+    code = TOTP(begin.json()["totp_secret"]).now()
     await client.post(
         "/api/auth/setup/finish",
         json={"token": token, "password": PASSWORD, "totp_code": code},
