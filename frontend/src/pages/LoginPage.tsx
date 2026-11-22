@@ -4,6 +4,7 @@ import { useState, type SubmitEvent } from "react";
 
 import { authStateQuery } from "@/api/queries";
 import { api, ApiError, unwrap } from "@/api/client";
+import { AuthCard } from "@/components/AuthCard";
 import { Field, TotpCodeField } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
@@ -42,8 +43,7 @@ export function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md space-y-4 px-4 py-8">
-      <h1 className="text-xl font-semibold">Log in</h1>
+    <AuthCard title="Log in">
       <form className="space-y-4" onSubmit={onSubmit}>
         <Field
           label="Password"
@@ -61,6 +61,6 @@ export function LoginPage() {
           Log in
         </Button>
       </form>
-    </main>
+    </AuthCard>
   );
 }

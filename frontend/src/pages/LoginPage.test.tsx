@@ -125,3 +125,11 @@ test("a 429 with no Retry-After shows the backend text", async () => {
 
   expect(await screen.findByRole("alert")).toHaveTextContent("Too many failed attempts. Try again later.");
 });
+
+test("the login form is in the center card with the product name", async () => {
+  renderRoute("/login");
+
+  const title = await screen.findByRole("heading", { level: 1, name: "Log in" });
+  expect(screen.getByText("Watch Tower")).toBeInTheDocument();
+  expect(title.parentElement).toContainElement(screen.getByRole("button", { name: "Log in" }));
+});

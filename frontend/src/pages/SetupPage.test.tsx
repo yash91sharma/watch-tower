@@ -117,3 +117,11 @@ test("a value that is not a 6-digit code shows a clear error and sends nothing",
   expect(await screen.findByRole("alert")).toHaveTextContent("Enter the 6-digit code from your authenticator app");
   expect(finishBody).toBeUndefined();
 });
+
+test("the setup form is in the center card with the product name", async () => {
+  renderRoute("/setup");
+
+  const title = await screen.findByRole("heading", { level: 1, name: "Set up Watch Tower" });
+  expect(screen.getByText("Watch Tower")).toBeInTheDocument();
+  expect(title.parentElement).toContainElement(screen.getByRole("button", { name: "Next" }));
+});

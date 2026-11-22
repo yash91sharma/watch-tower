@@ -6,6 +6,7 @@ import { useState, type SubmitEvent } from "react";
 import { authStateQuery } from "@/api/queries";
 import { api, unwrap } from "@/api/client";
 import type { SetupBegin } from "@/api/types";
+import { AuthCard } from "@/components/AuthCard";
 import { Field, TotpCodeField } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,9 @@ export function SetupPage() {
   usePageTitle("Set up");
   const [started, setStarted] = useState<Started | null>(null);
   return (
-    <main className="mx-auto max-w-md space-y-4 px-4 py-8">
-      <h1 className="text-xl font-semibold">Set up Watch Tower</h1>
+    <AuthCard title="Set up Watch Tower">
       {started === null ? <TokenStep onStarted={setStarted} /> : <FinishStep {...started} />}
-    </main>
+    </AuthCard>
   );
 }
 
