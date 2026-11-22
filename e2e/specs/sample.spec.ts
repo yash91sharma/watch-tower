@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test";
 test("the app loads over HTTPS", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page).toHaveTitle("WT");
+  // Each page has its own title, for example "Log in · WT".
+  await expect(page).toHaveTitle(/· WT$/);
   expect((await page.request.get("/api/health")).ok()).toBe(true);
 });

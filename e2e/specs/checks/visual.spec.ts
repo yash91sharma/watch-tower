@@ -84,7 +84,8 @@ test.describe("logged in", () => {
     test(`settings, ${colorScheme}`, async ({ page }) => {
       await open(page, "/settings", "Settings", colorScheme);
 
-      await expect(page).toHaveScreenshot(`settings-${colorScheme}.png`, { fullPage: true, mask: [sidebar(page), footer(page)] });
+      const stylePath = fileURLToPath(new URL("visual-settings.css", import.meta.url));
+      await expect(page).toHaveScreenshot(`settings-${colorScheme}.png`, { fullPage: true, mask: [sidebar(page), footer(page)], stylePath });
     });
 
     test(`logs page, ${colorScheme}`, async ({ page }) => {

@@ -1,0 +1,6 @@
+/* Only for the settings screenshot (visual.spec.ts): the Save bar is sticky at the bottom
+   of the window. A full-page screenshot keeps it at the bottom of the first window height,
+   where it covers a field. Static, it shows in its place under the form. */
+.sticky {
+  position: static !important;
+}
