@@ -24,9 +24,18 @@ test("each secret shows as set or not set", async () => {
   renderRoute("/settings");
 
   const secrets = within(await screen.findByRole("region", { name: "Secrets" }));
-  expect(secrets.getByText("GitHub token").nextSibling).toHaveTextContent("not set");
-  expect(secrets.getByText("ntfy token").nextSibling).toHaveTextContent("set");
-  expect(secrets.getByText("LLM API key").nextSibling).toHaveTextContent("not set");
+  const row = (name: string) => {
+    const item = secrets.getByText(name).closest("li");
+    if (!item) throw new Error(`No row for ${name}`);
+    return item;
+  };
+  expect(within(row("GitHub token")).getByText("not set")).toHaveAttribute("data-variant", "outline");
+  expect(within(row("ntfy token")).getByText("set")).toHaveAttribute("data-variant", "success");
+  expect(within(row("LLM API key")).getByText("not set")).toHaveAttribute("data-variant", "outline");
+  // Each secret tells what WT uses it for.
+  expect(row("GitHub token")).toHaveTextContent("GitHub API");
+  expect(row("ntfy token")).toHaveTextContent("ntfy");
+  expect(row("LLM API key")).toHaveTextContent("summaries");
   expect(secrets.queryByRole("textbox")).not.toBeInTheDocument();
 });
 

@@ -6,11 +6,11 @@ import { api, unwrap } from "@/api/client";
 import { settingsQuery } from "@/api/queries";
 import type { SecretState, Settings } from "@/api/types";
 import { ConfigFile } from "@/components/ConfigFile";
-import { DetailList } from "@/components/DetailList";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { QueryPending } from "@/components/QueryPending";
 import { Section } from "@/components/Section";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { usePageTitle } from "@/lib/pageTitle";
@@ -31,10 +31,11 @@ const FIELDS: { key: keyof Settings; label: string; numeric?: boolean; select?: 
 // The label of each field, for the field errors of the API.
 const LABELS: Record<string, string> = Object.fromEntries(FIELDS.map(({ key, label }) => [key, label]));
 
-const SECRETS: { key: keyof SecretState; label: string }[] = [
-  { key: "github_token", label: "GitHub token" },
-  { key: "ntfy_token", label: "ntfy token" },
-  { key: "llm_api_key", label: "LLM API key" },
+// `use`: what WT uses the secret for (static help text).
+const SECRETS: { key: keyof SecretState; label: string; use: string }[] = [
+  { key: "github_token", label: "GitHub token", use: "Gives a higher GitHub API rate limit for the update checks." },
+  { key: "ntfy_token", label: "ntfy token", use: "Lets WT send to an ntfy topic that needs a login." },
+  { key: "llm_api_key", label: "LLM API key", use: "Lets WT use the LLM server for the release note summaries." },
 ];
 
 export function SettingsPage() {
@@ -157,7 +158,17 @@ function Secrets({ secrets }: { secrets: SecretState }) {
   return (
     <Section title="Secrets">
       <p className="text-sm text-muted-foreground">Env vars set the secrets. Restart WT after a change.</p>
-      <DetailList className="gap-y-1" items={SECRETS.map(({ key, label }) => ({ term: label, value: secrets[key] }))} />
+      <ul className="divide-y rounded-xl border bg-card text-sm shadow-xs">
+        {SECRETS.map(({ key, label, use }) => (
+          <li key={key} className="space-y-0.5 px-3 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium">{label}</span>
+              <Badge variant={secrets[key] === "set" ? "success" : "outline"}>{secrets[key]}</Badge>
+            </div>
+            <p className="text-muted-foreground">{use}</p>
+          </li>
+        ))}
+      </ul>
     </Section>
   );
 }
