@@ -1,6 +1,6 @@
 // Page frame for the logged-in app: top nav, the sidebar, the page and a footer with the version.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { PanelLeft } from "lucide-react";
+import { LogOut, PanelLeft } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router";
 
@@ -51,21 +51,29 @@ export function Layout() {
               <span className="max-sm:sr-only">WT</span>
             </Link>
           </div>
-          <nav aria-label="Main" className="flex items-center gap-1">
-            <NavItem to="/">Overview</NavItem>
-            <NavItem to="/apps">Apps</NavItem>
-            <NavItem to="/settings">Settings</NavItem>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <nav aria-label="Main" className="flex items-center gap-1">
+              <NavItem to="/">Overview</NavItem>
+              <NavItem to="/apps">Apps</NavItem>
+              <NavItem to="/settings">Settings</NavItem>
+            </nav>
+            {/* Log out is an action, not a page: a line keeps it apart from the nav. */}
+            <span aria-hidden className="h-5 w-px bg-border" />
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
+              aria-label="Log out"
+              title="Log out"
               disabled={logout.isPending}
               onClick={() => {
                 logout.mutate();
               }}
             >
-              Log out
+              <LogOut aria-hidden />
+              {/* On a phone only the icon shows, so that the nav fits. */}
+              <span className="max-sm:hidden">Log out</span>
             </Button>
-          </nav>
+          </div>
         </div>
       </header>
       <div className="flex flex-1 flex-col md:flex-row">

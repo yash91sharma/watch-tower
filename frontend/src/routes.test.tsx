@@ -20,7 +20,9 @@ test.each([
   expect(within(nav).getByRole("link", { name: "Overview" })).toHaveAttribute("href", "/");
   expect(within(nav).getByRole("link", { name: "Apps" })).toHaveAttribute("href", "/apps");
   expect(within(nav).getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
-  expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
+  // Log out is not a page, so it is in the header but not in the nav.
+  expect(within(screen.getByRole("banner")).getByRole("button", { name: "Log out" })).toBeInTheDocument();
+  expect(within(nav).queryByRole("button", { name: "Log out" })).not.toBeInTheDocument();
 });
 
 test.each([
