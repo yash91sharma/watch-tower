@@ -15,14 +15,8 @@ from sqlmodel import Session, select
 
 from wt import clock
 from wt.db.models import RepoCache
-from wt.versions.github import (
-    Fetched,
-    GitHub,
-    GitHubError,
-    NoRelease,
-    NotModified,
-    wait_on_rate_limit,
-)
+from wt.versions.fetch import FetchError, wait_on_rate_limit
+from wt.versions.github import Fetched, GitHub, NoRelease, NotModified
 from wt.versions.rules import Release, is_version_tag
 
 
@@ -62,7 +56,7 @@ async def refresh_repo(engine: Engine, github: GitHub, repo: str) -> None:
                     releases = await wait_on_rate_limit(lambda: github.releases(repo))
                     cache.releases = [asdict(item) for item in releases]
                 cache.latest_tag, cache.etag, cache.error = tag, latest.etag, None
-    except GitHubError as error:
+    except FetchError as error:
         cache.error = str(error)
     cache.fetched_at = clock.now()
     await asyncio.to_thread(_save, engine, cache)

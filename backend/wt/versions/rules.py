@@ -7,7 +7,9 @@ from enum import StrEnum
 from wt.db.models import RepoCache
 
 # Optional "v", numbers with dots, optional "-suffix" (for example "-alpine", "-r0-ls104").
-_VERSION_TAG = re.compile(r"[vV]?(\d+(?:\.\d+)*)(?:-[0-9A-Za-z._-]+)?")
+_VERSION_TAG = re.compile(r"([vV]?)(\d+(?:\.\d+)*)(?:-([0-9A-Za-z._-]+))?")
+# A git commit hash suffix, for example "-b5605b8f2" (SearXNG builds).
+_COMMIT = re.compile(r"[0-9a-f]{7,40}")
 
 
 def is_version_tag(tag: str | None) -> bool:
@@ -20,7 +22,38 @@ def version_parts(tag: str) -> tuple[int, ...]:
     match = _VERSION_TAG.fullmatch(tag)
     if match is None:
         raise ValueError(f"{tag!r} is not a version tag")
-    return tuple(int(part) for part in match.group(1).split("."))
+    return tuple(int(part) for part in match.group(2).split("."))
+
+
+def same_flavor(tag: str, running: str) -> bool:
+    """True if `tag` and `running` are version tags of the same kind.
+
+    The same kind has the same "v", the same number of parts and the same suffix. So
+    "16.4-alpine" matches "16.5-alpine", not "16.5" or "17". A commit hash suffix matches
+    any commit hash. WT uses it for Docker Hub, where one repo has many tag kinds.
+    """
+    flavor = _flavor(tag)
+    return flavor is not None and flavor == _flavor(running)
+
+
+def _flavor(tag: str) -> tuple[str, int, str] | None:
+    """("v" or "", number of parts, suffix). None if `tag` is not a version tag."""
+    match = _VERSION_TAG.fullmatch(tag)
+    if match is None:
+        return None
+    prefix, numbers, suffix = match.group(1), match.group(2), match.group(3) or ""
+    if _COMMIT.fullmatch(suffix):
+        suffix = "<commit>"
+    return prefix, numbers.count(".") + 1, suffix
+
+
+def latest_version(tags: list[str], running: str) -> str | None:
+    """The highest tag of the same kind as `running`. None if there is none.
+
+    For equal versions, the first tag wins (Docker Hub sends the newest first).
+    """
+    kept = [tag for tag in tags if same_flavor(tag, running)]
+    return max(kept, key=_key) if kept else None
 
 
 def is_update(running: str, latest: str) -> bool:

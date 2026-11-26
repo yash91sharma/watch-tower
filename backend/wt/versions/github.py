@@ -1,36 +1,19 @@
 """GitHub releases API client. The base URL comes from WT_GITHUB_API_URL (tests use a fake)."""
 
-import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from importlib.metadata import version
 
 import httpx
 from pydantic import BaseModel, SecretStr, TypeAdapter, ValidationError
 
 from wt import clock
+from wt.versions.fetch import TIMEOUT_SECONDS, USER_AGENT, FetchError, RateLimitedError
 from wt.versions.rules import Release
 
-TIMEOUT_SECONDS = 30
-# A run waits for the rate limit this many times, then fails.
-MAX_RATE_LIMIT_WAITS = 3
-# The version of the installed WT package (pyproject.toml).
-USER_AGENT = f"watch-tower/{version('wt')}"
 
-log = logging.getLogger(__name__)
-
-
-class GitHubError(Exception):
-    """The fetch failed. WT saves the text in repo_cache.error."""
-
-
-class RateLimitedError(GitHubError):
-    """GitHub rate limit: wait until `reset_at`, then try again."""
-
-    def __init__(self, reset_at: datetime) -> None:
-        super().__init__(f"GitHub rate limit until {reset_at.isoformat()}")
-        self.reset_at = reset_at
+class GitHubError(FetchError):
+    """A GitHub fetch failed."""
 
 
 @dataclass(frozen=True)
@@ -115,7 +98,7 @@ class GitHub:
             ) from None
         reset_at = _rate_limit_reset(response)
         if reset_at is not None:
-            raise RateLimitedError(reset_at)
+            raise RateLimitedError("GitHub", reset_at)
         if response.status_code not in (200, 304, 404):
             raise GitHubError(f"GitHub answered HTTP {response.status_code}")
         return response
@@ -141,15 +124,3 @@ def _rate_limit_reset(response: httpx.Response) -> datetime | None:
     if reset.isdigit():
         return datetime.fromtimestamp(int(reset), UTC)
     return clock.now() + timedelta(minutes=1)
-
-
-async def wait_on_rate_limit[T](call: Callable[[], Awaitable[T]]) -> T:
-    """Run `call`. On a rate limit, wait until the reset (through clock) and run it again."""
-    for _ in range(MAX_RATE_LIMIT_WAITS):
-        try:
-            return await call()
-        except RateLimitedError as error:
-            seconds = max((error.reset_at - clock.now()).total_seconds(), 0) + 1
-            log.warning("GitHub rate limit. WT waits %d s.", seconds)
-            await clock.sleep(seconds)
-    raise GitHubError("GitHub rate limit: WT stopped after 3 waits")

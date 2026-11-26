@@ -8,13 +8,8 @@ import pytest
 import respx
 
 from wt.clock import FakeClock
-from wt.versions.github import (
-    Fetched,
-    GitHub,
-    GitHubError,
-    RateLimitedError,
-    wait_on_rate_limit,
-)
+from wt.versions.fetch import FetchError, RateLimitedError, wait_on_rate_limit
+from wt.versions.github import Fetched, GitHub, GitHubError
 
 pytestmark = pytest.mark.anyio
 
@@ -107,7 +102,9 @@ async def test_gives_up_after_3_waits(github: GitHub, clock: FakeClock) -> None:
     with respx.mock:
         respx.get(LATEST).mock(return_value=limited(clock, seconds=10))
 
-        with pytest.raises(GitHubError, match="rate limit"):
+        with pytest.raises(
+            FetchError, match="GitHub rate limit: WT stopped after 3 waits"
+        ):
             await wait_on_rate_limit(lambda: github.latest("owner/app", etag=None))
 
 
