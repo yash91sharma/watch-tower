@@ -74,6 +74,24 @@ async def test_import_of_an_export_into_an_empty_db_gives_the_same_export(
 
 
 @pytest.mark.anyio
+async def test_import_keeps_a_docker_hub_source(
+    app: FastAPI, user_client: httpx.AsyncClient
+) -> None:
+    source = {
+        "name": "search",
+        "release_source": "dockerhub:searxng/searxng",
+        "source_confirmed": True,
+    }
+    body = {**CONFIG, "containers": [source]}
+
+    response = await do_import(user_client, body, dry_run=False)
+
+    assert response.json()["valid"] is True
+    export = (await user_client.get("/api/config/export")).json()
+    assert export["containers"] == [source]
+
+
+@pytest.mark.anyio
 async def test_import_updates_known_containers_by_name(
     app: FastAPI, user_client: httpx.AsyncClient
 ) -> None:

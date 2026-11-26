@@ -1627,7 +1627,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$"
+                "pattern": "^(?:[A-Za-z0-9-]+/[A-Za-z0-9._-]+|dockerhub:[a-z0-9]+/[a-z0-9]+(?:[._-][a-z0-9]+)*)$"
               },
               {
                 "type": "null"

@@ -98,7 +98,7 @@ test("a bad value shows the field error", async () => {
   server.use(
     http.put("*/api/containers/:name/release-source", () =>
       HttpResponse.json(
-        { error: "Unprocessable Content", detail: [{ field: "source", message: "Give a GitHub URL or owner/repo" }] },
+        { error: "Unprocessable Content", detail: [{ field: "source", message: "Give a GitHub or Docker Hub URL" }] },
         { status: 422 },
       ),
     ),
@@ -109,7 +109,7 @@ test("a bad value shows the field error", async () => {
   await user.type(form.getByLabelText("GitHub URL or owner/repo"), "x");
   await user.click(form.getByRole("button", { name: "Save" }));
 
-  expect(await form.findByRole("alert")).toHaveTextContent("source: Give a GitHub URL or owner/repo");
+  expect(await form.findByRole("alert")).toHaveTextContent("source: Give a GitHub or Docker Hub URL");
 });
 
 test("with no source, the page says so and edit starts with an empty value", async () => {

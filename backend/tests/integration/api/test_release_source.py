@@ -55,6 +55,18 @@ async def test_set_without_confirm(
     assert saved(ctx) == ("admin/choice", False)
 
 
+async def test_set_a_docker_hub_url(
+    ctx: AppContext, user_client: httpx.AsyncClient
+) -> None:
+    response = await put(
+        user_client,
+        {"source": "https://hub.docker.com/r/searxng/searxng", "confirmed": True},
+    )
+
+    assert response.json()["release_source"] == "dockerhub:searxng/searxng"
+    assert saved(ctx) == ("dockerhub:searxng/searxng", True)
+
+
 async def test_confirm_keeps_the_value_after_a_new_inspect(
     ctx: AppContext, user_client: httpx.AsyncClient
 ) -> None:
@@ -85,7 +97,9 @@ async def test_bad_value_gives_422(
     response = await put(user_client, {"source": source, "confirmed": True})
 
     assert response.status_code == 422
-    assert [item["field"] for item in response.json()["detail"]] == ["source"]
+    assert response.json()["detail"] == [
+        {"field": "source", "message": "Give a GitHub or Docker Hub URL"}
+    ]
     assert saved(ctx) == ("label/source", False)
 
 

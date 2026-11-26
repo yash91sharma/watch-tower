@@ -44,7 +44,7 @@ test("a bad value shows the field error and changes nothing", async ({ page }) =
   await source(page).getByLabel("GitHub URL or owner/repo").fill("not a repo");
   await source(page).getByRole("button", { name: "Save" }).click();
 
-  await expect(source(page).getByRole("alert")).toContainText("source: Give a GitHub URL or owner/repo");
+  await expect(source(page).getByRole("alert")).toContainText("source: Give a GitHub or Docker Hub URL");
   await page.reload();
   await expect(source(page).getByText("No release source")).toBeVisible();
 });

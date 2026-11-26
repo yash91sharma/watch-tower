@@ -31,7 +31,7 @@ router = APIRouter(prefix="/containers", tags=["containers"])
 
 
 class ReleaseSourceIn(BaseModel):
-    # A GitHub URL or "owner/repo". None clears the source.
+    # A GitHub or Docker Hub URL, or a short form (see release_source). None clears it.
     source: str | None = Field(max_length=500)
     confirmed: bool
 
@@ -50,7 +50,7 @@ def put_release_source(name: str, body: ReleaseSourceIn, ctx: Ctx) -> ReleaseSou
         source = release_source(body.source)
         if source is None:
             raise RequestValidationError(
-                [{"loc": ("body", "source"), "msg": "Give a GitHub URL or owner/repo"}]
+                [{"loc": ("body", "source"), "msg": "Give a GitHub or Docker Hub URL"}]
             )
     with Session(ctx.engine) as session:
         row = get_container(session, name)
