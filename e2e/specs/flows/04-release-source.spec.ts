@@ -48,3 +48,16 @@ test("a bad value shows the field error and changes nothing", async ({ page }) =
   await page.reload();
   await expect(source(page).getByText("No release source")).toBeVisible();
 });
+
+test("the (i) button shows what to enter", async ({ page }, testInfo) => {
+  await page.goto("/containers/wt_test_e2e_healthy");
+
+  await source(page).getByRole("button", { name: "What to enter" }).click();
+
+  const help = page.getByRole("dialog", { name: "What to enter" });
+  await expect(help).toContainText("https://github.com/immich-app/immich");
+  await expect(help).toContainText("https://hub.docker.com/r/searxng/searxng");
+  await page.screenshot({ path: testInfo.outputPath("source-help.png") });
+  await page.keyboard.press("Escape");
+  await expect(help).toHaveCount(0);
+});
