@@ -11,8 +11,9 @@ from sqlalchemy import Engine
 from sqlmodel import Session, col, select
 
 from wt.db.models import Container, RepoCache, Update
+from wt.docker.parse import SourceKind, parse_source
 from wt.llm.client import LlmResult
-from wt.versions.cache import cached_releases
+from wt.versions.cache import cache_key, cached_releases
 from wt.versions.rules import Status, container_status, join_notes, release_range
 
 
@@ -29,7 +30,7 @@ def current_updates(
     # Container id -> (name, latest tag).
     latest: dict[int, tuple[str, str]] = {}
     for container in containers:
-        cache = caches.get(container.release_source or "")
+        cache = caches.get(cache_key(container.release_source, container.tag))
         status = container_status(container.tag, container.release_source, cache)
         if cache is not None and container.id is not None and status is Status.UPDATE:
             latest[container.id] = (container.name, cache.latest_tag or "")
@@ -43,7 +44,7 @@ def current_updates(
 
 def _update_cache(session: Session, container: Container) -> RepoCache | None:
     """The repo cache of the container, if its status is "update". Else None."""
-    cache = session.get(RepoCache, container.release_source or "")
+    cache = session.get(RepoCache, cache_key(container.release_source, container.tag))
     status = container_status(container.tag, container.release_source, cache)
     return cache if status is Status.UPDATE else None
 
@@ -69,7 +70,10 @@ def plan_updates(engine: Engine, rows: list[Container]) -> list[UpdatePlan]:
             if existing is not None and existing.from_version == row.tag:
                 continue
             releases = release_range(cached_releases(cache), row.tag, latest)
-            plans.append(UpdatePlan(row.id, row.tag, latest, join_notes(releases)))
+            # Docker Hub has no release notes: the notes stay empty.
+            source = parse_source(row.release_source or "")
+            notes = join_notes(releases) if source.kind is SourceKind.GITHUB else ""
+            plans.append(UpdatePlan(row.id, row.tag, latest, notes))
     return plans
 
 

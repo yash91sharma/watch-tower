@@ -32,6 +32,17 @@ async def test_llm_off_uses_keywords_and_no_summary(settings: Settings) -> None:
     assert not route.called
 
 
+async def test_no_notes_give_normal_and_no_llm_call() -> None:
+    """Docker Hub updates have no release notes. The LLM has nothing to read."""
+    with respx.mock:
+        route = respx.post(f"{URL}/v1/chat/completions")
+
+        result = await summarize("", Settings(llm_url=URL, llm_model="m"), None)
+
+    assert result == LlmResult(severity=Severity.NORMAL, summary="")
+    assert not route.called
+
+
 async def test_llm_error_uses_keywords_and_no_summary() -> None:
     with respx.mock:
         respx.post(f"{URL}/v1/chat/completions").mock(return_value=httpx.Response(500))

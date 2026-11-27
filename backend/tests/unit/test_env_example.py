@@ -6,7 +6,12 @@ from wt.config import SECRET_FIELDS, Env
 
 ENV_EXAMPLE = Path(__file__).parents[3] / ".env.example"
 # compose.yaml sets DOCKER_HOST. The defaults of the others are correct for a deploy.
-NOT_IN_FILE = {"DOCKER_HOST", "WT_DATA_DIR", "WT_GITHUB_API_URL"}
+NOT_IN_FILE = {
+    "DOCKER_HOST",
+    "WT_DATA_DIR",
+    "WT_GITHUB_API_URL",
+    "WT_DOCKERHUB_API_URL",
+}
 
 
 def env_name(field: str) -> str:

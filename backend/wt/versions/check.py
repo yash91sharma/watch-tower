@@ -1,7 +1,8 @@
 """Check run: fetch the latest release of each repo and save the status counts.
 
 Only one run at a time. WT checks the containers that exist now, are not excluded, and
-have a version tag and a release source. Containers with the same repo share one call.
+have a version tag and a release source. Containers with the same cache row (see
+cache_key) share one call.
 """
 
 import asyncio
@@ -18,8 +19,10 @@ from wt.bus import Bus, Topic
 from wt.config import Env, load_settings
 from wt.db.models import Container, Setting
 from wt.docker.inventory import Inventory
+from wt.docker.parse import SourceKind, parse_source
 from wt.llm.summary import summarize
-from wt.versions.cache import refresh_repo, status_caches
+from wt.versions.cache import cache_key, refresh_repo, refresh_tags, status_caches
+from wt.versions.dockerhub import DockerHub
 from wt.versions.github import GitHub
 from wt.versions.rules import (
     container_status,
@@ -106,19 +109,26 @@ class CheckRunner:
     async def _run(self, names: Collection[str] | None) -> None:
         live = await asyncio.to_thread(_live_rows, self._engine, self._inventory)
         rows = live if names is None else [row for row in live if row.name in names]
-        repos = sorted(
-            {
-                row.release_source
-                for row in rows
-                if row.release_source and is_version_tag(row.tag)
-            }
-        )
+        # Cache row -> a container that uses it.
+        targets = {
+            cache_key(row.release_source, row.tag): row
+            for row in rows
+            if row.release_source and is_version_tag(row.tag)
+        }
         github = GitHub(self._env.github_api_url, self._env.github_token)
+        hub = DockerHub(self._env.dockerhub_api_url)
         try:
-            for repo in repos:
-                await refresh_repo(self._engine, github, repo)
+            for key in sorted(targets):
+                row = targets[key]
+                source = parse_source(key)
+                if source.kind is SourceKind.GITHUB:
+                    await refresh_repo(self._engine, github, key)
+                else:
+                    name = parse_source(row.release_source or "").name
+                    await refresh_tags(self._engine, hub, key, name, row.tag or "")
         finally:
             await github.close()
+            await hub.close()
         await self._update_rows(rows)
         await asyncio.to_thread(_save_status, self._engine, live, names is None)
         if self._after_run is not None:
@@ -144,7 +154,9 @@ def _save_status(engine: Engine, rows: list[Container], full: bool) -> None:
         caches = status_caches(session)
         counts = Counter(
             container_status(
-                row.tag, row.release_source, caches.get(row.release_source or "")
+                row.tag,
+                row.release_source,
+                caches.get(cache_key(row.release_source, row.tag)),
             ).value
             for row in rows
         )

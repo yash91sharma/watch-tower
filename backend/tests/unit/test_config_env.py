@@ -40,6 +40,7 @@ def test_defaults() -> None:
     assert env.data_dir == Path("/data")
     assert env.log_level == "INFO"
     assert env.github_api_url == "https://api.github.com"
+    assert env.dockerhub_api_url == "https://hub.docker.com"
     assert env.github_token is None
     assert env.ntfy_token is None
     assert env.llm_api_key is None
@@ -50,6 +51,7 @@ def test_values_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("WT_DATA_DIR", "/srv/wt")
     monkeypatch.setenv("WT_LOG_LEVEL", "debug")
     monkeypatch.setenv("WT_GITHUB_API_URL", "http://fake-github:8080/")
+    monkeypatch.setenv("WT_DOCKERHUB_API_URL", "http://fake-hub:8080/")
 
     env = Env()
 
@@ -57,6 +59,7 @@ def test_values_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert env.data_dir == Path("/srv/wt")
     assert env.log_level == "DEBUG"
     assert env.github_api_url == "http://fake-github:8080"
+    assert env.dockerhub_api_url == "http://fake-hub:8080"
 
 
 @pytest.mark.parametrize(
@@ -64,6 +67,7 @@ def test_values_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     [
         ("WT_LOG_LEVEL", "LOUD"),
         ("WT_GITHUB_API_URL", "ftp://example.com"),
+        ("WT_DOCKERHUB_API_URL", "ftp://example.com"),
     ],
 )
 def test_bad_values_fail(

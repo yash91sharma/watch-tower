@@ -99,11 +99,12 @@ The Overview page (`/`) shows the resources of the Docker VM (on OrbStack, the L
 | `WT_DATA_DIR` | `/data` | Folder for the SQLite DB. |
 | `WT_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR`. |
 | `WT_GITHUB_API_URL` | `https://api.github.com` | GitHub API URL. Change it only for tests. |
+| `WT_DOCKERHUB_API_URL` | `https://hub.docker.com` | Docker Hub API URL. Change it only for tests. |
 | `WT_GITHUB_TOKEN` | none | Secret. GitHub token for a higher API rate limit. |
 | `WT_NTFY_TOKEN` | none | Secret. ntfy access token. |
 | `WT_LLM_API_KEY` | none | Secret. API key of the LLM server. |
 
-`.env.example` does not have `DOCKER_HOST`, `WT_DATA_DIR` and `WT_GITHUB_API_URL`. `compose.yaml` sets `DOCKER_HOST`, and the defaults of the other two are correct for a deploy.
+`.env.example` does not have `DOCKER_HOST`, `WT_DATA_DIR`, `WT_GITHUB_API_URL` and `WT_DOCKERHUB_API_URL`. `compose.yaml` sets `DOCKER_HOST`, and the defaults of the others are correct for a deploy.
 
 Each secret can also come from a file: set `WT_<NAME>_FILE` (for example, `WT_NTFY_TOKEN_FILE=/run/secrets/ntfy_token`). Do not set both.
 

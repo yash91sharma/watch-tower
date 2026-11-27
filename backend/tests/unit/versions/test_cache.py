@@ -10,7 +10,14 @@ from sqlmodel import Session
 
 from wt.clock import FakeClock
 from wt.db.models import RepoCache
-from wt.versions.cache import cached_releases, refresh_repo, status_caches
+from wt.versions.cache import (
+    cache_key,
+    cached_releases,
+    refresh_repo,
+    refresh_tags,
+    status_caches,
+)
+from wt.versions.dockerhub import DockerHub
 from wt.versions.github import GitHub
 from wt.versions.rules import Release
 
@@ -191,3 +198,95 @@ def test_status_caches_gives_each_repo_without_the_release_list(
         assert state is not None
         assert "releases" not in state.dict
         assert caches["o/a"].releases == notes
+
+
+HUB = "http://hub.test"
+HUB_TAGS = f"{HUB}/v2/namespaces/searxng/repositories/searxng/tags"
+HUB_KEY = "dockerhub:searxng/searxng@3-<commit>"
+
+
+@pytest.fixture
+async def hub() -> AsyncIterator[DockerHub]:
+    client = DockerHub(HUB)
+    yield client
+    await client.close()
+
+
+def hub_row(engine: Engine) -> RepoCache:
+    with Session(engine) as session:
+        cache = session.get(RepoCache, HUB_KEY)
+    assert cache is not None
+    return cache
+
+
+def tag_page(*tags: str) -> httpx.Response:
+    return httpx.Response(200, json={"results": [{"name": tag} for tag in tags]})
+
+
+@pytest.mark.parametrize(
+    ("source", "tag", "key"),
+    [
+        ("owner/app", "v1.2", "owner/app"),
+        ("dockerhub:searxng/searxng", "2026.11.20-a7959eeaf", HUB_KEY),
+        (
+            "dockerhub:library/postgres",
+            "16.4-alpine",
+            "dockerhub:library/postgres@2-alpine",
+        ),
+        ("dockerhub:library/postgres", "v16", "dockerhub:library/postgres@v1"),
+        ("dockerhub:library/postgres", "latest", "dockerhub:library/postgres"),
+        (None, "1.0", ""),
+    ],
+)
+def test_cache_key(source: str | None, tag: str | None, key: str) -> None:
+    """Docker Hub: one cache row per tag kind, because each kind has its own latest."""
+    assert cache_key(source, tag) == key
+
+
+async def test_docker_hub_fetch_saves_the_latest_tag_of_the_same_kind(
+    db_engine: Engine, hub: DockerHub, clock: FakeClock
+) -> None:
+    tags = ("latest", "2026.11.26-b5605b8f2", "2026.11.23-a7163d091")
+    with respx.mock:
+        respx.get(HUB_TAGS).mock(return_value=tag_page(*tags))
+
+        await refresh_tags(
+            db_engine, hub, HUB_KEY, "searxng/searxng", "2026.11.20-a7959eeaf"
+        )
+
+    cache = hub_row(db_engine)
+    assert (cache.latest_tag, cache.error, cache.fetched_at) == (
+        "2026.11.26-b5605b8f2",
+        None,
+        clock.now(),
+    )
+    assert cached_releases(cache) == [
+        Release("2026.11.26-b5605b8f2", ""),
+        Release("2026.11.23-a7163d091", ""),
+    ]
+
+
+async def test_docker_hub_with_no_tag_of_the_same_kind_is_an_error(
+    db_engine: Engine, hub: DockerHub
+) -> None:
+    with respx.mock:
+        respx.get(HUB_TAGS).mock(return_value=tag_page("latest", "1.0"))
+
+        await refresh_tags(
+            db_engine, hub, HUB_KEY, "searxng/searxng", "2026.11.20-a7959eeaf"
+        )
+
+    cache = hub_row(db_engine)
+    assert cache.latest_tag is None
+    assert cache.error == "Docker Hub has no tag of the same kind as the running tag"
+
+
+async def test_docker_hub_error_is_saved(db_engine: Engine, hub: DockerHub) -> None:
+    with respx.mock:
+        respx.get(HUB_TAGS).mock(return_value=httpx.Response(404))
+
+        await refresh_tags(
+            db_engine, hub, HUB_KEY, "searxng/searxng", "2026.11.20-a7959eeaf"
+        )
+
+    assert hub_row(db_engine).error == "The image is not on Docker Hub"

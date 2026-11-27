@@ -58,6 +58,7 @@ class Env(BaseSettings):
     data_dir: Path = Path("/data")
     log_level: LogLevel = "INFO"
     github_api_url: str = "https://api.github.com"
+    dockerhub_api_url: str = "https://hub.docker.com"
 
     github_token: SecretStr | None = None
     ntfy_token: SecretStr | None = None
@@ -68,7 +69,7 @@ class Env(BaseSettings):
     def _upper_log_level(cls, value: object) -> object:
         return value.upper() if isinstance(value, str) else value
 
-    @field_validator("github_api_url")
+    @field_validator("github_api_url", "dockerhub_api_url")
     @classmethod
     def _check_url(cls, value: str) -> str:
         return http_url(value)

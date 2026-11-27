@@ -8,14 +8,14 @@ import httpx
 import pytest
 import respx
 from sqlalchemy import Engine
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from tests.factories import make_info
 from wt.bus import Bus
 from wt.clock import FakeClock
 from wt.config import Env
 from wt.db import LOCAL_HOST_ID
-from wt.db.models import Container, Setting
+from wt.db.models import Container, Setting, Update
 from wt.docker.inventory import Inventory
 from wt.versions.check import CheckRunner, load_check_status
 
@@ -202,3 +202,50 @@ async def test_a_partial_run_keeps_the_last_full_run_time(
         await runner.run(["db"])
 
     assert load_check_status(db_engine).last_run == first
+
+
+HUB = "http://hub.test"
+
+
+async def test_docker_hub_sources_get_one_call_per_tag_kind(
+    db_engine: Engine, clock: FakeClock
+) -> None:
+    inventory = Inventory(db_engine)
+    source = "dockerhub:library/postgres"
+    await add(inventory, "pg1", "postgres:16.4-alpine", source)
+    await add(inventory, "pg2", "postgres:16.5-alpine", source)
+    await add(inventory, "pg3", "postgres:16.4", source)
+    image = "searxng/searxng:2026.11.20-a7959eeaf"
+    await add(inventory, "search", image, "https://hub.docker.com/r/searxng/searxng")
+    env = Env(data_dir=Path("."), github_api_url=API, dockerhub_api_url=HUB)
+    runner = CheckRunner(db_engine, env, inventory, Bus())
+    page = {"results": [{"name": t} for t in ("17.1", "16.5-alpine", "16.4-alpine")]}
+    with respx.mock:
+        postgres = respx.get(
+            f"{HUB}/v2/namespaces/library/repositories/postgres/tags"
+        ).mock(return_value=httpx.Response(200, json=page))
+        searxng = respx.get(
+            f"{HUB}/v2/namespaces/searxng/repositories/searxng/tags"
+        ).mock(
+            return_value=httpx.Response(
+                200, json={"results": [{"name": "2026.11.26-b5605b8f2"}]}
+            )
+        )
+
+        await runner.run()
+
+    # Two tag kinds of postgres (alpine and plain): two calls.
+    assert postgres.call_count == 2
+    assert searxng.call_count == 1
+    # pg1: update to 16.5-alpine. pg2: up to date. pg3: update to 17.1. search: update.
+    assert load_check_status(db_engine).counts == {"update": 3, "up to date": 1}
+    with Session(db_engine) as session:
+        search = session.exec(select(Container).where(Container.name == "search")).one()
+        update = session.exec(
+            select(Update).where(Update.container_id == search.id)
+        ).one()
+    assert (update.to_version, update.release_notes, update.summary) == (
+        "2026.11.26-b5605b8f2",
+        "",
+        "",
+    )

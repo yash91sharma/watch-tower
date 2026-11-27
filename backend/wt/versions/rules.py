@@ -47,6 +47,17 @@ def _flavor(tag: str) -> tuple[str, int, str] | None:
     return prefix, numbers.count(".") + 1, suffix
 
 
+def flavor_name(tag: str) -> str | None:
+    """The tag kind as text, for example "2-alpine" for "16.4-alpine". None if `tag` is
+    not a version tag.
+    """
+    flavor = _flavor(tag)
+    if flavor is None:
+        return None
+    prefix, parts, suffix = flavor
+    return f"{prefix}{parts}-{suffix}" if suffix else f"{prefix}{parts}"
+
+
 def latest_version(tags: list[str], running: str) -> str | None:
     """The highest tag of the same kind as `running`. None if there is none.
 

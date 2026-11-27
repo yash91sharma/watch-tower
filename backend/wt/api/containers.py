@@ -3,7 +3,6 @@
 from collections.abc import Mapping
 from datetime import datetime
 from typing import Literal, cast, get_args
-from urllib.parse import quote
 
 from fastapi import APIRouter
 from fastapi.exceptions import RequestValidationError
@@ -22,8 +21,8 @@ from wt.db.models import (
     Update,
 )
 from wt.docker.inventory import LiveContainer
-from wt.docker.parse import release_source
-from wt.versions.cache import status_caches
+from wt.docker.parse import parse_source, release_source
+from wt.versions.cache import cache_key, status_caches
 from wt.versions.rules import Status, container_status
 from wt.versions.updates import current_updates
 
@@ -81,7 +80,8 @@ class ContainerOut(BaseModel):
     # The status text for the UI.
     status_label: str
     latest_version: str | None
-    # The GitHub release page of the latest version. None with no latest version.
+    # The web page of the latest version (GitHub release or Docker Hub tag). None with
+    # no latest version.
     latest_url: str | None
     # The severity of the current update. None with no update.
     severity: Severity | None
@@ -117,7 +117,7 @@ def container_out(
     update: Update | None,
 ) -> ContainerOut:
     """One container. `caches`: the repo caches by repo. `update`: its current update."""
-    cache = caches.get(row.release_source or "")
+    cache = caches.get(cache_key(row.release_source, row.tag))
     status = container_status(row.tag, row.release_source, cache)
     known = status in (Status.UPDATE, Status.UP_TO_DATE)
     # Docker keeps the last health of a stopped container, so only a running one has one.
@@ -135,8 +135,8 @@ def container_out(
         status_label=status_label(status, update.severity if update else None),
         latest_version=latest,
         latest_url=(
-            f"https://github.com/{row.release_source}/releases/tag/{quote(latest)}"
-            if latest
+            parse_source(row.release_source).release_url(latest)
+            if latest and row.release_source
             else None
         ),
         severity=update.severity if update else None,
@@ -187,6 +187,10 @@ def list_containers(ctx: Ctx) -> list[GroupOut]:
         return result
 
 
+# The release notes text of an update with no notes (Docker Hub).
+NO_NOTES = "Docker Hub has no release notes. See the image page for the changes."
+
+
 class UpdateOut(BaseModel):
     from_version: str
     to_version: str
@@ -233,7 +237,13 @@ def get_container_detail(name: str, ctx: Ctx) -> ContainerDetail:
         )
         return ContainerDetail(
             **container_out(row, live, caches, update).model_dump(),
-            update=UpdateOut.model_validate(update, from_attributes=True)
+            update=UpdateOut(
+                from_version=update.from_version,
+                to_version=update.to_version,
+                severity=update.severity,
+                summary=update.summary,
+                release_notes=update.release_notes or NO_NOTES,
+            )
             if update
             else None,
             events=[

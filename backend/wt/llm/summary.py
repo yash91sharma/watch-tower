@@ -48,7 +48,8 @@ async def summarize(
 
     Else the keyword severity and an empty summary (the UI shows the release notes only).
     """
-    if settings.llm_url and settings.llm_model:
+    # No notes (Docker Hub): the LLM has nothing to read.
+    if notes and settings.llm_url and settings.llm_model:
         result = await complete(
             settings.llm_url, settings.llm_model, build_messages(notes), api_key
         )

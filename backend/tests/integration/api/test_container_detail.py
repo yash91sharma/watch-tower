@@ -113,3 +113,41 @@ async def test_gone_container_gives_404(
 
 def test_each_event_kind_has_a_label() -> None:
     assert set(EVENT_LABELS) == set(EventKind)
+
+
+async def test_docker_hub_update_links_to_the_tag_and_says_no_notes(
+    ctx: AppContext, user_client: httpx.AsyncClient, clock: FakeClock
+) -> None:
+    image = "searxng/searxng:2026.11.20-a7959eeaf"
+    source = "https://hub.docker.com/r/searxng/searxng"
+    row_id = await add(ctx, "search", image, **{SOURCE: source})
+    latest = "2026.11.26-b5605b8f2"
+    with Session(ctx.engine) as session:
+        session.add(
+            RepoCache(
+                repo="dockerhub:searxng/searxng@3-<commit>",
+                latest_tag=latest,
+                fetched_at=clock.now(),
+            )
+        )
+        session.add(
+            Update(
+                container_id=row_id,
+                from_version="2026.11.20-a7959eeaf",
+                to_version=latest,
+                severity=Severity.NORMAL,
+                release_notes="",
+            )
+        )
+        session.commit()
+
+    body = (await user_client.get("/api/containers/search")).json()
+
+    assert (body["status"], body["latest_version"]) == ("update", latest)
+    assert body["latest_url"] == (
+        f"https://hub.docker.com/r/searxng/searxng/tags?name={latest}"
+    )
+    assert body["release_source"] == "dockerhub:searxng/searxng"
+    assert body["update"]["release_notes"] == (
+        "Docker Hub has no release notes. See the image page for the changes."
+    )
