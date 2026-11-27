@@ -24,7 +24,7 @@ test("the label value shows as not confirmed until the admin confirms it", async
 test("the admin edits the source with a GitHub URL", async ({ page }) => {
   await page.goto("/containers/wt_test_e2e_old_b");
   await source(page).getByRole("button", { name: "Edit" }).click();
-  const input = source(page).getByLabel("GitHub URL or owner/repo");
+  const input = source(page).getByLabel("GitHub or Docker Hub URL");
   await expect(input).toHaveValue("wt-e2e/old-b");
 
   await input.fill("https://github.com/wt-e2e/old-b.git");
@@ -41,7 +41,7 @@ test("a bad value shows the field error and changes nothing", async ({ page }) =
   await expect(source(page).getByText("No release source")).toBeVisible();
   await source(page).getByRole("button", { name: "Edit" }).click();
 
-  await source(page).getByLabel("GitHub URL or owner/repo").fill("not a repo");
+  await source(page).getByLabel("GitHub or Docker Hub URL").fill("not a repo");
   await source(page).getByRole("button", { name: "Save" }).click();
 
   await expect(source(page).getByRole("alert")).toContainText("source: Give a GitHub or Docker Hub URL");

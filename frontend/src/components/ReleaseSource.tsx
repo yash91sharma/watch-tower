@@ -8,6 +8,7 @@ import { containersQuery } from "@/api/queries";
 import { Field } from "@/components/Field";
 import { FormError } from "@/components/FormError";
 import { Section } from "@/components/Section";
+import { SourceHelp } from "@/components/SourceHelp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -32,11 +33,11 @@ export function ReleaseSource({ name, source, confirmed }: { name: string; sourc
   }
 
   return (
-    <Section title="Release source">
+    <Section title="Release source" actions={<SourceHelp />}>
       {editing ? (
         <form className="space-y-3" onSubmit={onSave}>
           <Field
-            label="GitHub URL or owner/repo"
+            label="GitHub or Docker Hub URL"
             value={value}
             onChange={(event) => {
               setValue(event.target.value);

@@ -60,7 +60,7 @@ test("edit saves a new value as confirmed", async () => {
   const form = await section();
 
   await user.click(form.getByRole("button", { name: "Edit" }));
-  const input = form.getByLabelText("GitHub URL or owner/repo");
+  const input = form.getByLabelText("GitHub or Docker Hub URL");
   expect(input).toHaveValue("nginx/nginx");
   await user.clear(input);
   await user.type(input, "acme/web");
@@ -75,7 +75,7 @@ test("an empty value clears the source", async () => {
   const form = await section();
 
   await user.click(form.getByRole("button", { name: "Edit" }));
-  await user.clear(form.getByLabelText("GitHub URL or owner/repo"));
+  await user.clear(form.getByLabelText("GitHub or Docker Hub URL"));
   await user.click(form.getByRole("button", { name: "Save" }));
 
   expect(saved).toEqual([{ source: null, confirmed: true }]);
@@ -106,7 +106,7 @@ test("a bad value shows the field error", async () => {
   const form = await section();
 
   await user.click(form.getByRole("button", { name: "Edit" }));
-  await user.type(form.getByLabelText("GitHub URL or owner/repo"), "x");
+  await user.type(form.getByLabelText("GitHub or Docker Hub URL"), "x");
   await user.click(form.getByRole("button", { name: "Save" }));
 
   expect(await form.findByRole("alert")).toHaveTextContent("source: Give a GitHub or Docker Hub URL");
@@ -122,5 +122,29 @@ test("with no source, the page says so and edit starts with an empty value", asy
   expect(form.queryByRole("button", { name: "Confirm" })).not.toBeInTheDocument();
   await user.click(form.getByRole("button", { name: "Edit" }));
 
-  expect(form.getByLabelText("GitHub URL or owner/repo")).toHaveValue("");
+  expect(form.getByLabelText("GitHub or Docker Hub URL")).toHaveValue("");
+});
+
+test("the (i) button shows what to enter, with a GitHub and a Docker Hub example", async () => {
+  const user = start("nginx/nginx", false);
+  const form = await section();
+
+  await user.click(form.getByRole("button", { name: "What to enter" }));
+
+  const help = await screen.findByRole("dialog", { name: "What to enter" });
+  expect(help).toHaveTextContent("https://github.com/immich-app/immich");
+  expect(help).toHaveTextContent("https://hub.docker.com/r/searxng/searxng");
+  await user.keyboard("{Escape}");
+  await waitFor(() => {
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});
+
+test("the (i) button is there in the edit form too", async () => {
+  const user = start("nginx/nginx", true);
+  const form = await section();
+
+  await user.click(form.getByRole("button", { name: "Edit" }));
+
+  expect(form.getByRole("button", { name: "What to enter" })).toBeInTheDocument();
 });
