@@ -60,11 +60,12 @@ async def test_sync_all_saves_rows_and_live_state(db_engine: Engine) -> None:
         "nginx/nginx",
         False,
     )
+    # No source label: the Docker Hub repo of the image (not confirmed).
     assert (db.compose_project, db.image, db.tag, db.release_source) == (
         None,
         "postgres",
         "latest",
-        None,
+        "dockerhub:library/postgres",
     )
     assert inventory.get("web") == LiveContainer("id-web", "web", "running", "healthy")
     assert inventory.get("db") == LiveContainer("id-db", "db", "exited", "none")
@@ -124,9 +125,31 @@ async def test_label_change_updates_a_source_that_is_not_confirmed(
     assert rows(db_engine)["web"].release_source == "c/d"
 
 
-async def test_non_github_label_gives_no_source(db_engine: Engine) -> None:
+async def test_non_github_label_on_a_docker_hub_image_gives_the_docker_hub_source(
+    db_engine: Engine,
+) -> None:
     docker = FakeDocker()
-    docker.add(info("web", labels={SOURCE: "https://gitlab.com/a/b"}))
+    docker.add(info("web", image="searxng/searxng:2026.11.20-a7959eeaf"))
+    docker.add(info("api", labels={SOURCE: "https://gitlab.com/a/b"}))
+    inventory = Inventory(db_engine)
+
+    await inventory.sync_all(docker)
+
+    saved = rows(db_engine)
+    assert (saved["web"].release_source, saved["web"].source_confirmed) == (
+        "dockerhub:searxng/searxng",
+        False,
+    )
+    assert saved["api"].release_source == "dockerhub:library/nginx"
+
+
+async def test_non_github_label_on_an_other_registry_gives_no_source(
+    db_engine: Engine,
+) -> None:
+    docker = FakeDocker()
+    docker.add(
+        info("web", image="ghcr.io/a/b:1.0", labels={SOURCE: "https://gitlab.com/a/b"})
+    )
     inventory = Inventory(db_engine)
 
     await inventory.sync_all(docker)

@@ -42,7 +42,7 @@ async def runner(db_engine: Engine) -> CheckRunner:
     await add(inventory, "web1", "nginx:1.26", "nginx/nginx")
     await add(inventory, "web2", "nginx:1.27", "nginx/nginx")
     await add(inventory, "db", "postgres:16", "docker-library/postgres")
-    await add(inventory, "nosrc", "app:1.0", None)
+    await add(inventory, "nosrc", "registry.test/app:1.0", None)
     await add(inventory, "rolling", "app:latest", "o/app")
     await add(inventory, "hidden", "app:1.0", "o/hidden", **{"wt.enable": "false"})
     env = Env(data_dir=Path("."), github_api_url=API)

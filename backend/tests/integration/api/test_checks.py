@@ -79,7 +79,7 @@ async def test_start_for_one_app_checks_only_its_containers(
     await add_web(ctx)
     project = {"com.docker.compose.project": "shop"}
     await ctx.inventory.update(
-        make_info("api", "api:1.0", docker_id="id-2", labels=project)
+        make_info("api", "registry.test/api:1.0", docker_id="id-2", labels=project)
     )
 
     with respx.mock:

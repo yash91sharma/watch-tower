@@ -116,3 +116,12 @@ Container labels:
 
  - `wt.enable=false`: WT does not show or watch this container.
  - `org.opencontainers.image.source`: the GitHub URL of the release source. You can change it on the container page.
+
+## Release sources
+
+WT finds new versions from the release source of each container:
+
+ - GitHub: the latest release, with its release notes. Enter `https://github.com/owner/repo`.
+ - Docker Hub: the image tags, with no release notes. Enter `https://hub.docker.com/r/namespace/repo`. Use this for apps with no GitHub releases (for example SearXNG).
+
+The source label comes first. An image on Docker Hub with no label gets its Docker Hub repo. On Docker Hub, WT compares only tags of the same kind: the same `v`, number of parts and suffix (`16.4-alpine` updates to `16.5-alpine`, not to `17`). A commit hash suffix matches any commit hash (`2026.11.20-a7959eeaf` updates to `2026.11.26-b5605b8f2`).

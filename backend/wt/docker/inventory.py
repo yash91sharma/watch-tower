@@ -19,6 +19,7 @@ from wt.docker.parse import (
     SOURCE_LABEL,
     InvalidImageRefError,
     compose_project,
+    dockerhub_source,
     group_label,
     is_excluded,
     parse_image,
@@ -161,5 +162,8 @@ def _upsert(session: Session, info: ContainerInfo) -> None:
     row.image, row.tag = repo, tag
     row.enabled = not is_excluded(info.labels)
     if not row.source_confirmed:
-        row.release_source = release_source(info.labels.get(SOURCE_LABEL))
+        # The label first. Else the Docker Hub repo of the image, if it is on Docker Hub.
+        row.release_source = release_source(info.labels.get(SOURCE_LABEL)) or (
+            dockerhub_source(repo) if repo else None
+        )
     session.add(row)

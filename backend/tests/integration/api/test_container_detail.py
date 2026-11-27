@@ -32,7 +32,7 @@ async def ctx(app: FastAPI, clock: FakeClock) -> AppContext:
     web_id = await add(
         context, "web", "nginx:1.26", **{SOURCE: "https://github.com/nginx/nginx"}
     )
-    await add(context, "db", "postgres:16")
+    await add(context, "db", "registry.test/postgres:16")
     await add(context, "secret", "app:1", **{"wt.enable": "false"})
     now = clock.now()
     with Session(context.engine) as session:

@@ -42,7 +42,7 @@ async def ctx(app: FastAPI, clock: FakeClock) -> AppContext:
         info(
             "api", "app:2.0", "site", "starting", **{SOURCE: "https://github.com/o/app"}
         ),
-        info("db", "postgres:16", "data", "unhealthy"),
+        info("db", "registry.test/postgres:16", "data", "unhealthy"),
         info("tool", "busybox:latest"),
         info("secret", "app:1.0", "site", **{"wt.enable": "false"}),
     ]:

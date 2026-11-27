@@ -33,7 +33,7 @@ DATA_DIR = Path(tempfile.mkdtemp(prefix="wt-contract-"))
 ENGINE = open_db(DATA_DIR)
 
 _docker = FakeDocker()
-_docker.add(make_info(image="nginx:1.27", health="healthy"))
+_docker.add(make_info(image="registry.test/nginx:1.27", health="healthy"))
 
 
 async def fake_docker_worker(ctx: AppContext) -> None:
